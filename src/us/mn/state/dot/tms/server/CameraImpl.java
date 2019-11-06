@@ -40,7 +40,7 @@ import us.mn.state.dot.tms.server.comm.DevicePoller;
 import us.mn.state.dot.tms.server.event.CameraVideoEvent;
 
 /**
- * CameraImpl represents a single CCTV camera.
+ * CameraImpl represents a single roadside camera.
  *
  * @author Douglas Lau
  * @author Tim Johnson
@@ -468,7 +468,7 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		w.write("<camera");
 		w.write(createAttribute("name", getName()));
 		w.write(createAttribute("description",
-		        GeoLocHelper.getDescription(geo_loc)));
+		        GeoLocHelper.getLocation(geo_loc)));
 		Position pos = GeoLocHelper.getWgs84Position(geo_loc);
 		if (pos != null) {
 			w.write(createAttribute("lon",
