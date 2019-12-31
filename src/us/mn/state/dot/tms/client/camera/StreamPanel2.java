@@ -397,8 +397,8 @@ public class StreamPanel2 extends AbstractForm {
 //            }
 	        
 
-	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=" + c.getEncoderType().getUriScheme() + 
-	        		c.getEncoder() + c.getEncoderType().getUriPath() + " ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
+	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=" + video_req.getUri(c) + " protocols=tcp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
+	        
 //	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
 	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
            

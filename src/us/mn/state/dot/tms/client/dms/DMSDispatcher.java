@@ -18,8 +18,12 @@ package us.mn.state.dot.tms.client.dms;
 
 import java.awt.BorderLayout;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import us.mn.state.dot.sonar.User;
+import us.mn.state.dot.tms.BitmapGraphic;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.DMSHelper;
@@ -37,6 +41,8 @@ import us.mn.state.dot.tms.client.proxy.ProxySelectionModel;
 import us.mn.state.dot.tms.client.widget.IOptionPane;
 import us.mn.state.dot.tms.utils.I18N;
 import us.mn.state.dot.tms.utils.MultiString;
+import static us.mn.state.dot.tms.SignMsgSource.operator;
+
 
 /**
  * The DMSDispatcher is a GUI component for creating and deploying DMS messages.
@@ -97,8 +103,14 @@ public class DMSDispatcher extends JPanel {
 	/** Sign message creator */
 	private final SignMessageCreator creator;
 
+	/** Selection tab pane */
+	private final JTabbedPane tabPane = new JTabbedPane();
+
 	/** Single sign tab */
 	private final SingleSignTab singleTab;
+
+	/** Multiple sign tab */
+	private final MultipleSignTab multipleTab;
 
 	/** Message composer widget */
 	private final SignMessageComposer composer;
@@ -117,14 +129,18 @@ public class DMSDispatcher extends JPanel {
 		creator = new SignMessageCreator(s);
 		sel_mdl = manager.getSelectionModel();
 		singleTab = new SingleSignTab(session, this);
+		multipleTab = new MultipleSignTab(dms_cache, sel_mdl);
 		composer = new SignMessageComposer(session, this, manager);
-		add(singleTab, BorderLayout.CENTER);
+		tabPane.addTab(I18N.get("dms.single"), singleTab);
+		tabPane.addTab(I18N.get("dms.multiple"), multipleTab);
+		add(tabPane, BorderLayout.CENTER);
 		add(composer, BorderLayout.SOUTH);
 	}
 
 	/** Initialize the dispatcher */
 	public void initialize() {
 		singleTab.initialize();
+		multipleTab.initialize();
 		sel_mdl.addProxySelectionListener(sel_listener);
 		clearSelected();
 	}
@@ -135,6 +151,7 @@ public class DMSDispatcher extends JPanel {
 		clearSelected();
 		removeAll();
 		singleTab.dispose();
+		multipleTab.dispose();
 		composer.dispose();
 	}
 
@@ -343,16 +360,15 @@ public class DMSDispatcher extends JPanel {
 		Set<DMS> sel = sel_mdl.getSelected();
 		if (sel.size() == 0)
 			clearSelected();
-		else {
+		else if (sel.size() == 1) {
 			for (DMS dms: sel) {
 				composer.setSign(dms);
 				setSelected(dms);
-				break;
 			}
-			if (sel.size() > 1) {
-				singleTab.setSelected(null);
-				setEnabled(true);
-			}
+		} else {
+			singleTab.setSelected(null);
+			setEnabled(true);
+			selectMultipleTab();
 		}
 	}
 
@@ -363,12 +379,28 @@ public class DMSDispatcher extends JPanel {
 		setComposedMulti("");
 		unlinkIncident();
 		singleTab.setSelected(null);
+		selectSingleTab();
 	}
 
 	/** Set a single selected DMS */
 	private void setSelected(DMS dms) {
 		setEnabled(DMSHelper.isActive(dms));
 		singleTab.setSelected(dms);
+		selectSingleTab();
+	}
+
+	/** Select the single selection tab */
+	private void selectSingleTab() {
+		if (tabPane.getSelectedComponent() != singleTab)
+			tabPane.setSelectedComponent(singleTab);
+		composer.setMultiple(false);
+	}
+
+	/** Select the multiple selection tab */
+	private void selectMultipleTab() {
+		if (tabPane.getSelectedComponent() != multipleTab)
+			tabPane.setSelectedComponent(multipleTab);
+		composer.setMultiple(true);
 	}
 
 	/** Unlink incident */

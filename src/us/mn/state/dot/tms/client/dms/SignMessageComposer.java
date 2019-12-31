@@ -146,6 +146,11 @@ public class SignMessageComposer extends JPanel {
 		button_pnl.setBorder(UI.panelBorder());
 	}
 
+	/** Set multiple sign selection mode */
+	public void setMultiple(boolean m) {
+		misc_pnl.setMultiple(m);
+	}
+
 	/** Clear the widgets */
 	public void clearWidgets() {
 		adjusting++;
@@ -329,6 +334,11 @@ public class SignMessageComposer extends JPanel {
 	/** Get the selected duration */
 	public Integer getDuration() {
 		return misc_pnl.getDuration();
+	}
+
+	/** Get the selected priority */
+	public DmsMsgPriority getPriority() {
+		return misc_pnl.getPriority();
 	}
 
 	/** Get the font cache */
