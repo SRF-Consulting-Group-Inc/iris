@@ -436,7 +436,8 @@ public class StreamPanel extends JPanel {
 	/** Clear the video stream */
 	private void clearStream() {
 		timer.stop();
-		pipe.stop();
+		if (pipe != null)
+				pipe.stop();
 		screen_pnl.removeAll();
 		screen_pnl.repaint();
 //		VideoStream vs = stream;
