@@ -33,7 +33,7 @@ public class RouteLegTimer {
 	static private final float LOW_SPEED_DISTANCE = 1.0f;
 
 	/** Maximum allowed length of a travel time link (miles) */
-	static private final float MAX_LINK_LENGTH = 0.6f;
+	static private final float MAX_LINK_LENGTH = 1.5f;
 
 	/** Check if a segment is too long.
 	 * @param m0 Milepoint at start of segment.

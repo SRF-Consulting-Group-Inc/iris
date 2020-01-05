@@ -110,7 +110,7 @@ public class SmartDesktop extends JDesktopPane {
 //		else
 //			frame = addForm(form);
 		JFrame frame = addFormSecondScreen(form);
-		frame.setLocation(new Point(2200, 400));
+		frame.setLocation(new Point(400, 200));
 				//screen[1].getCenteredLocation(this,
 			//frame.getSize()));
 		frame.setVisible(true);
