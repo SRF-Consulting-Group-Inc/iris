@@ -334,8 +334,8 @@ public class StreamPanel extends JPanel {
 	 */
 	private void stopStream() {
 //		if (stream != null)
-	    if (pipe != null)
-			clearStream();
+	    //if (pipe != null)
+		clearStream();
 	}
 
 	/** Update stream status */
@@ -437,7 +437,8 @@ public class StreamPanel extends JPanel {
 	private void clearStream() {
 		timer.stop();
 		if (pipe != null)
-				pipe.stop();
+			pipe.stop();
+			pipe = null;
 		screen_pnl.removeAll();
 		screen_pnl.repaint();
 //		VideoStream vs = stream;
@@ -496,8 +497,8 @@ public class StreamPanel extends JPanel {
 		}
 		boolean streaming = isStreaming();
 		boolean mjpeg = video_req.hasMJPEG(camera);
-		stop_button.setEnabled(mjpeg && streaming);
-		play_button.setEnabled(mjpeg && !streaming);
+		stop_button.setEnabled(streaming);
+		play_button.setEnabled(!streaming);
 		playext_button.setEnabled(true);
 	}
 
