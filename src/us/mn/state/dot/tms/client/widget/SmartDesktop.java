@@ -20,6 +20,8 @@ import java.awt.Container;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import javax.swing.JComponent;
@@ -148,6 +150,15 @@ public class SmartDesktop extends JDesktopPane {
 		final JFrame frame = new JFrame();
 		frame.setTitle(form.getTitle());
 		frame.setResizable(form.isResizable());
+		frame.setAlwaysOnTop(true);
+//		frame.addWindowListener(new WindowAdapter()
+//	        {
+//	            @Override
+//	            public void windowClosing(WindowEvent e)
+//	            {
+//	                form.dispose();
+//	            }
+//	        });
 //		frame.setClosable(true);
 //		frame.setIconifiable(true);
 //		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

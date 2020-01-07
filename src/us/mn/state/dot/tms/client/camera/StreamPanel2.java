@@ -311,7 +311,7 @@ public class StreamPanel2 extends AbstractForm {
 	 * This is normally called from the streamer thread.
 	 */
 	private void playStream() {
-		stopStream();
+	//	stopStream();
 		if (camera == null) {
 			setStatusText(null);
 			return;
@@ -356,7 +356,7 @@ public class StreamPanel2 extends AbstractForm {
 	public void setCamera(final Camera c) {
 		STREAMER.addJob(new Job() {
 			public void perform() {
-				stopStream();
+			//	stopStream();
 				camera = c;
 				updateButtonState();
 				setStatusText(null);
