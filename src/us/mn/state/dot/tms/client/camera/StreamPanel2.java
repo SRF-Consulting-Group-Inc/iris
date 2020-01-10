@@ -417,12 +417,12 @@ public class StreamPanel2 extends AbstractForm {
 //            }
 	        
 
-//			String pipeLaunch = "rtspsrc location=" + video_req.getUri(c) + " protocols=tcp timeout=10000000 ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! appsink name=appsink";
+//			String pipeLaunch = "rtspsrc location=" + video_req.getUri(c) + " protocols=tcp timeout=10000000 ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink";
 			String pipeLaunch = "uridecodebin uri=" + video_req.getUri(c) + " ! videoconvert ! appsink name=appsink";
 //			String pipeLaunch = "uridecodebin uri=" + video_req.getUri(c) + " ! videoconvert ! fakesink";
 //			System.out.println(pipeLaunch);
 	        pipe = (Pipeline)Gst.parseLaunch(pipeLaunch);
-	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "pipe_dbg2");
+//	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "pipe_dbg2");
 	        
 //	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
 	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
