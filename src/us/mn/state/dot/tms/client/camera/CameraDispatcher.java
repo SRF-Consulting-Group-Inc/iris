@@ -218,6 +218,8 @@ public class CameraDispatcher extends JPanel {
 			}
 			@Override
 			public void onStreamFinished() {
+				// dispose of stream thingys
+				stream_pnl.clearStream();
 				updateCamControls();
 			}
 		};

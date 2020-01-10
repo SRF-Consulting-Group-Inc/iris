@@ -54,6 +54,7 @@ import us.mn.state.dot.tms.client.camera_test.SimpleVideoComponent;
 import us.mn.state.dot.tms.client.widget.AbstractForm;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.Icons;
+import us.mn.state.dot.tms.client.widget.SmartDesktop;
 import us.mn.state.dot.tms.utils.I18N;
 import us.mn.state.dot.tms.utils.OSUtils;
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
@@ -77,7 +78,7 @@ public class StreamPanel2 extends AbstractForm {
 	static private final int STATUS_DELAY = 1000;
 
 	/** Camera streamer thread */
-	static private final Scheduler STREAMER = new Scheduler("streamer");
+	private Scheduler STREAMER;
 
 	/** Video request */
 	private final VideoRequest video_req;
@@ -113,18 +114,8 @@ public class StreamPanel2 extends AbstractForm {
 		PLAY_EXTERNAL;
 	}
 
-	/** Timer listener for updating video status */
-	private class StatusUpdater implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			updateStatus();
-		}
-	};
-
-	/** Timer task for updating video status */
-	private final StatusUpdater stat_updater = new StatusUpdater();
-
 	/** Stream progress timer */
-	private final Timer timer = new Timer(STATUS_DELAY, stat_updater);
+	private Timer timer;
 
 	/** Mouse PTZ control */
 	private final MousePTZ mouse_ptz;
@@ -135,6 +126,9 @@ public class StreamPanel2 extends AbstractForm {
 	/** Current video stream */
 	private VideoStream stream = null;
 
+	/** Stream status listener */
+	private final StreamStatusListener ss_listener;
+	
 	/** External viewer from user/client properties.  Null means none. */
 	private final String external_viewer;
 
@@ -154,7 +148,7 @@ public class StreamPanel2 extends AbstractForm {
 	private final Set<StreamStatusListener> ssl_set =
 		new HashSet<StreamStatusListener>();
 	
-    private static Pipeline pipe;
+    private Pipeline pipe;
 
 	/**
 	 * Create a new stream panel.
@@ -172,6 +166,19 @@ public class StreamPanel2 extends AbstractForm {
 	{
 		//super(new GridBagLayout());
 		super("Stream Panel " + cam_ptz.getCamera().getName());
+		
+
+		/** Timer listener for updating video status */
+		class StatusUpdater implements ActionListener {
+			public void actionPerformed(ActionEvent e) {
+				updateStatus();
+			}
+		};
+		
+		timer = new Timer(STATUS_DELAY, new StatusUpdater());
+		
+		STREAMER = new Scheduler("streamer");
+		
 		video_req = req;
 		external_viewer = (s == null) ? null
 			: UserProperty.getExternalVideoViewer(s.getProperties());
@@ -202,7 +209,9 @@ public class StreamPanel2 extends AbstractForm {
 		updateButtonState();
 		
 		add(new CamControlPanel(cam_ptz), BorderLayout.SOUTH);
-
+		
+		ss_listener = createStreamStatusListener();
+		
 		setCamera(cam_ptz.getCamera());
 		
 
@@ -318,6 +327,7 @@ public class StreamPanel2 extends AbstractForm {
 		}
 		setStatusText(I18N.get("camera.stream.opening"));
 		requestStream(camera);
+		bindStreamStatusListener(ss_listener);
 	}
 
 	/**
@@ -334,6 +344,7 @@ public class StreamPanel2 extends AbstractForm {
 	private void updateStatus() {
 		STREAMER.addJob(new Job() {
 			public void perform() {
+//				System.out.println(String.format("Updating status for stream %s", camera.getName()));
 //				VideoStream vs = stream;
 //				if (vs != null && vs.isPlaying())
 					//setStatusText(vs.getStatus());
@@ -345,6 +356,13 @@ public class StreamPanel2 extends AbstractForm {
 		});
 	}
 
+	@Override
+	protected void close(SmartDesktop desktop) {
+		// stop the stream before closing the window
+		stopStream();
+		super.close(desktop);
+	}
+	
 	/**
 	 * Set the Camera to use for streaming.  If a current stream exists,
 	 * it is stopped.  If autoplay is enabled and Camera c can be
@@ -371,7 +389,9 @@ public class StreamPanel2 extends AbstractForm {
 	private void requestStream(Camera c) {
 //		try {
 //			stream = createStream(c);
-	        Gst.init("CameraTest");
+			if (! Gst.isInitialized()) {
+				Gst.init("CameraTest");
+			}
 	        
 //            SimpleVideoComponent vc = new SimpleVideoComponent();
 //            Bin bin = Gst.parseBinFromDescription(
@@ -397,7 +417,12 @@ public class StreamPanel2 extends AbstractForm {
 //            }
 	        
 
-	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=" + video_req.getUri(c) + " protocols=tcp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
+//			String pipeLaunch = "rtspsrc location=" + video_req.getUri(c) + " protocols=tcp timeout=10000000 ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! appsink name=appsink";
+			String pipeLaunch = "uridecodebin uri=" + video_req.getUri(c) + " ! videoconvert ! appsink name=appsink";
+//			String pipeLaunch = "uridecodebin uri=" + video_req.getUri(c) + " ! videoconvert ! fakesink";
+//			System.out.println(pipeLaunch);
+	        pipe = (Pipeline)Gst.parseLaunch(pipeLaunch);
+	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "pipe_dbg2");
 	        
 //	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
 	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
@@ -425,12 +450,42 @@ public class StreamPanel2 extends AbstractForm {
 //			throw new IOException("Unable to stream");
 //	}
 
+	/** Create the StreamStatusListener */
+	private StreamStatusListener createStreamStatusListener() {
+		StreamStatusListener ssl = new StreamStatusListener() {
+			@Override
+			public void onStreamStarted() {
+				updateCamControls();
+			}
+			@Override
+			public void onStreamFinished() {
+				// dispose of stream thingys
+				clearStream();
+				updateCamControls();
+			}
+		};
+		return ssl;
+	}
+	
+	private void updateCamControls() {
+		// TODO needed? reimplement from CameraDispatcher? move from there to here and StreamPanel?
+	}
+	
 	/** Clear the video stream */
 	private void clearStream() {
+//		if (camera != null)
+//			System.out.println(String.format("Cleaning up after stream %s in StreamPanel2 ...", camera.getName()));
 		timer.stop();
-		if (pipe != null)
+		if (pipe != null) {
 			pipe.stop();
+			// try getting elements and disposing of them, see what happens...
+			List<Element> pipeElements = pipe.getElementsRecursive();
+			for (Element e : pipeElements) {
+				e.setState(null);
+				e.dispose();
+			}
 			pipe = null;
+		}
 		screen_pnl.removeAll();
 		screen_pnl.repaint();
 //		VideoStream vs = stream;
@@ -447,6 +502,7 @@ public class StreamPanel2 extends AbstractForm {
 		clearStream();
 		if (mouse_ptz != null)
 			mouse_ptz.dispose();
+		super.dispose();
 	}
 
 	/** Set the status label. */
@@ -471,6 +527,7 @@ public class StreamPanel2 extends AbstractForm {
 			return;
 		stream_state = streaming;
 		updateButtonState();
+//		System.out.println(ssl_set.size());
 		for (StreamStatusListener ssl : ssl_set) {
 			if (stream_state)
 				ssl.onStreamStarted();
