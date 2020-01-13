@@ -316,7 +316,7 @@ public class StreamPanel extends JPanel {
 			//launchExternalViewer(camera);
 			final CameraPTZ cam_ptz = new CameraPTZ(session);
 			cam_ptz.setCamera(ptz.getCamera());
-			StreamPanel2 sp = new StreamPanel2(video_req, cam_ptz, session, false, true);
+			final StreamPanel2 sp = new StreamPanel2(video_req, cam_ptz, session, false, true);
 			JFrame frame = desktop.showSecondScreen(sp);
 			
 			// add a handler to the window to stop the stream when it's closed
