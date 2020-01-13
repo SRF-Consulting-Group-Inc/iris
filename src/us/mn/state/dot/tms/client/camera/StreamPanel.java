@@ -24,6 +24,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -292,6 +294,8 @@ public class StreamPanel extends JPanel {
 	/** Handle control button press */
 	private void handleControlBtn(StreamCommand sc) {
 		if (sc == StreamCommand.STOP) {
+//			if (pipe != null)
+//				pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, getDOTFileName());
 			STREAMER.addJob(new Job() {
 				public void perform() {
 					stopStream();
@@ -353,6 +357,8 @@ public class StreamPanel extends JPanel {
 					setStatusText(Encoding.fromOrdinal(camera.getEncoderType().getEncoding()).toString());
 				else
 					clearStream();
+//				if (pipe != null)
+//					pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, getDOTFileName());
 			}
 		});
 	}
@@ -379,6 +385,12 @@ public class StreamPanel extends JPanel {
 		});
 	}
 
+	/** Generate a DOT filename with the current date and time. */
+	private String getDOTFileName() {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss_SSS");
+		return String.format("pipe_dbg_%s", dtf.format(LocalDateTime.now()));
+	}
+	
 	/** Request a new video stream */
 	private void requestStream(Camera c) {
 //		try {
@@ -418,13 +430,18 @@ public class StreamPanel extends JPanel {
 //			String pipeLaunch = "uridecodebin uri=" + video_req.getUri(c) + " ! videoconvert ! fakesink";
 //			System.out.println(pipeLaunch);
 			pipe = (Pipeline)Gst.parseLaunch(pipeLaunch);
-//	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "pipe_dbg");
+			
+//	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, getDOTFileName());
 	        
 //	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
 	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
            
+//	        pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, getDOTFileName());
+	        
             pipe.play();
 
+//            pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, getDOTFileName());
+            
 //          pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "mjpeg_pipe_play");
 			JComponent screen = vc;
 //			JComponent screen = stream.getComponent();
