@@ -23,6 +23,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -314,7 +316,17 @@ public class StreamPanel extends JPanel {
 			//launchExternalViewer(camera);
 			final CameraPTZ cam_ptz = new CameraPTZ(session);
 			cam_ptz.setCamera(ptz.getCamera());
-			desktop.showSecondScreen(new StreamPanel2(video_req, cam_ptz, session, false, true));
+			StreamPanel2 sp = new StreamPanel2(video_req, cam_ptz, session, false, true);
+			JFrame frame = desktop.showSecondScreen(sp);
+			
+			// add a handler to the window to stop the stream when it's closed
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+//					System.out.println("Closing window and stopping stream");
+					sp.stopStream();
+				}
+			});
 		}
 	}
 

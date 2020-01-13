@@ -334,7 +334,7 @@ public class StreamPanel2 extends AbstractForm {
 	 * Stop streaming, if a stream is currently active.
 	 * This is normally called from the streamer thread.
 	 */
-	private void stopStream() {
+	public void stopStream() {
 //		if (stream != null)
 //	    if (pipe != null)
 		clearStream();
