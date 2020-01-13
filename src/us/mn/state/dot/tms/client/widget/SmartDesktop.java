@@ -105,7 +105,7 @@ public class SmartDesktop extends JDesktopPane {
 	}
 	
 	/** Show the specified form */
-	public void showSecondScreen(AbstractForm form) {
+	public JFrame showSecondScreen(AbstractForm form) {
 //		JInternalFrame frame = findFrame(form.getTitle());
 //		if (frame != null)
 //			selectFrame(frame);
@@ -116,6 +116,9 @@ public class SmartDesktop extends JDesktopPane {
 				//screen[1].getCenteredLocation(this,
 			//frame.getSize()));
 		frame.setVisible(true);
+		
+		// return a handle to the frame so the caller can do stuff with it
+		return frame;
 	}
 
 	/** Find a frame with a specific title */
