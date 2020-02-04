@@ -51,6 +51,8 @@ abstract public class Messenger implements Closeable {
 			return StreamMessenger.create(u, rt, rt);
 		else if ("http".equals(u.getScheme()))
 			return HttpFileMessenger.create(u, rt);
+		else if ("https".equals(u.getScheme()))
+			return HttpsFileMessenger.create(u, rt);
 		else if ("modem".equals(u.getScheme()))
 			return ModemMessenger.create(u, rt);
 		else
