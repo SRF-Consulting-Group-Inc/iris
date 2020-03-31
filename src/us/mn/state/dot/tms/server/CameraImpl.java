@@ -478,4 +478,17 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		}
 		w.write("/>\n");
 	}
+
+	/** Camera template name */
+	private String camTemplate = "";
+
+	@Override
+	public void setCameraTemplate(String camTemplate) {
+		this.camTemplate = camTemplate;
+	}
+
+	@Override
+	public String getCameraTemplate() {
+		return camTemplate;
+	}
 }

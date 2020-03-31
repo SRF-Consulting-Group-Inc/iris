@@ -80,4 +80,7 @@ public interface Camera extends Device {
 
 	/** Recall the specified preset */
 	void setRecallPreset(int preset);
+
+	void setCameraTemplate(String camTemplate);
+	String getCameraTemplate();
 }
