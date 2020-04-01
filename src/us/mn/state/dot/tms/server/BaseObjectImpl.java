@@ -114,6 +114,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		WordImpl.loadAll();
 		DMSImpl.updateAllStyles();
 		RptConduitImpl.loadAll();
+		IpawsAlertImpl.loadAll();
 	}
 
 	/** Get the time as a time stamp */
