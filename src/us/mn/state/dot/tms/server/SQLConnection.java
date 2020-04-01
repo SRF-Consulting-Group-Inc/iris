@@ -67,6 +67,11 @@ public class SQLConnection {
 	static private String escapeValue(Object value) {
 		return value.toString().replace("'", "''");
 	}
+	
+	/** Prepare a string array for SQL */
+	static private String prepareArray(Object value) {
+		return value.toString().replace("[", "{").replace("]", "}");
+	}
 
 	/** Location of database server */
 	private final String location;
@@ -202,7 +207,8 @@ public class SQLConnection {
 			updateNull(s, field, key);
 			return;
 		}
-		String v = escapeValue(value);
+		String esc_val = escapeValue(value);
+		String v = prepareArray(esc_val);
 		validateValue(v);
 		update("UPDATE " + s.getTable() +
 		      " SET " + field + " = '" + v + "'" +
@@ -230,7 +236,8 @@ public class SQLConnection {
 				validateIdentifier(field);
 				keys.append(field);
 				keys.append(",");
-				String val = escapeValue(value);
+				String esc_val = escapeValue(value);
+				String val = prepareArray(esc_val);
 				validateValue(val);
 				values.append("'");
 				values.append(val);
@@ -246,7 +253,8 @@ public class SQLConnection {
 
 	/** Destroy one storable record */
 	public void destroy(Storable s) throws TMSException {
-		String val = escapeValue(s.getKey());
+		String esc_val = escapeValue(s.getKey());
+		String val = prepareArray(esc_val);
 		validateValue(val);
 		update("DELETE FROM " + s.getTable() +
 		      " WHERE " + s.getKeyName() + " = '" + val + "';");
