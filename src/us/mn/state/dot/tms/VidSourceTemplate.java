@@ -55,98 +55,107 @@ public interface VidSourceTemplate extends SonarObject {
 	public void setConfig(String c);
 
 	/**
-	 * @return the defaultPort
+	 * @return the defaultPort (or null)
 	 */
 	public Integer getDefaultPort();
 
 	/**
-	 * @param defaultPort the defaultPort to set
+	 * @param defaultPort the defaultPort to set (or null)
 	 */
 	public void setDefaultPort(Integer defaultPort);
 
 	/** Get string containing a comma separated list of subnets.
-	 * @return the subnets
+	 * @return the subnets (or null)
 	 */
 	public String getSubnets();
 
 	/** Set string containing a comma separated list of subnets.
-	 * @param subnets the subnets to set
+	 * @param subnets the subnets to set (or null)
 	 */
 	public void setSubnets(String subnets);
 
 	/** Get the latency
-	 * @return the latency
+	 * @return the latency (or null)
 	 */
-	public int getLatency();
+	public Integer getLatency();
 
 	/** Set the latency.
-	 * @param latency the latency to set
+	 * @param latency the latency to set (or null)
 	 */
-	public void setLatency(int latency);
+	public void setLatency(Integer latency);
 
 	/** Get the encoder-type string.
-	 * @return the encoder type
+	 * @return the encoder type (or null)
 	 */
 	public String getEncoder();
 
 	/** Set the encoder-type string.
-	 * @param encoder the encoder type to set
+	 * @param encoder the encoder type to set (or null)
 	 */
 	public void setEncoder(String encoder);
 
 	/** Get the transport scheme.
-	 * @return the scheme
+	 * @return the scheme (or null)
 	 */
 	public String getScheme();
 
 	/** Set the transport scheme.
-	 * @param scheme the scheme to set
+	 * @param scheme the scheme to set (or null)
 	 */
 	public void setScheme(String scheme);
 
 	/** Get the codec name.
-	 * @return the codec name
+	 * @return the codec name (or null)
 	 */
 	public String getCodec();
 
 	/** Set the codec name.
-	 * @param codec the codec to set
+	 * @param codec the codec to set (or null)
 	 */
 	public void setCodec(String codec);
 
 	/** Get the native pixel width of the stream.
-	 * @return the rezWidth
+	 * @return the rezWidth (or null)
 	 */
-	public int getRezWidth();
+	public Integer getRezWidth();
 
 	/** Set the native pixel width of the stream.
-	 * @param rezWidth the rezWidth to set
+	 * @param rezWidth the rezWidth to set (or null)
 	 */
-	public void setRezWidth(int rezWidth);
+	public void setRezWidth(Integer rezWidth);
 
 	/** Get the native pixel height of the stream.
-	 * @return the rezHeight
+	 * @return the rezHeight (or null)
 	 */
-	public int getRezHeight();
+	public Integer getRezHeight();
 
 	/** Set the native pixel height of the stream.
-	 * @param rezHeight the rezHeight to set
+	 * @param rezHeight the rezHeight to set (or null)
 	 */
-	public void setRezHeight(int rezHeight);
+	public void setRezHeight(Integer rezHeight);
 
 	/** Get multicast-stream flag.
-	 * @return the multicast
+	 * @return the multicast flag (or null)
 	 */
-	public boolean isMulticast();
+	public Boolean isMulticast();
 
 	/** Set multicast-stream flag.
-	 * @param multicast the multicast to set
+	 * @param multicast the multicast flag to set (or null)
 	 */
-	public void setMulticast(boolean multicast);
+	public void setMulticast(Boolean multicast);
+
+	/** Get the notes for this template.
+	 * @return the notes string (or null)
+	 */
+	public String getNotes();
+
+	/** Set the notes for this template.
+	 * @param notes the notes tring (or null)
+	 */
+	public void setNotes(String notes);
 
 	/**
 	 * @return True if config appears to be a GStreamer gst-launch string
 	 */
 	public boolean isGstStream();
-
 }

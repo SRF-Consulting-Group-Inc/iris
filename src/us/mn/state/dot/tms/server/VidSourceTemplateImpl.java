@@ -22,9 +22,12 @@ import java.util.Map;
 import us.mn.state.dot.tms.VidSourceTemplate;
 import us.mn.state.dot.tms.TMSException;
 
-/**
+/** Server-side implementation of video-source-template.
+ * 
+ * (See VidSourceTemplate.java and comments later
+ *  in this file for more details.)
+ * 
  * @author John L. Stanley - SRF Consulting
- *
  */
 public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTemplate {
 
@@ -34,7 +37,8 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		store.query("SELECT name, label, config, "+
 			"default_port, subnets, latency, "+
 			"encoder, scheme, codec, "+
-			"rez_width, rez_height, multicast FROM iris." +
+			"rez_width, rez_height, multicast, "+
+			"notes FROM iris." +
 			SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
@@ -59,23 +63,25 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		map.put("rez_width", rez_width);
 		map.put("rez_height", rez_height);
 		map.put("multicast", multicast);
+		map.put("notes", notes);
 		return map;
 	}
 
-	/** Create a gate arm array */
+	/** Create a VidSourceTemplateImpl object from database fields. */
 	private VidSourceTemplateImpl(ResultSet row) throws SQLException {
 		this(row.getString(1),    // name
 		     row.getString(2),    // label
 		     row.getString(3),    // config
 		     row.getObject(4),    // default_port
 		     row.getString(5),    // subnets
-		     row.getInt(6),       // latency
+		     row.getObject(6),    // latency
 		     row.getString(7),    // encoder
 		     row.getString(8),    // scheme
 		     row.getString(9),    // codec
-		     row.getInt(10),      // rez_width
-		     row.getInt(11),      // rez_height
-		     row.getBoolean(12)); // multicast
+		     row.getObject(10),   // rez_width
+		     row.getObject(11),   // rez_height
+		     row.getObject(12),   // multicast
+		     row.getString(13));  // notes
 	}
 
 	/** Get the database table name */
@@ -90,37 +96,38 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		return SONAR_TYPE;
 	}
 
-	/** Create an xStreamTemplate */
+	/** Create an VidSourceTemplate */
 	public VidSourceTemplateImpl(String n) {
 		super(n);
 		// TODO Auto-generated constructor stub
 	}
 
-	/** Create an xStreamTemplate */
+	/** Create an VidSourceTemplate */
 	private VidSourceTemplateImpl(String sName,
-			String sLabel,  String sConfig,
-			Object iDefault_port, String sSubnets,
-			int iLatency, String sEncoder,
-			String sScheme, String sCodec,
-			int iRez_width, int iRez_height,
-			boolean bMulticast) {
+			String label,  String config,
+			Object default_port, String subnets,
+			Object latency, String encoder,
+			String scheme, String codec,
+			Object rez_width, Object rez_height,
+			Object multicast, String notes) {
 		super(sName);
-		label = sLabel;
-		config = sConfig;
-		default_port = (Integer)iDefault_port;
-		subnets = sSubnets;
-		latency = iLatency;
-		encoder = sEncoder;
-		scheme = sScheme;
-		codec = sCodec;
-		rez_width = iRez_width;
-		rez_height = iRez_height;
-		multicast = bMulticast;
+		this.label = label;
+		this.config = config;
+		this.default_port = (Integer)default_port;
+		this.subnets = subnets;
+		this.latency = (Integer)latency;
+		this.encoder = encoder;
+		this.scheme = scheme;
+		this.codec = codec;
+		this.rez_width = (Integer)rez_width;
+		this.rez_height = (Integer)rez_height;
+		this.multicast = (Boolean)multicast;
+		this.notes = notes;
 	}
 
 	//---------------------------------
 	
-	String label;   // stream-type identifier shown in video window
+	String label;   // source-type identifier shown in video window
 	String config;
 		// If codec is empty:
 		//   config is a backwards-compatible uri_path string
@@ -142,16 +149,17 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		// If no port specified in camera record, use this value for {port} substitution
 		// If no port specified here or in camera record, and {port} or {mport} is in the config string, don't use this template
 	String subnets;
-		// Comma separated list of subnet identifiers where stream is available.
-		// If empty, the stream is available in all subnets.
-	int latency;
+		// Comma separated list of subnet identifiers where source is available.
+		// If empty, the source is available in all subnets.
+	Integer latency;
 	String encoder; // Name of manufacturer & model
 	String scheme;  // (rtsp/http/udp/ftp)
 	String codec;   // (MJPEG, MPEG2, MPEG4, H264, H265, JPEG, etc)
 	                // If empty, codec is probably MJPEG
-	int rez_width;
-	int rez_height;
-	boolean multicast; // (T/F)
+	Integer rez_width;
+	Integer rez_height;
+	Boolean multicast; // (T/F)
+	String notes;
 	
 	//-- maybe implement later?
 //	String users; // Semicolon separated list of user-groups and users permitted to use that stream.
@@ -219,14 +227,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	/**
 	 * @return the latency
 	 */
-	public int getLatency() {
+	public Integer getLatency() {
 		return latency;
 	}
 
 	/**
 	 * @param latency the latency to set
 	 */
-	public void setLatency(int latency) {
+	public void setLatency(Integer latency) {
 		this.latency = latency;
 	}
 
@@ -273,43 +281,54 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	/**
 	 * @return the rezWidth
 	 */
-	public int getRezWidth() {
+	public Integer getRezWidth() {
 		return rez_width;
 	}
 
 	/**
 	 * @param rezWidth the rezWidth to set
 	 */
-	public void setRezWidth(int rezWidth) {
+	public void setRezWidth(Integer rezWidth) {
 		this.rez_width = rezWidth;
 	}
 
 	/**
 	 * @return the rez_height
 	 */
-	public int getRezHeight() {
+	public Integer getRezHeight() {
 		return rez_height;
 	}
 
 	/**
 	 * @param rez_height the rez_height to set
 	 */
-	public void setRezHeight(int rez_height) {
+	public void setRezHeight(Integer rez_height) {
 		this.rez_height = rez_height;
 	}
 
 	/**
 	 * @return the multicast
 	 */
-	public boolean isMulticast() {
+	public Boolean isMulticast() {
 		return multicast;
 	}
 
 	/**
 	 * @param multicast the multicast to set
 	 */
-	public void setMulticast(boolean multicast) {
+	public void setMulticast(Boolean multicast) {
 		this.multicast = multicast;
+	}
+
+	@Override
+	public String getNotes() {
+		// TODO Auto-generated method stub
+		return notes;
+	}
+
+	@Override
+	public void setNotes(String notes) {
+		this.notes = notes;
 	}
 
 	@Override
