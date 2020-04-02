@@ -21,8 +21,8 @@ import us.mn.state.dot.tms.CameraVidSourceOrder;
 import us.mn.state.dot.tms.TMSException;
 
 /**
- * CameraSourceOrderImplprovides a BaseObjectImpl
- * for the CameraSourceOrder interface.
+ * CameraVidSourceOrderImpl provides a BaseObjectImpl
+ * for the CameraVidSourceOrder interface.
  *
  * @author John L. Stanley - SRF Consulting
  */
