@@ -50,6 +50,7 @@ import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.Encoding;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.UserProperty;
+import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
 import us.mn.state.dot.tms.client.camera_test.SimpleVideoComponent;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.Icons;
@@ -310,7 +311,8 @@ public class StreamPanel extends JPanel {
 			//launchExternalViewer(camera);
 			final CameraPTZ cam_ptz = new CameraPTZ(session);
 			cam_ptz.setCamera(ptz.getCamera());
-			desktop.showSecondScreen(new StreamPanel2(video_req, cam_ptz, session, false, true));
+//			desktop.showSecondScreen(new StreamPanel2(video_req, cam_ptz, session, false, true));
+			desktop.showSecondScreen(new VidWindow(camera, true, Size.LARGE));
 		}
 	}
 
