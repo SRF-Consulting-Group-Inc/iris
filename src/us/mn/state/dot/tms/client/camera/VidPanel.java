@@ -159,7 +159,7 @@ public class VidPanel extends JPanel implements FocusListener {
 	{
 		public void perform2() {
 			int frames = getReceivedFrameCount();
-			System.err.println("frames: "+frames);
+//			System.err.println("frames: "+frames);
 			switch (panelStatus) {
 				case IDLE:
 				case FAILED:
@@ -383,8 +383,11 @@ public class VidPanel extends JPanel implements FocusListener {
 						startNextStream();
 					else if ("Left".equals(sKey))
 						startPreviousStream();
-					else if ("F5".equals(sKey))
+					else if ("F5".equals(sKey)) {
+						panelStatus = PanelStatus.SCANNING;
+						timeoutSec = 0;
 						startCurrentStream();
+					}
 					else if ("Space".equals(sKey)) {
 						pausePanel = !pausePanel;
 						if (pausePanel)
