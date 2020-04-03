@@ -127,8 +127,8 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 
 	//---------------------------------
 	
-	String label;   // source-type identifier shown in video window
-	String config;
+	private String label;   // source-type identifier shown in video window
+	private String config;
 		// If codec is empty:
 		//   config is a backwards-compatible uri_path string
 		// If codec is not empty:
@@ -145,21 +145,21 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		//	examples
 		//      rtsp://83.244.45.234/{camName}
 		//      http://{addrport}/mpeg4/media.amp
-	Integer default_port;
+	private Integer default_port;
 		// If no port specified in camera record, use this value for {port} substitution
 		// If no port specified here or in camera record, and {port} or {mport} is in the config string, don't use this template
-	String subnets;
+	private String subnets;
 		// Comma separated list of subnet identifiers where source is available.
 		// If empty, the source is available in all subnets.
-	Integer latency;
-	String encoder; // Name of manufacturer & model
-	String scheme;  // (rtsp/http/udp/ftp)
-	String codec;   // (MJPEG, MPEG2, MPEG4, H264, H265, JPEG, etc)
+	private Integer latency;
+	private String encoder; // Name of manufacturer & model
+	private String scheme;  // (rtsp/http/udp/ftp)
+	private String codec;   // (MJPEG, MPEG2, MPEG4, H264, H265, JPEG, etc)
 	                // If empty, codec is probably MJPEG
-	Integer rez_width;
-	Integer rez_height;
-	Boolean multicast; // (T/F)
-	String notes;
+	private Integer rez_width;
+	private Integer rez_height;
+	private Boolean multicast; // (T/F)
+	private String notes;
 	
 	//-- maybe implement later?
 //	String users; // Semicolon separated list of user-groups and users permitted to use that stream.

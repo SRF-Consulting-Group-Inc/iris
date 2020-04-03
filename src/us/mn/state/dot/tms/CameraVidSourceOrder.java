@@ -30,17 +30,27 @@ public interface CameraVidSourceOrder extends SonarObject, Comparable<CameraVidS
 	/** SONAR type name */
 	String SONAR_TYPE = "camera_vid_source_order";
 	
+	/** Set the camera template */
 	public void setCameraTemplate(String cameraTemplate);
+	
+	/** Get the camera template */
 	public String getCameraTemplate();
 	
-	public void setOrder(int order);
-	public int getOrder();
+	/** Set the source order */
+	public void setSourceOrder(int so);
 	
+	/** Get the source order */
+	public int getSourceOrder();
+	
+	/** Set the source template */
 	public void setVidSourceTemplate(String vidSourceTemplate);
+	
+	/** Get the srouce template */
 	public String getVidSourceTemplate();
 	
+	/** Compare source order */
 	default int compareTo(CameraVidSourceOrder cso2) {
-		return Integer.compare(getOrder(), cso2.getOrder());
+		return Integer.compare(getSourceOrder(), cso2.getSourceOrder());
 	}
 	
 

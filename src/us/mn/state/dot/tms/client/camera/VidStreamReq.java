@@ -271,7 +271,7 @@ public class VidStreamReq {
 	public static Comparator<CameraVidSourceOrder> streamOrder =
 		new Comparator<CameraVidSourceOrder>() {
 			public int compare(CameraVidSourceOrder cso1, CameraVidSourceOrder cso2) {
-				return Integer.compare(cso1.getOrder(), cso2.getOrder());
+				return Integer.compare(cso1.getSourceOrder(), cso2.getSourceOrder());
 			}
 		};
 

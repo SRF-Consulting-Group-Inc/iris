@@ -31,14 +31,14 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	/** Load all the camera presets */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraVidSourceOrderImpl.class);
-		store.query("SELECT name, camera_template, order, source_template " +
-			"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
+		store.query("SELECT name, camera_template, source_order, " +
+			"source_template FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraVidSourceOrderImpl(
 					row.getString(1),	// name
 					row.getString(2),	// camera_template
-					row.getInt(3),		// order
+					row.getInt(3),		// source order
 					row.getString(4)	// source_template
 				));
 			}
@@ -50,7 +50,7 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
 		map.put("camera_template", camera_template);
-		map.put("order", order);
+		map.put("source_order", source_order);
 		map.put("source_template", source_template);
 		return map;
 	}
@@ -71,10 +71,10 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	}
 
 	/** Create a camera preset */
-	protected CameraVidSourceOrderImpl(String n, String ct, int o, String st) {
+	protected CameraVidSourceOrderImpl(String n, String ct, int so, String st) {
 		super(n);
 		camera_template = ct;
-		order = o;
+		source_order = so;
 		source_template = st;
 	}
 
@@ -93,19 +93,19 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 		return camera_template;
 	}
 
-	/** Order */
-	private int order;
+	/** Source Order */
+	private int source_order;
 
 	/** Set the source order number */
 	@Override
-	public void setOrder(int order) {
-		this.order = order;
+	public void setSourceOrder(int so) {
+		this.source_order = so;
 	}
 
 	/** Get the source order number */
 	@Override
-	public int getOrder() {
-		return order;
+	public int getSourceOrder() {
+		return source_order;
 	}
 
 	/** name of stream template */
