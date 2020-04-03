@@ -44,39 +44,39 @@ public interface CameraTemplate extends SonarObject {
 	/** Set the notes */
 	public void setNotes(String notes);
 
-//	/** Get the AutoStart parameter */
-//	public Boolean getAutoStart();
-//
-//	/** Set the AutoStart parameter */
-//	public void setAutoStart(Boolean autostart);
-//
-//	/** Get the Failover parameter */
-//	public Boolean getFailover();
-//
-//	/** Set the Failover parameter */
-//	public void setFailover(Boolean failover);
-//
-//	/** Get the ConnectFailSec parameter */
-//	public Integer getConnectFailSec();
-//
-//	/** Set the ConnectFailSec parameter */
-//	public void setConnectFailSec(Integer sec);
-//
-//	/** Get the LostTimeoutSec parameter */
-//	public Integer getLostTimeoutSec();
-//
-//	/** Set the LostTimeoutSec parameter */
-//	public void setLostTimeoutSec(Integer sec);
-//
-//	/** Get the AutoReconnect parameter */
-//	public Boolean getAutoReconnect();
-//
-//	/** Set the AutoReconnect parameter */
-//	public void setAutoReconnect(Boolean autoReconnect);
-//
-//	/** Get the ReconnectTimeoutSec parameter */
-//	public Integer getReconnectTimeoutSec();
-//
-//	/** Set the ReconnectTimeoutSec parameter */
-//	public void setReconnectTimeoutSec(Integer sec);
+	/** Get the AutoStart parameter */
+	public Boolean getAutoStart();
+
+	/** Set the AutoStart parameter */
+	public void setAutoStart(Boolean autostart);
+
+	/** Get the Failover parameter */
+	public Boolean getFailover();
+
+	/** Set the Failover parameter */
+	public void setFailover(Boolean failover);
+
+	/** Get the ConnectFailSec parameter */
+	public Integer getConnectFailSec();
+
+	/** Set the ConnectFailSec parameter */
+	public void setConnectFailSec(Integer sec);
+
+	/** Get the LostTimeoutSec parameter */
+	public Integer getLostTimeoutSec();
+
+	/** Set the LostTimeoutSec parameter */
+	public void setLostTimeoutSec(Integer sec);
+
+	/** Get the AutoReconnect parameter */
+	public Boolean getAutoReconnect();
+
+	/** Set the AutoReconnect parameter */
+	public void setAutoReconnect(Boolean autoReconnect);
+
+	/** Get the ReconnectTimeoutSec parameter */
+	public Integer getReconnectTimeoutSec();
+
+	/** Set the ReconnectTimeoutSec parameter */
+	public void setReconnectTimeoutSec(Integer sec);
 }

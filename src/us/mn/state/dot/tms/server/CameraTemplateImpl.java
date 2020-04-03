@@ -16,16 +16,24 @@ import us.mn.state.dot.tms.TMSException;
  */
 public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate {
 
-	/** Load all the camera presets */
+	/** Load all the camera templates */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, notes " +
-			"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
+		store.query("SELECT name, notes, autostart, failover, " +
+			"connect_fail_sec, lost_timeout_sec, auto_recconect, " +
+			"reconnect_timeout_sec FROM iris." + SONAR_TYPE + ";", 
+			new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraTemplateImpl(
 					row.getString(1),	// name
-					row.getString(2)	// notes
+					row.getString(2),	// notes
+					row.getBoolean(3),	// autostart
+					row.getBoolean(4),	// failover
+					row.getInt(5),		// connect fail sec
+					row.getInt(6),		// lost timeout sec
+					row.getBoolean(7),	// auto reconnect
+					row.getInt(8)		// reconnect timeout sec
 				));
 			}
 		});
@@ -37,6 +45,12 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
 		map.put("notes", notes);
+		map.put("autostart", autostart);
+		map.put("failover", failover);
+		map.put("connect_fail_sec", connect_fail_sec);
+		map.put("lost_timeout_sec", lost_timeout_sec);
+		map.put("auto_reconnect", auto_reconnect);
+		map.put("reconnect_timeout_sec", reconnect_timeout_sec);
 		return map;
 	}
 
@@ -55,96 +69,124 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Create a CameraTemplate */
 	public CameraTemplateImpl(String n) {
 		super(n);
-		// TODO Auto-generated constructor stub
 	}
 
 	/** Create a camera template */
-	public CameraTemplateImpl(String n, String no) {
+	public CameraTemplateImpl(String n, String no, Boolean as, Boolean f,
+								Integer cfs, Integer lts, Boolean ar,
+								Integer rts) {
 		super(n);
 		notes = no;
+		autostart = as;
+		failover = f;
+		connect_fail_sec = cfs;
+		lost_timeout_sec = lts;
+		auto_reconnect = ar;
+		reconnect_timeout_sec = rts;
 	}
 
-	private String  notes;
-//	private Boolean autostart;
-//	private Boolean failover;
-//	private Integer connectFailSec;
-//	private Integer lostTimeoutSec;
-//	private Boolean autoReconnect;
-//	private Integer reconnectTimeoutSec;
-	
-	/* (non-Javadoc)
-	 * @see us.mn.state.dot.tms.CameraTemplate#getNotes()
-	 */
+	/** Template notes */
+	private String notes;
+
+	/** Get the template notes */
 	@Override
 	public String getNotes() {
 		return notes;
 	}
 
-	/* (non-Javadoc)
-	 * @see us.mn.state.dot.tms.CameraTemplate#setNotes(java.lang.String)
-	 */
+	/** Set the template notes */
 	@Override
 	public void setNotes(String notes) {
 		this.notes = notes;
 	}
+	
+	/** Autostart boolean */
+	private Boolean autostart;
 
-//	@Override
-//	public Boolean getAutoStart() {
-//		return autostart;
-//	}
-//
-//	@Override
-//	public void setAutoStart(Boolean autostart) {
-//		this.autostart = autostart;
-//	}
-//
-//	@Override
-//	public Boolean getFailover() {
-//		return failover;
-//	}
-//
-//	@Override
-//	public void setFailover(Boolean failover) {
-//		this.failover = failover;
-//	}
-//
-//	@Override
-//	public Integer getConnectFailSec() {
-//		return connectFailSec;
-//	}
-//
-//	@Override
-//	public void setConnectFailSec(Integer sec) {
-//		this.connectFailSec = sec;
-//	}
-//
-//	@Override
-//	public Integer getLostTimeoutSec() {
-//		return lostTimeoutSec;
-//	}
-//
-//	@Override
-//	public void setLostTimeoutSec(Integer sec) {
-//		this.lostTimeoutSec = sec;
-//	}
-//
-//	@Override
-//	public Boolean getAutoReconnect() {
-//		return autoReconnect;
-//	}
-//
-//	@Override
-//	public void setAutoReconnect(Boolean autoReconnect) {
-//		this.autoReconnect = autoReconnect;
-//	}
-//
-//	@Override
-//	public Integer getReconnectTimeoutSec() {
-//		return reconnectTimeoutSec;
-//	}
-//
-//	@Override
-//	public void setReconnectTimeoutSec(Integer sec) {
-//		this.reconnectTimeoutSec = sec;
-//	}
+	/** Get the autostart boolean */
+	@Override
+	public Boolean getAutoStart() {
+		return autostart;
+	}
+
+	/** Set the autostart boolean */
+	@Override
+	public void setAutoStart(Boolean autostart) {
+		this.autostart = autostart;
+	}
+	
+	/** Failover boolean */
+	private Boolean failover;
+
+	/** Get the failover boolean */
+	@Override
+	public Boolean getFailover() {
+		return failover;
+	}
+
+	/** Set the failover boolean */
+	@Override
+	public void setFailover(Boolean failover) {
+		this.failover = failover;
+	}
+	
+	/** Connection failure time in seconds */
+	private Integer connect_fail_sec;
+
+	/** Get teh connection failture time in seconds */
+	@Override
+	public Integer getConnectFailSec() {
+		return connect_fail_sec;
+	}
+
+	/** Set the connection failure time in seconds */
+	@Override
+	public void setConnectFailSec(Integer sec) {
+		this.connect_fail_sec = sec;
+	}
+	
+	/** Lost timeout in seconds */
+	private Integer lost_timeout_sec;
+
+	/** Get the lost timeout in seconds */
+	@Override
+	public Integer getLostTimeoutSec() {
+		return lost_timeout_sec;
+	}
+
+	/** Set the lost timeout in seconds */
+	@Override
+	public void setLostTimeoutSec(Integer sec) {
+		this.lost_timeout_sec = sec;
+	}
+	
+	/** Auto reconnect boolean */
+	private Boolean auto_reconnect;
+
+	/** Get the auto reconnect boolean */
+	@Override
+	public Boolean getAutoReconnect() {
+		return auto_reconnect;
+	}
+
+	/** Set the auto reconnect bolean */
+	@Override
+	public void setAutoReconnect(Boolean autoReconnect) {
+		this.auto_reconnect = autoReconnect;
+	}
+
+	/** Reconnect timeout in seconds */
+	private Integer reconnect_timeout_sec;
+
+	/** Get the reconnect timeout in seconds */
+	@Override
+	public Integer getReconnectTimeoutSec() {
+		return reconnect_timeout_sec;
+	}
+
+	/** Set the reconnect timeout in seconds */
+	@Override
+	public void setReconnectTimeoutSec(Integer sec) {
+		this.reconnect_timeout_sec = sec;
+	}
 }
