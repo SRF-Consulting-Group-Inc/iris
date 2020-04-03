@@ -19,22 +19,14 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Load all the camera templates */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, label, notes, autostart, failover, " +
-			"connect_fail_sec, lost_timeout_sec, auto_recconect, " +
-			"reconnect_timeout_sec FROM iris." + SONAR_TYPE + ";", 
-			new ResultFactory()
+		store.query("SELECT name, label, notes"
+				+ "FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraTemplateImpl(
 					row.getString(1),	// name
 					row.getString(2),   //label
-					row.getString(3),	// notes
-					row.getBoolean(4),	// autostart
-					row.getBoolean(5),	// failover
-					row.getInt(6),		// connect fail sec
-					row.getInt(7),		// lost timeout sec
-					row.getBoolean(8),	// auto reconnect
-					row.getInt(9)		// reconnect timeout sec
+					row.getString(3)	// notes
 				));
 			}
 		});
@@ -47,12 +39,6 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 		map.put("name", name);
 		map.put("label", label);
 		map.put("notes", notes);
-		map.put("autostart", autostart);
-		map.put("failover", failover);
-		map.put("connect_fail_sec", connect_fail_sec);
-		map.put("lost_timeout_sec", lost_timeout_sec);
-		map.put("auto_reconnect", auto_reconnect);
-		map.put("reconnect_timeout_sec", reconnect_timeout_sec);
 		return map;
 	}
 
@@ -74,18 +60,10 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	}
 
 	/** Create a camera template */
-	public CameraTemplateImpl(String n, String no, String l, Boolean as, 
-								Boolean f, Integer cfs, Integer lts, 
-								Boolean ar, Integer rts) {
+	public CameraTemplateImpl(String n, String no, String l) {
 		super(n);
 		label = l;
 		notes = no;
-		autostart = as;
-		failover = f;
-		connect_fail_sec = cfs;
-		lost_timeout_sec = lts;
-		auto_reconnect = ar;
-		reconnect_timeout_sec = rts;
 	}
 	
 	/** Template label */
@@ -119,93 +97,93 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 		this.notes = notes;
 	}
 	
-	/** Autostart boolean */
-	private Boolean autostart;
-
-	/** Get the autostart boolean */
-	@Override
-	public Boolean getAutoStart() {
-		return autostart;
-	}
-
-	/** Set the autostart boolean */
-	@Override
-	public void setAutoStart(Boolean autostart) {
-		this.autostart = autostart;
-	}
-	
-	/** Failover boolean */
-	private Boolean failover;
-
-	/** Get the failover boolean */
-	@Override
-	public Boolean getFailover() {
-		return failover;
-	}
-
-	/** Set the failover boolean */
-	@Override
-	public void setFailover(Boolean failover) {
-		this.failover = failover;
-	}
-	
-	/** Connection failure time in seconds */
-	private Integer connect_fail_sec;
-
-	/** Get teh connection failture time in seconds */
-	@Override
-	public Integer getConnectFailSec() {
-		return connect_fail_sec;
-	}
-
-	/** Set the connection failure time in seconds */
-	@Override
-	public void setConnectFailSec(Integer sec) {
-		this.connect_fail_sec = sec;
-	}
-	
-	/** Lost timeout in seconds */
-	private Integer lost_timeout_sec;
-
-	/** Get the lost timeout in seconds */
-	@Override
-	public Integer getLostTimeoutSec() {
-		return lost_timeout_sec;
-	}
-
-	/** Set the lost timeout in seconds */
-	@Override
-	public void setLostTimeoutSec(Integer sec) {
-		this.lost_timeout_sec = sec;
-	}
-	
-	/** Auto reconnect boolean */
-	private Boolean auto_reconnect;
-
-	/** Get the auto reconnect boolean */
-	@Override
-	public Boolean getAutoReconnect() {
-		return auto_reconnect;
-	}
-
-	/** Set the auto reconnect bolean */
-	@Override
-	public void setAutoReconnect(Boolean autoReconnect) {
-		this.auto_reconnect = autoReconnect;
-	}
-
-	/** Reconnect timeout in seconds */
-	private Integer reconnect_timeout_sec;
-
-	/** Get the reconnect timeout in seconds */
-	@Override
-	public Integer getReconnectTimeoutSec() {
-		return reconnect_timeout_sec;
-	}
-
-	/** Set the reconnect timeout in seconds */
-	@Override
-	public void setReconnectTimeoutSec(Integer sec) {
-		this.reconnect_timeout_sec = sec;
-	}
+//	/** Autostart boolean */
+//	private Boolean autostart;
+//
+//	/** Get the autostart boolean */
+//	@Override
+//	public Boolean getAutoStart() {
+//		return autostart;
+//	}
+//
+//	/** Set the autostart boolean */
+//	@Override
+//	public void setAutoStart(Boolean autostart) {
+//		this.autostart = autostart;
+//	}
+//	
+//	/** Failover boolean */
+//	private Boolean failover;
+//
+//	/** Get the failover boolean */
+//	@Override
+//	public Boolean getFailover() {
+//		return failover;
+//	}
+//
+//	/** Set the failover boolean */
+//	@Override
+//	public void setFailover(Boolean failover) {
+//		this.failover = failover;
+//	}
+//	
+//	/** Connection failure time in seconds */
+//	private Integer connect_fail_sec;
+//
+//	/** Get teh connection failture time in seconds */
+//	@Override
+//	public Integer getConnectFailSec() {
+//		return connect_fail_sec;
+//	}
+//
+//	/** Set the connection failure time in seconds */
+//	@Override
+//	public void setConnectFailSec(Integer sec) {
+//		this.connect_fail_sec = sec;
+//	}
+//	
+//	/** Lost timeout in seconds */
+//	private Integer lost_timeout_sec;
+//
+//	/** Get the lost timeout in seconds */
+//	@Override
+//	public Integer getLostTimeoutSec() {
+//		return lost_timeout_sec;
+//	}
+//
+//	/** Set the lost timeout in seconds */
+//	@Override
+//	public void setLostTimeoutSec(Integer sec) {
+//		this.lost_timeout_sec = sec;
+//	}
+//	
+//	/** Auto reconnect boolean */
+//	private Boolean auto_reconnect;
+//
+//	/** Get the auto reconnect boolean */
+//	@Override
+//	public Boolean getAutoReconnect() {
+//		return auto_reconnect;
+//	}
+//
+//	/** Set the auto reconnect bolean */
+//	@Override
+//	public void setAutoReconnect(Boolean autoReconnect) {
+//		this.auto_reconnect = autoReconnect;
+//	}
+//
+//	/** Reconnect timeout in seconds */
+//	private Integer reconnect_timeout_sec;
+//
+//	/** Get the reconnect timeout in seconds */
+//	@Override
+//	public Integer getReconnectTimeoutSec() {
+//		return reconnect_timeout_sec;
+//	}
+//
+//	/** Set the reconnect timeout in seconds */
+//	@Override
+//	public void setReconnectTimeoutSec(Integer sec) {
+//		this.reconnect_timeout_sec = sec;
+//	}
 }
