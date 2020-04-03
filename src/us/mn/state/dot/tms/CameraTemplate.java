@@ -38,6 +38,12 @@ public interface CameraTemplate extends SonarObject {
 	/** SONAR type name */
 	String SONAR_TYPE = "camera_template";
 	
+	/** Get the label */
+	public String getLabel();
+	
+	/** Set the label */
+	public void setLabel(String label);
+
 	/** Get the notes */
 	public String getNotes();
 	

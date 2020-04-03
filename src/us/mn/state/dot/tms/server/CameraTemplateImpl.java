@@ -19,7 +19,7 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Load all the camera templates */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, notes, autostart, failover, " +
+		store.query("SELECT name, label, notes, autostart, failover, " +
 			"connect_fail_sec, lost_timeout_sec, auto_recconect, " +
 			"reconnect_timeout_sec FROM iris." + SONAR_TYPE + ";", 
 			new ResultFactory()
@@ -27,13 +27,14 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraTemplateImpl(
 					row.getString(1),	// name
-					row.getString(2),	// notes
-					row.getBoolean(3),	// autostart
-					row.getBoolean(4),	// failover
-					row.getInt(5),		// connect fail sec
-					row.getInt(6),		// lost timeout sec
-					row.getBoolean(7),	// auto reconnect
-					row.getInt(8)		// reconnect timeout sec
+					row.getString(2),   //label
+					row.getString(3),	// notes
+					row.getBoolean(4),	// autostart
+					row.getBoolean(5),	// failover
+					row.getInt(6),		// connect fail sec
+					row.getInt(7),		// lost timeout sec
+					row.getBoolean(8),	// auto reconnect
+					row.getInt(9)		// reconnect timeout sec
 				));
 			}
 		});
@@ -44,6 +45,7 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	public Map<String, Object> getColumns() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
+		map.put("label", label);
 		map.put("notes", notes);
 		map.put("autostart", autostart);
 		map.put("failover", failover);
@@ -72,10 +74,11 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	}
 
 	/** Create a camera template */
-	public CameraTemplateImpl(String n, String no, Boolean as, Boolean f,
-								Integer cfs, Integer lts, Boolean ar,
-								Integer rts) {
+	public CameraTemplateImpl(String n, String no, String l, Boolean as, 
+								Boolean f, Integer cfs, Integer lts, 
+								Boolean ar, Integer rts) {
 		super(n);
+		label = l;
 		notes = no;
 		autostart = as;
 		failover = f;
@@ -84,6 +87,22 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 		auto_reconnect = ar;
 		reconnect_timeout_sec = rts;
 	}
+	
+	/** Template label */
+	private String label;
+
+	/** Get the template label */
+	@Override
+	public String getLabel() {
+		return notes;
+	}
+
+	/** Set the template label */
+	@Override
+	public void setLabel(String label) {
+		this.label = label;
+	}
+	
 
 	/** Template notes */
 	private String notes;
