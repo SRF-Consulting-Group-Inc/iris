@@ -19,12 +19,13 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Load all the camera presets */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, notes " +
+		store.query("SELECT name, label, notes " +
 			"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraTemplateImpl(
 					row.getString(1),	// name
+					row.getString(2),	// label
 					row.getString(2)	// notes
 				));
 			}
@@ -36,6 +37,7 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	public Map<String, Object> getColumns() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
+		map.put("label", label);
 		map.put("notes", notes);
 		return map;
 	}
@@ -59,12 +61,14 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	}
 
 	/** Create a camera template */
-	public CameraTemplateImpl(String n, String no) {
+	public CameraTemplateImpl(String n, String l, String no) {
 		super(n);
+		label = l;
 		notes = no;
 	}
 
 	private String  notes;
+	private String  label;
 //	private Boolean autostart;
 //	private Boolean failover;
 //	private Integer connectFailSec;
@@ -72,6 +76,24 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 //	private Boolean autoReconnect;
 //	private Integer reconnectTimeoutSec;
 	
+	@Override
+	/* (non-Javadoc)
+	 * @see us.mn.state.dot.tms.CameraTemplate#getLabel()
+	 */
+	public String getLabel() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	/* (non-Javadoc)
+	 * @see us.mn.state.dot.tms.CameraTemplate#setLabel()
+	 */
+	public void setLabel(String label) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	/* (non-Javadoc)
 	 * @see us.mn.state.dot.tms.CameraTemplate#getNotes()
 	 */
