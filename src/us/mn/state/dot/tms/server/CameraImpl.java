@@ -61,7 +61,7 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		namespace.registerType(SONAR_TYPE, CameraImpl.class);
 		store.query("SELECT name, geo_loc, controller, pin, notes, " +
 			"cam_num, encoder_type, encoder, enc_mcast, " +
-			"encoder_channel, publish, video_loss FROM iris." +
+			"encoder_channel, publish, video_loss, cam_template FROM iris." +
 			SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
@@ -86,6 +86,7 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		map.put("encoder_channel", encoder_channel);
 		map.put("publish", publish);
 		map.put("video_loss", video_loss);
+		map.put("cam_template", cam_template);
 		return map;
 	}
 
@@ -123,23 +124,24 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		     row.getString(9),		// enc_mcast
 		     row.getInt(10),		// encoder_channel
 		     row.getBoolean(11),	// publish
-		     row.getBoolean(12)		// video_loss
+		     row.getBoolean(12),	// video_loss
+		     row.getString(13)		// camera template
 		);
 	}
 
 	/** Create a camera */
 	private CameraImpl(String n, String l, String c, int p, String nt,
 		Integer cn, String et, String e, String em, int ec, boolean pb,
-		boolean vl)
+		boolean vl, String ct)
 	{
 		this(n, lookupGeoLoc(l), lookupController(c), p, nt, cn,
-		     lookupEncoderType(et), e, em, ec, pb, vl);
+		     lookupEncoderType(et), e, em, ec, pb, vl, ct);
 	}
 
 	/** Create a camera */
 	private CameraImpl(String n, GeoLocImpl l, ControllerImpl c, int p,
 		String nt, Integer cn, EncoderType et, String e, String em,
-		int ec, boolean pb, boolean vl)
+		int ec, boolean pb, boolean vl, String ct)
 	{
 		super(n, c, p, nt);
 		geo_loc = l;
@@ -150,6 +152,7 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		encoder_channel = ec;
 		publish = pb;
 		video_loss = vl;
+		cam_template = ct;
 		initTransients();
 	}
 
@@ -480,15 +483,17 @@ public class CameraImpl extends DeviceImpl implements Camera {
 	}
 
 	/** Camera template name */
-	private String camTemplate = "";
+	private String cam_template = "";
 
+	/** Set the camera template */
 	@Override
 	public void setCameraTemplate(String camTemplate) {
-		this.camTemplate = camTemplate;
+		this.cam_template = camTemplate;
 	}
 
+	/** Get the camera template */
 	@Override
 	public String getCameraTemplate() {
-		return camTemplate;
+		return cam_template;
 	}
 }
