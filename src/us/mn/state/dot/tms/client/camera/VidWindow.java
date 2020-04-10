@@ -54,7 +54,7 @@ import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 public class VidWindow extends AbstractForm {
 
 	/** Status panel height */
-	static private final int HEIGHT_STATUS_PNL = 20;
+	static private final int HEIGHT_STATUS_PNL = 40;
 
 	/** Control panel height */
 	static private final int HEIGHT_CONTROL_PNL = 40;
@@ -62,30 +62,6 @@ public class VidWindow extends AbstractForm {
 	/** JPanel that renders the video stream */
 	private final VidPanel videoPanel;
 
-	/** JPanel which holds the status widgets */
-	private final JPanel status_pnl;
-
-	/** Stream controls panel and its components */
-	private final JPanel control_pnl;
-
-	/** Stop button */
-	private JButton stop_button;
-
-	/** Play button */
-	private JButton play_button;
-
-	/** Play external button */
-	private JButton playext_button;
-
-	/** JLabel for displaying the stream details (codec, size, framerate) */
-	private final JLabel status_lbl = new JLabel();
-
-	/** Stream control commands */
-	static private enum StreamCommand {
-		STOP,
-		PLAY,
-		PLAY_EXTERNAL;
-	}
 
 //	/** Timer listener for updating video status */
 //	private class StatusUpdater implements ActionListener {
@@ -103,9 +79,6 @@ public class VidWindow extends AbstractForm {
 	/** Current Camera */
 	private Camera camera = null;
 
-	/** External viewer from user/client properties.  Null means none. */
-	private final String external_viewer;
-
 	/** Most recent streaming state.  State variable for event FSM. */
 	private boolean stream_state = false;
 
@@ -116,202 +89,37 @@ public class VidWindow extends AbstractForm {
 //    private static Pipeline pipe;
 
 	/**
-	 * Create a new stream panel.
-	 * @param req The VideoRequest object to use.
-	 * @param cam_ptz An optional (null for none) CameraPTZ PTZ manager.
-	 *                Mouse PTZ control is disabled if null.
-	 * @param s A reference to the current Session, or null if external
-	 *          viewer support not desired.
-	 * @param ctrl Enable streaming control buttons?  If false, you
-	 *             probably want autoplay to be true.
-	 * @param auto Automatically play upon setCamera()?
+
 	 */
-//	public StreamPanel3(VideoRequest req, CameraPTZ cam_ptz, Session s,
-//		boolean ctrl, boolean auto)
-	public VidWindow(Camera cam, boolean ctrl, VideoRequest.Size vsz)
+	public VidWindow(Camera cam, Boolean ctrl, VideoRequest.Size vsz)
 	{
-		//super(new GridBagLayout());
-		super("Stream Panel " + cam.getName(), true);
+		super("Stream Panel: " + cam.getName(), true);
 		
 		setLayout(new BorderLayout());
 
-//		video_req = req;
 		Session s = Session.getCurrent();
-		external_viewer = (s == null) ? null
-			: UserProperty.getExternalVideoViewer(s.getProperties());
-//		autoplay = auto;
-//		VideoRequest.Size vsz = req.getSize();
 		Dimension sz = UI.dimension(vsz.width, vsz.height);
 		CameraPTZ cam_ptz = new CameraPTZ(s);
 		cam_ptz.setCamera(cam);
 
 		videoPanel = new VidPanel(sz);
-//		video_pnl = createScreenPanel(sz);
-		status_pnl = createStatusPanel(vsz);
-		control_pnl = createControlPanel(vsz);
-		GridBagConstraints c = new GridBagConstraints();
-//		c.fill = GridBagConstraints.BOTH;
-//		c.weightx = 1;
-//		c.weighty = 1;
-//		add(videoPanel, c);
 		add(videoPanel, BorderLayout.CENTER);
-
-		JPanel southPanel = new JPanel();
-		southPanel.setLayout(new GridBagLayout());
-		c = new GridBagConstraints();
-		c.fill = GridBagConstraints.BOTH;
-		c.gridx = 0;
-		c.gridy = GridBagConstraints.RELATIVE;
-//		southPanel.add(videoPanel, c);
-		southPanel.add(status_pnl, c);
+				
 		if (ctrl)
-			southPanel.add(control_pnl, c);
+			add(new PopoutCamControlPanel(cam_ptz), BorderLayout.SOUTH);
+
 		int pnlHeight = vsz.height + HEIGHT_STATUS_PNL
-			+ (ctrl ? HEIGHT_CONTROL_PNL : 0);
-		add(southPanel, BorderLayout.SOUTH);
-		
-		int w = (int)(vsz.width*1.1);
-		int h = (int)(pnlHeight*1.55);
+				+ (ctrl ? HEIGHT_CONTROL_PNL : 0);
+		int w = (int)(vsz.width*1.0);
+		int h = (int)(pnlHeight*1.0);
 
 		setPreferredSize(UI.dimension(w, h));
 		setMinimumSize(UI.dimension(w, h));
 		setMaximumSize(UI.dimension(w, h));
-		updateButtonState();
-		
-		add(new CamControlPanel(cam_ptz), BorderLayout.SOUTH);
 
 		videoPanel.addChangeListener(new StateChangeListener());
 		setCamera(cam);
 	}
-
-//	/**
-//	 * Create a new stream panel with autoplay, no stream controls, and
-//	 * no mouse PTZ.
-//	 */
-//	public StreamPanel3(VideoRequest req) {
-//		this(req, null, null, false, true);
-//	}
-
-	/** Create the screen panel */
-	private JPanel createScreenPanel(Dimension sz) {
-		JPanel p = new JPanel(new BorderLayout());
-		p.setBorder(BorderFactory.createBevelBorder(
-			BevelBorder.LOWERED));
-		p.setPreferredSize(sz);
-		p.setMinimumSize(sz);
-		return p;
-	}
-
-	/** Create the status panel */
-	private JPanel createStatusPanel(VideoRequest.Size vsz) {
-		JPanel p = new JPanel(new BorderLayout());
-		p.add(status_lbl, BorderLayout.WEST);
-		p.setPreferredSize(UI.dimension(vsz.width, HEIGHT_STATUS_PNL));
-		p.setMinimumSize(UI.dimension(vsz.width, HEIGHT_STATUS_PNL));
-		return p;
-	}
-
-	/** Create the control panel */
-	private JPanel createControlPanel(VideoRequest.Size vsz) {
-		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER,
-			UI.hgap, UI.vgap));
-		stop_button = createControlBtn("camera.stream.stop",
-			StreamCommand.STOP);
-		play_button = createControlBtn("camera.stream.play",
-			StreamCommand.PLAY);
-		playext_button = createControlBtn("camera.stream.playext",
-			StreamCommand.PLAY_EXTERNAL);
-		p.add(stop_button);
-		p.add(play_button);
-		p.add(playext_button);
-		p.setPreferredSize(UI.dimension(vsz.width,
-			HEIGHT_CONTROL_PNL));
-		p.setMinimumSize(UI.dimension(vsz.width, HEIGHT_CONTROL_PNL));
-		return p;
-	}
-
-	/**
-	* Create a stream-control button.
-	* @param text_id Text ID
-	* @param sc The StreamCommand to associate with the button
-	* @return The requested JButton.
-	*/
-	private JButton createControlBtn(String text_id,
-		final StreamCommand sc)
-	{
-		final JButton btn;
-		IAction ia = null;
-		ia = new IAction(text_id) {
-			@Override
-			protected void doActionPerformed(ActionEvent
-				ev)
-			{
-				handleControlBtn(sc);
-			}
-		};
-		btn = new JButton(ia);
-		btn.setPreferredSize(UI.dimension(40, 28));
-		btn.setMinimumSize(UI.dimension(28, 28));
-		btn.setMargin(new Insets(0, 0, 0, 0));
-		ImageIcon icon = Icons.getIconByPropName(text_id);
-		if (icon != null) {
-			btn.setIcon(icon);
-			btn.setHideActionText(true);
-		}
-		btn.setFocusPainted(false);
-		return btn;
-	}
-
-	/** Handle control button press */
-	private void handleControlBtn(StreamCommand sc) {
-		if (sc == StreamCommand.STOP) {
-			videoPanel.stopStream();
-		}
-		else if (sc == StreamCommand.PLAY) {
-			videoPanel.startCurrentStream();
-		}
-//		else if (sc == StreamCommand.PLAY_EXTERNAL)
-//			launchExternalViewer(camera);
-	}
-
-//	/**
-//	 * Start streaming from the current camera, unless null.
-//	 * This is normally called from the streamer thread.
-//	 */
-//	private void playStream() {
-//		stopStream();
-//		if (camera == null) {
-//			setStatusText(null);
-//			return;
-//		}
-//		setStatusText(I18N.get("camera.stream.opening"));
-//		requestStream(camera);
-//	}
-
-//	/**
-//	 * Stop streaming, if a stream is currently active.
-//	 * This is normally called from the streamer thread.
-//	 */
-//	private void stopStream() {
-////		if (stream != null)
-//	    if (pipe != null)
-//			clearStream();
-//	}
-
-//	/** Update stream status */
-//	private void updateStatus() {
-//		STREAMER.addJob(new Job() {
-//			public void perform() {
-////				VideoStream vs = stream;
-////				if (vs != null && vs.isPlaying())
-//					//setStatusText(vs.getStatus());
-//				if (pipe != null && pipe.isPlaying())
-//					setStatusText(Encoding.fromOrdinal(camera.getEncoderType().getEncoding()).toString());
-//				else
-//					clearStream();
-//			}
-//		});
-//	}
 
 	/**
 	 * Set the Camera to use for streaming.  If a current stream exists,
@@ -325,94 +133,6 @@ public class VidWindow extends AbstractForm {
 		videoPanel.setCamera(c);
 	}
 
-//	/** Request a new video stream */
-//	private void requestStream(Camera c) {
-////		try {
-////			stream = createStream(c);
-//	        Gst.init("CameraTest");
-//	        
-////            SimpleVideoComponent vc = new SimpleVideoComponent();
-////            Bin bin = Gst.parseBinFromDescription(
-////                    "autovideosrc ! videoconvert",
-////                    true);
-////            Bin bin = Gst.parseBinFromDescription(
-////                    "souphttpsrc location=http://10.1.4.183/axis-cgi/mjpg/video.cgi ! jpegdec ! videoconvert",
-////                    true);
-////            Bin bin = Gst.parseBinFromDescription(
-////                    "rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264",
-////                    true);
-//            
-////            System.out.println(System.getenv().get("GST_DEBUG_DUMP_DOT_DIR"));            
-////            bin.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "bingraph");
-//            
-////            pipe = new Pipeline();
-////            pipe.addMany(bin, vc.getElement());
-////            Pipeline.linkMany(bin, vc.getElement());
-////            pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "mjpeg_pipe");
-//////            vc.setPreferredSize(new Dimension(640, 480));           
-////            for ( Element e : bin.getElements()) {
-////            	System.out.println(e.toString());
-////            }
-//	        
-//
-//	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=" + c.getEncoderType().getUriScheme() + 
-//	        		c.getEncoder() + c.getEncoderType().getUriPath() + " ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
-////	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
-//	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
-//           
-//            pipe.play();
-//
-////          pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "mjpeg_pipe_play");
-//			JComponent screen = vc;
-////			JComponent screen = stream.getComponent();
-//			screen.setPreferredSize(video_pnl.getPreferredSize());
-//			video_pnl.add(screen);
-//			timer.start();
-//			handleStateChange();
-////		}
-////		catch (IOException e) {
-////			setStatusText(e.getMessage());
-////		}
-//	}
-
-//	/** Create a new video stream */
-//	private VideoStream createStream(Camera c) throws IOException {
-//		if (video_req.hasMJPEG(c))
-//			return new MJPEGStream(STREAMER, video_req, c);
-//		else
-//			throw new IOException("Unable to stream");
-//	}
-
-//	/** Clear the video stream */
-//	private void clearStream() {
-//		timer.stop();
-//		pipe.stop();
-//		video_pnl.removeAll();
-//		video_pnl.repaint();
-////		VideoStream vs = stream;
-////		if (vs != null) {
-////			vs.dispose();
-////			stream = null;
-////		}
-//		setStatusText(null);
-//		handleStateChange();
-//	}
-
-//	/** Dispose of the stream panel */
-//	@Override
-//	protected void dispose() {
-////		System.out.println("StreamPanel3.dispose()");
-//		VidPanel vp = videoPanel;
-////		if ((vp != null) && vp.isStreaming()) {
-//		if (vp != null)
-//			vp.dispose();
-//		super.dispose();
-//	}
-
-//	/** Set the status label. */
-//	private void setStatusText(String s) {
-//		status_lbl.setText(s);
-//	}
 
 	/** Are we currently streaming? */
 	public boolean isStreaming() {
@@ -439,27 +159,12 @@ public class VidWindow extends AbstractForm {
 		if (streaming == stream_state)
 			return;
 		stream_state = streaming;
-		updateButtonState();
 		for (StreamStatusListener ssl : ssl_set) {
 			if (stream_state)
 				ssl.onStreamStarted();
 			else
 				ssl.onStreamFinished();
 		}
-	}
-
-	/** Update the button state */
-	private void updateButtonState() {
-		if (camera == null) {
-			stop_button.setEnabled(false);
-			play_button.setEnabled(false);
-			playext_button.setEnabled(false);
-			return;
-		}
-		boolean streaming = isStreaming();
-		stop_button.setEnabled(streaming);
-		play_button.setEnabled(!streaming);
-		playext_button.setEnabled(true);
 	}
 
 	/**
@@ -478,30 +183,4 @@ public class VidWindow extends AbstractForm {
 			ssl_set.remove(ssl);
 	}
 
-//	/** Launch the external viewer for a Camera. */
-//	private void launchExternalViewer(Camera c) {
-//		if (c == null)
-//			return;
-//		if (external_viewer == null) {
-//			// FIXME: i18n
-//			setStatusText("Error: no external viewer defined.");
-//			return;
-//		}
-//		String uri = video_req.getUri(c).toString();
-//		if (uri.length() == 0) {
-//			// FIXME: i18n
-//			setStatusText("Error: cannot determine URL.");
-//			return;
-//		}
-//		String[] fields = external_viewer.split(",");
-//		List<String> cmd =
-//			new ArrayList<String>(fields.length + 1);
-//		for (String f : fields)
-//			cmd.add(f);
-//		cmd.add(uri);
-//		OSUtils.spawnProcess(cmd);
-//		// FIXME: i18n
-//		setStatusText("External viewer launched.");
-//		return;
-//	}
 }
