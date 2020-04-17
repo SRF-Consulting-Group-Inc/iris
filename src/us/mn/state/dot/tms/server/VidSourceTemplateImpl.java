@@ -186,7 +186,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	 * @return the config
 	 */
 	public String getConfig() {
-		return encoder;
+		return config;
 	}
 
 	/**
@@ -238,16 +238,20 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.latency = latency;
 	}
 
+	/**
+	 * @return the encoder
+	 */
 	@Override
 	public String getEncoder() {
-		// TODO Auto-generated method stub
-		return null;
+		return encoder;
 	}
 
+	/**
+	 * @param encoder the encoder to set
+	 */
 	@Override
 	public void setEncoder(String encoder) {
-		// TODO Auto-generated method stub
-		
+		this.encoder = encoder;
 	}
 
 	/**
@@ -322,7 +326,6 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 
 	@Override
 	public String getNotes() {
-		// TODO Auto-generated method stub
 		return notes;
 	}
 

@@ -31,8 +31,8 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	/** Load all the camera presets */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraVidSourceOrderImpl.class);
-		store.query("SELECT name, camera_template, source_order, " +
-			"source_template FROM iris." + SONAR_TYPE + ";", new ResultFactory()
+		store.query("SELECT name, camera_template, src_order, " +
+			"src_template FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraVidSourceOrderImpl(
@@ -50,8 +50,8 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
 		map.put("camera_template", camera_template);
-		map.put("source_order", source_order);
-		map.put("source_template", source_template);
+		map.put("src_order", source_order);
+		map.put("src_template", source_template);
 		return map;
 	}
 

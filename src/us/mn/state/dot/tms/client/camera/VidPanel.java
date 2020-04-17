@@ -51,6 +51,7 @@ import javax.swing.event.InternalFrameAdapter;
 
 import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sched.Scheduler;
+import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.CameraTemplateHelper;
@@ -673,9 +674,9 @@ public class VidPanel extends JPanel implements FocusListener {
 				null,
 				SystemAttrEnum.VID_RECONNECT_TIMEOUT_SEC);
 
-		streamReqList = VidStreamReq.getStreamRequests_test(camera);
-//		streamReqList = VidStreamReq.getStreamRequests(camera);
+//		streamReqList = VidStreamReq.getStreamRequests_test(camera);
 		Session s = Session.getCurrent();
+		streamReqList = VidStreamReq.getVidStreamReqs(camera);
 		CameraPTZ cam_ptz = new CameraPTZ(s);
 		cam_ptz.setCamera(cam);
 		if (isFlagSet(MOUSE_PTZ))

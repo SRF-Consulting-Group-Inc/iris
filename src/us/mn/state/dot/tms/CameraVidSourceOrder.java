@@ -28,7 +28,7 @@ import us.mn.state.dot.sonar.SonarObject;
 public interface CameraVidSourceOrder extends SonarObject, Comparable<CameraVidSourceOrder> {
 	
 	/** SONAR type name */
-	String SONAR_TYPE = "camera_vid_source_order";
+	String SONAR_TYPE = "cam_vid_src_ord";
 	
 	/** Set the camera template */
 	public void setCameraTemplate(String cameraTemplate);

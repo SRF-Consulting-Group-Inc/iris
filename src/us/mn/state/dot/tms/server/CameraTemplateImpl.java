@@ -19,7 +19,7 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Load all the camera templates */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, label, notes"
+		store.query("SELECT name, label, notes "
 				+ "FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {

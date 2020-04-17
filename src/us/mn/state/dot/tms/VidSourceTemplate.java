@@ -36,7 +36,7 @@ import us.mn.state.dot.sonar.SonarObject;
 public interface VidSourceTemplate extends SonarObject {
 
 	/** SONAR type name */
-	String SONAR_TYPE = "vid_source_template";
+	String SONAR_TYPE = "vid_src_template";
 	
 	/** Get the stream-type label shown in the video window.
 	 * @return the label

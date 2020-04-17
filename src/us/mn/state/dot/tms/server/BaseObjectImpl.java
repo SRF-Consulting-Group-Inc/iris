@@ -72,6 +72,9 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		corridors.createCorridors();
 		AlarmImpl.loadAll();
 		GpsImpl.loadAll();
+		CameraTemplateImpl.loadAll();
+		VidSourceTemplateImpl.loadAll();
+		CameraVidSourceOrderImpl.loadAll();
 		DetectorImpl.loadAll();
 		TollZoneImpl.loadAll();
 		EncoderTypeImpl.loadAll();
