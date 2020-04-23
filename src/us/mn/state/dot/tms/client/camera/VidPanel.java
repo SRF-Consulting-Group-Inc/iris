@@ -15,22 +15,16 @@
 package us.mn.state.dot.tms.client.camera;
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.FontMetrics;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.HierarchyEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -38,8 +32,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
@@ -47,18 +39,14 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.InternalFrameAdapter;
 
 import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sched.Scheduler;
-import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraTemplate;
-import us.mn.state.dot.tms.CameraTemplateHelper;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
-import us.mn.state.dot.tms.client.widget.IPanel;
 
 /** JPanel that shows video.
  *
@@ -84,7 +72,7 @@ public class VidPanel extends JPanel implements FocusListener {
 	private List<VidStreamReq> streamReqList = new ArrayList<VidStreamReq>();
 
 	/** Current stream request number */
-	private int streamReqNum;
+	private int streamReqNum = 0;
 
 	/** Current stream request */
 	private VidStreamReq streamReq;
@@ -286,6 +274,12 @@ public class VidPanel extends JPanel implements FocusListener {
 	/** Create fixed-size video panel */
 	public VidPanel(Dimension dim) {
 		this(dim.width, dim.height);
+	}
+	
+	/** Create fixed-size video panel with specified stream */
+	public VidPanel(Dimension dim, int strm_num) {
+		this(dim.width, dim.height);
+		streamReqNum = strm_num;
 	}
 	
 	/** Create fixed-size video panel */
@@ -684,7 +678,7 @@ public class VidPanel extends JPanel implements FocusListener {
 		boolean ret = !streamReqList.isEmpty();
 		panelStatus = PanelStatus.IDLE;
 		if (autostart) {
-			if (playStream(0)) {
+			if (playStream(streamReqNum)) {
 				panelStatus = PanelStatus.SCANNING;
 				ret = true;
 			}

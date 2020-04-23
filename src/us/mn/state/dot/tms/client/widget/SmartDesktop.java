@@ -20,8 +20,9 @@ import java.awt.Container;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
-import java.io.IOException;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -103,16 +104,15 @@ public class SmartDesktop extends JDesktopPane {
 	}
 	
 	/** Show the specified form */
-	public void showSecondScreen(AbstractForm form) {
-//		JInternalFrame frame = findFrame(form.getTitle());
-//		if (frame != null)
-//			selectFrame(frame);
-//		else
-//			frame = addForm(form);
-		JFrame frame = addFormSecondScreen(form);
-//		frame.setLocation(new Point(2200, 400));
-				//screen[1].getCenteredLocation(this,
-			//frame.getSize()));
+	public void showExtFrame(AbstractForm form) {
+		JFrame frame = addExtForm(form);
+		frame.setVisible(true);
+	}
+	
+	/** Show the specified form */
+	public void showExtFrame(AbstractForm form, int x, int y) {
+		JFrame frame = addExtForm(form);
+		frame.setLocation(new Point(x, y));
 		frame.setVisible(true);
 	}
 
@@ -135,29 +135,28 @@ public class SmartDesktop extends JDesktopPane {
 	}
 	
 	/** Add an abstract form to the desktop pane */
-	private JFrame addFormSecondScreen(AbstractForm form) {
+	private JFrame addExtForm(AbstractForm form) {
 		form.initialize();
-		JFrame frame = createFrameSecondScreen(form);
-		//add(frame, FRAME_LAYER);
+		JFrame frame = createExtFrame(form);
 		frame.pack();
 		return frame;
 	}
 	
 	/** Create a new internal frame */
-	private JFrame createFrameSecondScreen(final AbstractForm form) {
+	private JFrame createExtFrame(final AbstractForm form) {
 		final JFrame frame = new JFrame();
 		frame.setTitle(form.getTitle());
 		frame.setResizable(form.isResizable());
-//		frame.setClosable(true);
-//		frame.setIconifiable(true);
-//		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//		frame.addInternalFrameListener(new InternalFrameAdapter() {
-//			public void internalFrameClosed(InternalFrameEvent e) {
-//				smartDesktopRequestFocus();	// see note
-//				form.dispose();
-//			}
-//		});
-		frame.setContentPane(form);
+		frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+				smartDesktopRequestFocus();	// see note
+				form.dispose();
+				frame.dispose();
+			}
+		});
+		frame.setContentPane(form);	
 		return frame;
 	}
 
@@ -177,6 +176,12 @@ public class SmartDesktop extends JDesktopPane {
 		});
 		frame.setContentPane(form);
 		return frame;
+	}
+	
+	public void setFullScreen(JFrame frame) {
+		frame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+		frame.setUndecorated(true);
+		frame.setVisible(true);
 	}
 
 	/** This method is being invoked to solve a subtle problem with

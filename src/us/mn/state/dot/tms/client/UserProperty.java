@@ -16,8 +16,10 @@
  */
 package us.mn.state.dot.tms.client;
 
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,7 +50,14 @@ public enum UserProperty {
 	TAB_LIST	("tab.list"),
 	SCALE		("scale"),
 	VIDEO_EXTVIEWER	("video.extviewer"),
-	VIDEO_MONITOR	("video.monitor");
+	VIDEO_MONITOR	("video.monitor"),
+	STREAM_CCTV		("stream.cctv"),
+	STREAM_WIDTH	("stream.width"),
+	STREAM_HEIGHT	("stream.height"),
+	STREAM_X		("stream.x"),
+	STREAM_Y		("stream.y"),
+	STREAM_SRC		("stream.src"),
+	NUM_STREAM	("num.stream");
 
 	/** Property name */
 	public final String name;
@@ -122,9 +131,25 @@ public enum UserProperty {
 		setProp(p, up, Integer.toString(i));
 	}
 
+	/** Set a string property with integer increment */
+	static private void setProp(Properties p, UserProperty up, String v, int j) {
+		p.setProperty(up.name + "." + Integer.toString(j), v);
+	}
+
+	/** Set an integer property with integer increment */
+	static private void setProp(Properties p, UserProperty up, int i, int j) {
+		setProp(p, up, Integer.toString(i), j);
+	}
+	
+	
 	/** Get a property value as a string */
 	static private String getProp(Properties p, UserProperty up) {
 		return p.getProperty(up.name, "").trim();
+	}
+	
+	/** Get a property (with integer increment) value as a string */
+	static private String getProp(Properties p, UserProperty up, int j) {
+		return p.getProperty(up.name + "." + Integer.toString(j), "").trim();
 	}
 
 	/** Get an integer property */
@@ -145,6 +170,10 @@ public enum UserProperty {
 		catch (NumberFormatException e) {
 			return null;
 		}
+	}
+	
+	static private void removeProp(Properties p, UserProperty up, int i) {
+		p.remove(up.name + "." + Integer.toString(i));
 	}
 
 	/** Get window position from properties.
@@ -188,6 +217,28 @@ public enum UserProperty {
 		return st.toArray(new String[0]);
 	}
 
+	/** Get Hashmap of camera/stream frames */
+	static public HashMap<String, String> getCameraFrames(Properties p) {
+	    HashMap<String, String> hmap = new HashMap<String, String>();
+	    int num_streams = 0;
+	    
+		if (getPropI(p, NUM_STREAM) != null) {
+			num_streams = getPropI(p, NUM_STREAM);
+			hmap.put(NUM_STREAM.name, getProp(p, NUM_STREAM));
+		}
+	
+		for (int i=0; i < num_streams; i++) {
+		    hmap.put(STREAM_CCTV.name + "." + Integer.toString(i), getProp(p, STREAM_CCTV, i));
+		    hmap.put(STREAM_WIDTH.name + "." + Integer.toString(i), getProp(p, STREAM_WIDTH, i));
+		    hmap.put(STREAM_HEIGHT.name + "." + Integer.toString(i), getProp(p, STREAM_HEIGHT, i));
+		    hmap.put(STREAM_X.name + "." + Integer.toString(i), getProp(p, STREAM_X, i));
+		    hmap.put(STREAM_Y.name + "." + Integer.toString(i), getProp(p, STREAM_Y, i));
+		    hmap.put(STREAM_SRC.name + "." + Integer.toString(i), getProp(p, STREAM_SRC, i));
+		}
+	    
+	    return hmap;
+	}
+	
 	/** Update user properties */
 	static public void updateProperties(Properties p, IrisClient frame) {
 		int es = frame.getExtendedState();
@@ -211,8 +262,41 @@ public enum UserProperty {
 		                ? s.getCameraManager().getSelectedMonitor()
 		                : null;
 		setProp(p, VIDEO_MONITOR, (vm != null) ? vm.toString() : "");
+	
 	}
 
+	static public void saveStreamLayout(Properties p) {
+		Frame [] frames = IrisClient.getFrames();
+		int j = 0;
+		for (Frame f : frames) {
+			String frame_title = f.getTitle();
+			if (frame_title.contains("Stream Panel") && f.isVisible()) {
+				String cam_name = frame_title.split("Stream Panel: ")[1];
+				setProp(p, STREAM_CCTV, cam_name, j);
+				setProp(p, STREAM_WIDTH, f.getComponent(0).getWidth(), j);
+				setProp(p, STREAM_HEIGHT, f.getComponent(0).getHeight(), j);
+				setProp(p, STREAM_X, String.valueOf(f.getX()), j);
+				setProp(p, STREAM_Y, String.valueOf(f.getY()), j);
+				setProp(p, STREAM_SRC, String.valueOf(0), j);
+				j += 1;
+			}
+		}
+		if (j == 0) {
+			if (getPropI(p, NUM_STREAM) != null) {
+				int num_streams = getPropI(p, NUM_STREAM);
+				for (int i=0; i < num_streams; i++) {
+					removeProp(p, STREAM_CCTV, i);
+					removeProp(p, STREAM_WIDTH, i);
+					removeProp(p, STREAM_HEIGHT, i);
+					removeProp(p, STREAM_X, i);
+					removeProp(p, STREAM_Y, i);
+					removeProp(p, STREAM_SRC, i);
+				}
+			}
+		}
+		setProp(p, NUM_STREAM, j);
+	}
+	
 	/** Get the user interface scale factor */
 	static public float getScale(Properties p) {
 		Float s = getPropF(p, SCALE);

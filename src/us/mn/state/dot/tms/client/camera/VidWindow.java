@@ -17,28 +17,14 @@ package us.mn.state.dot.tms.client.camera;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.util.HashSet;
 import java.util.Set;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.client.Session;
-import us.mn.state.dot.tms.client.UserProperty;
 import us.mn.state.dot.tms.client.widget.AbstractForm;
-import us.mn.state.dot.tms.client.widget.IAction;
-import us.mn.state.dot.tms.client.widget.Icons;
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 
 /**
@@ -57,7 +43,7 @@ public class VidWindow extends AbstractForm {
 	static private final int HEIGHT_STATUS_PNL = 40;
 
 	/** Control panel height */
-	static private final int HEIGHT_CONTROL_PNL = 40;
+	static private final int HEIGHT_CONTROL_PNL = 30;
 
 	/** JPanel that renders the video stream */
 	private final VidPanel videoPanel;
@@ -93,29 +79,38 @@ public class VidWindow extends AbstractForm {
 	 */
 	public VidWindow(Camera cam, Boolean ctrl, VideoRequest.Size vsz)
 	{
+		this(cam, ctrl, UI.dimension(vsz.width, vsz.height + HEIGHT_STATUS_PNL + (ctrl ? HEIGHT_CONTROL_PNL : 0)), 0);
+	}
+	
+	/**
+
+	 */
+	public VidWindow(Camera cam, Boolean ctrl, Dimension pdm, int strm_num)
+	{
 		super("Stream Panel: " + cam.getName(), true);
 		
 		setLayout(new BorderLayout());
 
 		Session s = Session.getCurrent();
-		Dimension sz = UI.dimension(vsz.width, vsz.height);
+		int vidHeight = pdm.height
+					- HEIGHT_STATUS_PNL 
+					- (ctrl ? HEIGHT_CONTROL_PNL : 0);
+		
+		int vidWidth = pdm.width;
+		
+		Dimension sz = UI.dimension(vidWidth, vidHeight);
 		CameraPTZ cam_ptz = new CameraPTZ(s);
 		cam_ptz.setCamera(cam);
 
-		videoPanel = new VidPanel(sz);
+		videoPanel = new VidPanel(sz, strm_num);
 		add(videoPanel, BorderLayout.CENTER);
 				
 		if (ctrl)
 			add(new PopoutCamControlPanel(cam_ptz), BorderLayout.SOUTH);
-
-		int pnlHeight = vsz.height + HEIGHT_STATUS_PNL
-				+ (ctrl ? HEIGHT_CONTROL_PNL : 0);
-		int w = (int)(vsz.width*1.0);
-		int h = (int)(pnlHeight*1.0);
-
-		setPreferredSize(UI.dimension(w, h));
-		setMinimumSize(UI.dimension(w, h));
-		setMaximumSize(UI.dimension(w, h));
+		
+		setPreferredSize(UI.dimension(pdm.width, pdm.height));
+		setMinimumSize(UI.dimension(pdm.width, pdm.height));
+		setMaximumSize(UI.dimension(pdm.width, pdm.height));
 
 		videoPanel.addChangeListener(new StateChangeListener());
 		setCamera(cam);

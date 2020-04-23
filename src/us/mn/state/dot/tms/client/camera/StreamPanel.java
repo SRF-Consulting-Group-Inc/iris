@@ -23,23 +23,22 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
 
-import org.freedesktop.gstreamer.Bin;
-import org.freedesktop.gstreamer.Element;
 import org.freedesktop.gstreamer.Gst;
 import org.freedesktop.gstreamer.Pipeline;
 import org.freedesktop.gstreamer.elements.AppSink;
@@ -47,7 +46,9 @@ import org.freedesktop.gstreamer.elements.AppSink;
 import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sched.Scheduler;
 import us.mn.state.dot.tms.Camera;
+import us.mn.state.dot.tms.CameraHelper;
 import us.mn.state.dot.tms.Encoding;
+import us.mn.state.dot.tms.client.EditModeListener;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.UserProperty;
 import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
@@ -103,6 +104,12 @@ public class StreamPanel extends JPanel {
 
 	/** Play external button */
 	private JButton playext_button;
+	
+	/** Save layout button */
+	private JButton save_layout_button;
+	
+	/** Restore layoutl button */
+	private JButton restore_layout_button;
 
 	/** JLabel for displaying the stream details (codec, size, framerate) */
 	private final JLabel status_lbl = new JLabel();
@@ -112,6 +119,12 @@ public class StreamPanel extends JPanel {
 		STOP,
 		PLAY,
 		PLAY_EXTERNAL;
+	}
+	
+	/** Layout control commands */
+	static private enum LayoutCommand {
+		SAVE,
+		RESTORE;
 	}
 
 	/** Timer listener for updating video status */
@@ -163,6 +176,13 @@ public class StreamPanel extends JPanel {
     
 	/** Smart desktop */
 	private SmartDesktop desktop;
+	
+	/** Edit mode listener */
+	private final EditModeListener edit_lsnr = new EditModeListener() {
+		public void editModeChanged() {
+			updateEditMode();
+		}
+	};
     
 	/**
 	 * Create a new stream panel.
@@ -207,9 +227,10 @@ public class StreamPanel extends JPanel {
 		
 		ptz = cam_ptz;
 		session = s;
-		if (session != null)
+		if (session != null) {
 			desktop = session.getDesktop();
-
+			session.addEditModeListener(edit_lsnr);
+		}
 	}
 
 	/**
@@ -248,16 +269,94 @@ public class StreamPanel extends JPanel {
 		play_button = createControlBtn("camera.stream.play",
 			StreamCommand.PLAY);
 		playext_button = createControlBtn("camera.stream.playext",
-			StreamCommand.PLAY_EXTERNAL);
+				StreamCommand.PLAY_EXTERNAL);
+		
+		save_layout_button = createLayoutBtn("Save Layout",
+				LayoutCommand.SAVE);
+		restore_layout_button = createLayoutBtn("Restore Layout",
+				LayoutCommand.RESTORE);
+
+			
 		p.add(stop_button);
 		p.add(play_button);
 		p.add(playext_button);
+		p.add(Box.createHorizontalStrut(10));
+
+		p.add(save_layout_button);
+		p.add(restore_layout_button);
 		p.setPreferredSize(UI.dimension(vsz.width,
 			HEIGHT_CONTROL_PNL));
 		p.setMinimumSize(UI.dimension(vsz.width, HEIGHT_CONTROL_PNL));
 		return p;
 	}
+	
+	/**
+	* Create a layout button.
+	* @param text_id Text ID
+	* @param sc The StreamCommand to associate with the button
+	* @return The requested JButton.
+	*/
+	private JButton createLayoutBtn(String text_id,
+		final LayoutCommand lc)
+	{
+		final JButton btn;
+		IAction ia = null;
+		ia = new IAction(text_id) {
+			@Override
+			protected void doActionPerformed(ActionEvent
+				ev)
+			{
+				handleLayoutBtn(lc);
+			}
+		};
+		btn = new JButton(ia);
+		btn.setPreferredSize(UI.dimension(100, 28));
+		btn.setMinimumSize(UI.dimension(100, 28));
+		btn.setMargin(new Insets(0, 0, 0, 0));
+		btn.setText(text_id);
+		btn.setFocusPainted(false);
+		return btn;
+	}
+	
+	
+	/** Handle layout button press */
+	private void handleLayoutBtn(LayoutCommand lc) {
+		Properties p = session.getProperties();
 
+		if (lc == LayoutCommand.SAVE) {
+			UserProperty.saveStreamLayout(p);
+		}
+		else if (lc == LayoutCommand.RESTORE) {
+			initializeCameraFrames(p);
+		}
+	}
+
+	
+	/** Initialize the camera frames */
+	private void initializeCameraFrames(Properties p) {
+
+	    HashMap<String, String> hmap = UserProperty.getCameraFrames(p);
+	    int num_streams = 0;
+	    
+	    if (hmap.get(UserProperty.NUM_STREAM.name) != null)
+	    	num_streams = Integer.parseInt(hmap.get(UserProperty.NUM_STREAM.name));
+	
+		for (int i=0; i < num_streams; i++) {
+			String cam_name = hmap.get(UserProperty.STREAM_CCTV.name + "." + Integer.toString(i));
+			Camera cam = CameraHelper.lookup(cam_name);
+			int w = Integer.parseInt(hmap.get(UserProperty.STREAM_WIDTH.name + "." + Integer.toString(i)));
+			int h = Integer.parseInt(hmap.get(UserProperty.STREAM_HEIGHT.name + "." + Integer.toString(i)));
+			Dimension d = new Dimension(w, h);
+			
+			int x = Integer.parseInt(hmap.get(UserProperty.STREAM_X.name + "." + Integer.toString(i)));
+			int y = Integer.parseInt(hmap.get(UserProperty.STREAM_Y.name + "." + Integer.toString(i)));
+				
+			int strm_num = Integer.parseInt(hmap.get(UserProperty.STREAM_SRC.name + "." + Integer.toString(i)));
+
+			desktop.showExtFrame(new VidWindow(cam, true, d, strm_num), x, y);	
+		}
+	}
+	
 	/**
 	* Create a stream-control button.
 	* @param text_id Text ID
@@ -311,8 +410,7 @@ public class StreamPanel extends JPanel {
 			//launchExternalViewer(camera);
 			final CameraPTZ cam_ptz = new CameraPTZ(session);
 			cam_ptz.setCamera(ptz.getCamera());
-//			desktop.showSecondScreen(new StreamPanel2(video_req, cam_ptz, session, false, true));
-			desktop.showSecondScreen(new VidWindow(camera, true, Size.LARGE));
+			desktop.showExtFrame(new VidWindow(camera, true, Size.LARGE));
 		}
 	}
 
@@ -456,6 +554,8 @@ public class StreamPanel extends JPanel {
 		clearStream();
 		if (mouse_ptz != null)
 			mouse_ptz.dispose();
+		session.removeEditModeListener(edit_lsnr);
+		save_layout_button.setEnabled(false);
 	}
 
 	/** Set the status label. */
@@ -544,5 +644,10 @@ public class StreamPanel extends JPanel {
 		// FIXME: i18n
 		setStatusText("External viewer launched.");
 		return;
+	}
+	
+	/** Update the edit mode */
+	public void updateEditMode() {
+		save_layout_button.setEnabled(session.canWrite("camera"));
 	}
 }
