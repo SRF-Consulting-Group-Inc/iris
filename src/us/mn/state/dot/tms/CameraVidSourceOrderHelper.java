@@ -14,9 +14,7 @@
  */
 package us.mn.state.dot.tms;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Helper class for CameraStreamLink objects
@@ -31,13 +29,13 @@ public class CameraVidSourceOrderHelper extends BaseHelper {
 		assert false;
 	}
 
-	/** Lookup the camera template with the specified name */
+	/** Lookup the camera video source order object with the specified name */
 	static public CameraVidSourceOrder lookup(String name) {
 		return (CameraVidSourceOrder)namespace.lookupObject(CameraVidSourceOrder.SONAR_TYPE,
 			name);
 	}
 
-	/** Get a camera template iterator */
+	/** Get a camera video source order object iterator */
 	static public Iterator<CameraVidSourceOrder> iterator() {
 		return new IteratorWrapper<CameraVidSourceOrder>(namespace.iterator(
 				CameraVidSourceOrder.SONAR_TYPE));

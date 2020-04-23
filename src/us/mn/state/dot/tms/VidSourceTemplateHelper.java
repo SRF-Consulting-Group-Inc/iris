@@ -14,9 +14,7 @@
  */
 package us.mn.state.dot.tms;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author John L. Stanley - SRF Consulting
