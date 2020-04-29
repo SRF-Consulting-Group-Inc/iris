@@ -271,9 +271,9 @@ public class StreamPanel extends JPanel {
 		playext_button = createControlBtn("camera.stream.playext",
 				StreamCommand.PLAY_EXTERNAL);
 		
-		save_layout_button = createLayoutBtn("Save Layout",
+		save_layout_button = createLayoutBtn("camera.template.save.layout",
 				LayoutCommand.SAVE);
-		restore_layout_button = createLayoutBtn("Restore Layout",
+		restore_layout_button = createLayoutBtn("camera.template.restore.layout",
 				LayoutCommand.RESTORE);
 
 			
@@ -313,7 +313,7 @@ public class StreamPanel extends JPanel {
 		btn.setPreferredSize(UI.dimension(100, 28));
 		btn.setMinimumSize(UI.dimension(100, 28));
 		btn.setMargin(new Insets(0, 0, 0, 0));
-		btn.setText(text_id);
+//		btn.setText(text_id);
 		btn.setFocusPainted(false);
 		return btn;
 	}
@@ -410,7 +410,7 @@ public class StreamPanel extends JPanel {
 			//launchExternalViewer(camera);
 			final CameraPTZ cam_ptz = new CameraPTZ(session);
 			cam_ptz.setCamera(ptz.getCamera());
-			desktop.showExtFrame(new VidWindow(camera, true, Size.LARGE));
+			desktop.showExtFrame(new VidWindow(camera, true, Size.MEDIUM));
 		}
 	}
 
