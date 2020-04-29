@@ -81,6 +81,13 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 		this.label = label;
 	}
 	
+	/** Set the template label */
+	public void doSetLabel(String label) throws TMSException {
+		if (label != this.label) {
+			store.update(this, "label", label);
+			setLabel(label);
+		}
+	}
 
 	/** Template notes */
 	private String notes;
@@ -95,6 +102,14 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	@Override
 	public void setNotes(String notes) {
 		this.notes = notes;
+	}
+	
+	/** Set the template notes */
+	public void doSetNotes(String notes) throws TMSException {
+		if (notes != this.notes) {
+			store.update(this, "notes", notes);
+			setNotes(notes);
+		}
 	}
 	
 //	/** Autostart boolean */

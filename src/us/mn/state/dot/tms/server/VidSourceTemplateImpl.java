@@ -182,6 +182,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.label = label;
 	}
 
+	/** Set the template label */
+	public void doSetLabel(String label) throws TMSException {
+		if (label != this.label) {
+			store.update(this, "label", label);
+			setLabel(label);
+		}
+	}
+	
 	/**
 	 * @return the config
 	 */
@@ -196,6 +204,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.config = config;
 	}
 
+	/** Set the template config */
+	public void doSetConfig(String config) throws TMSException {
+		if (config != this.config) {
+			store.update(this, "config", config);
+			setConfig(config);
+		}
+	}
+	
 	/**
 	 * @return the default_port
 	 */
@@ -210,6 +226,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.default_port = default_port;
 	}
 
+	/** Set the template default_port */
+	public void doSetdefault_port(Integer default_port) throws TMSException {
+		if (default_port != this.default_port) {
+			store.update(this, "default_port", default_port);
+			setDefaultPort(default_port);
+		}
+	}
+	
 	/**
 	 * @return the subnets
 	 */
@@ -224,6 +248,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.subnets = subnets;
 	}
 
+	/** Set the template subnets */
+	public void doSetSubnets(String subnets) throws TMSException {
+		if (subnets != this.subnets) {
+			store.update(this, "subnets", subnets);
+			setSubnets(subnets);
+		}
+	}
+	
 	/**
 	 * @return the latency
 	 */
@@ -236,6 +268,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	 */
 	public void setLatency(Integer latency) {
 		this.latency = latency;
+	}
+	
+	/** Set the template latency */
+	public void doSetLatency(Integer latency) throws TMSException {
+		if (latency != this.latency) {
+			store.update(this, "latency", latency);
+			setLatency(latency);
+		}
 	}
 
 	/**
@@ -253,6 +293,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	public void setEncoder(String encoder) {
 		this.encoder = encoder;
 	}
+	
+	/** Set the template encoder */
+	public void doSetEncoder(String encoder) throws TMSException {
+		if (encoder != this.encoder) {
+			store.update(this, "encoder", encoder);
+			setEncoder(encoder);
+		}
+	}
 
 	/**
 	 * @return the scheme
@@ -266,6 +314,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	 */
 	public void setScheme(String scheme) {
 		this.scheme = scheme;
+	}
+	
+	/** Set the template scheme */
+	public void doSetScheme(String scheme) throws TMSException {
+		if (scheme != this.scheme) {
+			store.update(this, "scheme", scheme);
+			setScheme(scheme);
+		}
 	}
 
 	/**
@@ -282,6 +338,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.codec = codec;
 	}
 
+	/** Set the template codec */
+	public void doSetCodec(String codec) throws TMSException {
+		if (codec != this.codec) {
+			store.update(this, "codec", codec);
+			setCodec(codec);
+		}
+	}
+	
 	/**
 	 * @return the rezWidth
 	 */
@@ -296,6 +360,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.rez_width = rezWidth;
 	}
 
+	/** Set the template rez_width */
+	public void doSetRezWidth(Integer rez_width) throws TMSException {
+		if (rez_width != this.rez_width) {
+			store.update(this, "rez_width", rez_width);
+			setRezWidth(rez_width);
+		}
+	}
+	
 	/**
 	 * @return the rez_height
 	 */
@@ -310,6 +382,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.rez_height = rez_height;
 	}
 
+	/** Set the template rez_height */
+	public void doSetRezHeight(Integer rez_height) throws TMSException {
+		if (rez_height != this.rez_height) {
+			store.update(this, "rez_height", rez_height);
+			setRezHeight(rez_height);
+		}
+	}
+	
 	/**
 	 * @return the multicast
 	 */
@@ -324,6 +404,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.multicast = multicast;
 	}
 
+	/** Set the template multicast */
+	public void doSetMulticast(Boolean multicast) throws TMSException {
+		if (multicast != this.multicast) {
+			store.update(this, "multicast", multicast);
+			setMulticast(multicast);
+		}
+	}
+	
 	@Override
 	public String getNotes() {
 		return notes;
@@ -334,6 +422,14 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.notes = notes;
 	}
 
+	/** Set the template notes */
+	public void doSetNotes(String notes) throws TMSException {
+		if (notes != this.notes) {
+			store.update(this, "notes", notes);
+			setNotes(notes);
+		}
+	}
+	
 	@Override
 	public boolean isGstStream() {
 		return (config != null) && config.contains("!");

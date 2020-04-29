@@ -92,6 +92,14 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	public String getCameraTemplate() {
 		return camera_template;
 	}
+	
+	/** Set the template camera_template */
+	public void doSetCameraTemplate(String camera_template) throws TMSException {
+		if (camera_template != this.camera_template) {
+			store.update(this, "camera_template", camera_template);
+			setCameraTemplate(camera_template);
+		}
+	}
 
 	/** Source Order */
 	private int source_order;
@@ -107,6 +115,14 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	public int getSourceOrder() {
 		return source_order;
 	}
+	
+	/** Set the template source_order */
+	public void doSetSourceOrder(int source_order) throws TMSException {
+		if (source_order != this.source_order) {
+			store.update(this, "source_order", source_order);
+			setSourceOrder(source_order);
+		}
+	}
 
 	/** name of stream template */
 	private String source_template;
@@ -121,5 +137,13 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	@Override
 	public String getVidSourceTemplate() {
 		return source_template;
+	}
+	
+	/** Set the template source_template */
+	public void doSetVidSourceTemplate(String source_template) throws TMSException {
+		if (source_template != this.source_template) {
+			store.update(this, "source_template", source_template);
+			setVidSourceTemplate(source_template);
+		}
 	}
 }
