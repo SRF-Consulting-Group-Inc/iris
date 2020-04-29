@@ -19,14 +19,14 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Load all the camera templates */
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, CameraTemplateImpl.class);
-		store.query("SELECT name, label, notes "
+		store.query("SELECT name, notes, label "
 				+ "FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraTemplateImpl(
 					row.getString(1),	// name
-					row.getString(2),   //label
-					row.getString(3)	// notes
+					row.getString(2),   //notes
+					row.getString(3)	// label
 				));
 			}
 		});
@@ -37,8 +37,8 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	public Map<String, Object> getColumns() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
-		map.put("label", label);
 		map.put("notes", notes);
+		map.put("label", label);
 		return map;
 	}
 
@@ -62,8 +62,8 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Create a camera template */
 	public CameraTemplateImpl(String n, String no, String l) {
 		super(n);
-		label = l;
 		notes = no;
+		label = l;
 	}
 	
 	/** Template label */
@@ -72,7 +72,7 @@ public class CameraTemplateImpl extends BaseObjectImpl implements CameraTemplate
 	/** Get the template label */
 	@Override
 	public String getLabel() {
-		return notes;
+		return label;
 	}
 
 	/** Set the template label */
