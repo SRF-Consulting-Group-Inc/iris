@@ -6,7 +6,7 @@ VALUES ('vid_connect_autostart', true),
 		('vid_reconnect_auto', true),
 		('vid_reconnect_timeout_sec', 10);
 
-CREATE TABLE iris.camera_template
+CREATE TABLE iris._camera_template
 (
 	name character varying(20),
 	notes text,
@@ -14,10 +14,21 @@ CREATE TABLE iris.camera_template
 	CONSTRAINT camera_template_pkey PRIMARY KEY (name)
 );
 
-ALTER TABLE iris.camera_template
+ALTER TABLE iris._camera_template
     OWNER to tms;
 	
-CREATE TABLE iris.vid_src_template
+CREATE OR REPLACE VIEW iris.camera_template
+ AS
+ SELECT name,
+		notes,
+		label
+   FROM iris._camera_template;
+
+ALTER TABLE iris.camera_template
+    OWNER TO tms
+
+	
+CREATE TABLE iris._vid_src_template
 (
 	name character varying(20),
 	label text,
@@ -36,17 +47,38 @@ CREATE TABLE iris.vid_src_template
 	CONSTRAINT vid_src_template_pkey PRIMARY KEY (name)
 );
 
-ALTER TABLE iris.vid_src_template
+ALTER TABLE iris._vid_src_template
     OWNER to tms;
+	
+CREATE OR REPLACE VIEW iris.vid_src_template
+ AS
+ SELECT name,
+		label,
+		config,
+		default_port,
+		subnets,
+		latency,
+		encoder,
+		scheme,
+		codec,
+		rez_width,
+		rez_height,
+		multicast,
+		notes,
+		gst_stream
+   FROM iris._vid_src_template;
+
+ALTER TABLE iris.vid_src_template
+    OWNER TO tms
 	
 ALTER TABLE iris._camera ADD COLUMN cam_template character varying(20);
  
 ALTER TABLE iris._camera ADD CONSTRAINT _camera_cam_template_fkey FOREIGN KEY (cam_template)
-        REFERENCES iris.camera_template (name) MATCH SIMPLE
+        REFERENCES iris._camera_template (name) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 
-CREATE TABLE iris.cam_vid_src_ord
+CREATE TABLE iris._cam_vid_src_ord
 (
 	name character varying(20),
 	camera_template character varying(20),
@@ -54,11 +86,23 @@ CREATE TABLE iris.cam_vid_src_ord
 	src_template character varying(20),
 	CONSTRAINT camera_vid_src_order_pkey PRIMARY KEY (name)
 );
-ALTER TABLE iris.cam_vid_src_ord
+ALTER TABLE iris._cam_vid_src_ord
     OWNER to tms;
 	
-ALTER TABLE iris.camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_camera_template_fkey FOREIGN KEY (camera_template)
-        REFERENCES iris.camera_template (name) MATCH SIMPLE
+	
+CREATE OR REPLACE VIEW iris.cam_vid_src_ord
+ AS
+ SELECT name,
+		camera_template,
+		src_order,
+		src_template
+   FROM iris._cam_vid_src_ord;
+
+ALTER TABLE iris.cam_vid_src_ord
+    OWNER TO tms
+	
+ALTER TABLE iris._camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_camera_template_fkey FOREIGN KEY (camera_template)
+        REFERENCES iris._camera_template (name) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 		
