@@ -45,6 +45,7 @@ public class VideoMenu extends IMenu {
 		addItem(createCatalogItem());
 		addItem(createMonitorStyleItem());
 		addItem(createVideoMonitorItem());
+		addItem(createCameraTemplateItem());
 	}
 
 	/** Create an encoder type menu item action */
@@ -93,6 +94,16 @@ public class VideoMenu extends IMenu {
 		    new IAction("video.monitor") {
 			protected void doActionPerformed(ActionEvent e) {
 				desktop.show(new VideoMonitorForm(session));
+			}
+		    } : null;
+	}
+	
+	/** Create a camera template menu item action */
+	private IAction createCameraTemplateItem() {
+		return CameraTemplateForm.isPermitted(session) ?
+		    new IAction("camera.templates") {
+			protected void doActionPerformed(ActionEvent e) {
+				desktop.show(new CameraTemplateForm(session));
 			}
 		    } : null;
 	}
