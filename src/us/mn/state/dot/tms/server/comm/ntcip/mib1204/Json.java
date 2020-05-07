@@ -48,4 +48,18 @@ public class Json {
 		} else
 			return "";
 	}
+	
+	/** Make a JSON key/sub object for a string type */
+	static public String sub(String key, Object value) {
+		if (value != null) {
+			StringBuilder sb = new StringBuilder();
+			sb.append('"');
+			sb.append(key);
+			sb.append("\":");
+			sb.append(value);
+			sb.append("");
+			return sb.toString();
+		} else
+			return "";
+	}
 }
