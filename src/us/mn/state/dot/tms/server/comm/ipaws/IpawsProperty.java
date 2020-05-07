@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.Files;
 
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.ControllerProperty;
@@ -53,12 +54,14 @@ public class IpawsProperty extends ControllerProperty {
 		// TODO read and parse alerts and store in bucket
 		
 		// TODO temp/test code to write output to file
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-		LocalDateTime now = LocalDateTime.now();
-		String fname = String.format("/var/log/iris/ipaws_test_%s.xml", dtf.format(now));
-		File xmlFile = new File(fname);
-		java.nio.file.Files.copy(is, xmlFile.toPath(),
-				StandardCopyOption.REPLACE_EXISTING);
+//		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+//		LocalDateTime now = LocalDateTime.now();
+//		String fname = String.format("\\\\ply-cfile1\\Ctxply\\mjanson\\Folders\\Documents\\srf-iris-ipaws workspace\\srf-iris-ipaws\\var\\log\\iris\\ipaws_test_%s.xml", dtf.format(now));
+//
+//		File xmlFile = new File(fname);
+//		java.nio.file.Files.copy(is, xmlFile.toPath(),
+//				StandardCopyOption.REPLACE_EXISTING);
+		IpawsReader.readIpaws(is);
 	}
 
 	/** Get a string representation of the property */

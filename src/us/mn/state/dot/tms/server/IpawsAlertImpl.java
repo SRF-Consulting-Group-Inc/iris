@@ -59,7 +59,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		map.put("headline", headline);
 		map.put("alert_description", alert_description);
 		map.put("instruction", instruction);
-		map.put("parameters", area);
+		map.put("parameters", parameters);
 		map.put("area", area);
 		return map;
 	}
