@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.server.comm.ipaws;
+package us.mn.state.dot.tms;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -20,6 +20,12 @@ import java.util.List;
 
 import us.mn.state.dot.sonar.SonarObject;
 
+/**
+ * Integrated Public Alert and Warning System (IPAWS) Alert interface.
+ *
+ * @author Michael Janson
+ * @author Gordon Parikh
+ */
 public interface IpawsAlert extends SonarObject {
 	
 	/** SONAR type name */
