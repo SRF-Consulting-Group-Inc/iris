@@ -50,8 +50,8 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
 		map.put("camera_template", camera_template);
-		map.put("src_order", source_order);
-		map.put("src_template", source_template);
+		map.put("src_order", src_order);
+		map.put("src_template", src_template);
 		return map;
 	}
 
@@ -71,11 +71,11 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	}
 
 	/** Create a camera preset */
-	protected CameraVidSourceOrderImpl(String n, String ct, int so, String st) {
+	public CameraVidSourceOrderImpl(String n, String ct, int so, String st) {
 		super(n);
 		camera_template = ct;
-		source_order = so;
-		source_template = st;
+		src_order = so;
+		src_template = st;
 	}
 
 	/** CCTV Camera */
@@ -102,48 +102,48 @@ public class CameraVidSourceOrderImpl extends BaseObjectImpl implements CameraVi
 	}
 
 	/** Source Order */
-	private int source_order;
+	private int src_order;
 
 	/** Set the source order number */
 	@Override
 	public void setSourceOrder(int so) {
-		this.source_order = so;
+		this.src_order = so;
 	}
 
 	/** Get the source order number */
 	@Override
 	public int getSourceOrder() {
-		return source_order;
+		return src_order;
 	}
 	
 	/** Set the template source_order */
-	public void doSetSourceOrder(int source_order) throws TMSException {
-		if (source_order != this.source_order) {
-			store.update(this, "source_order", source_order);
-			setSourceOrder(source_order);
+	public void doSetSourceOrder(int src_order) throws TMSException {
+		if (src_order != this.src_order) {
+			store.update(this, "src_order", src_order);
+			setSourceOrder(src_order);
 		}
 	}
 
 	/** name of stream template */
-	private String source_template;
+	private String src_template;
 
 	/** Set the source template name */
 	@Override
 	public void setVidSourceTemplate(String st) {
-		source_template = st;
+		src_template = st;
 	}
 
 	/** Get the source template name */
 	@Override
 	public String getVidSourceTemplate() {
-		return source_template;
+		return src_template;
 	}
 	
 	/** Set the template source_template */
-	public void doSetVidSourceTemplate(String source_template) throws TMSException {
-		if (source_template != this.source_template) {
-			store.update(this, "source_template", source_template);
-			setVidSourceTemplate(source_template);
+	public void doSetVidSourceTemplate(String src_template) throws TMSException {
+		if (src_template != this.src_template) {
+			store.update(this, "src_template", src_template);
+			setVidSourceTemplate(src_template);
 		}
 	}
 }

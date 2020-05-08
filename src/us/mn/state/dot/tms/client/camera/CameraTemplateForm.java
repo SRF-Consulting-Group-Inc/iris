@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2010-2017  Minnesota Department of Transportation
+ * Copyright (C) 2020 SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +24,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * A form for displaying and editing camera templates.
  *
  * @author Douglas Lau
+ * @author Michael Janson
  */
 public class CameraTemplateForm extends ProxyTableForm<CameraTemplate> {
 

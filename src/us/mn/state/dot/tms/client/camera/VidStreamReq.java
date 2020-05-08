@@ -316,6 +316,27 @@ public class VidStreamReq {
 		return (vrList.size() == 0) ? null : vrList;
 	}
 
+	/** Get list of CameraVidSourceOrder objects for a given camera template */
+	public static List<CameraVidSourceOrder> getCamVidSrcOrder(CameraTemplate ct) {
+		if (ct == null)
+			return null;
+		// Iterate through CameraStreamOrder(s)
+		// (collecting those that match the CameraTemplate)
+		Iterator<CameraVidSourceOrder> itCSO = CameraVidSourceOrderHelper.iterator();
+		List<CameraVidSourceOrder> csoList = new ArrayList<CameraVidSourceOrder>();
+		CameraVidSourceOrder cso;
+		while (itCSO.hasNext()) {
+			cso = itCSO.next();
+			if (cso.getCameraTemplate().equals(ct.getName()))
+				csoList.add(cso);
+		}
+		if (csoList.size() == 0)
+			return null;
+		// sort the resulting list of CSO(s) by stream-order
+		csoList.sort(streamOrder);
+		return (csoList.size() == 0) ? null : csoList;
+	}
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(vst.getLabel());

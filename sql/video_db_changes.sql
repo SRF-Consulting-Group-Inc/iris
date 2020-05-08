@@ -106,7 +106,7 @@ ALTER TABLE iris._camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_camer
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 		
-ALTER TABLE iris.camera_vid_srf_order ADD CONSTRAINT camera_vid_src_order_src_template_fkey FOREIGN KEY (source_template)
+ALTER TABLE iris.camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_src_template_fkey FOREIGN KEY (src_template)
         REFERENCES iris.vid_src_template (name) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
