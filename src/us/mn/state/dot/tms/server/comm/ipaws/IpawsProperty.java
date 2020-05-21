@@ -14,21 +14,10 @@
  */
 package us.mn.state.dot.tms.server.comm.ipaws;
 
-// TODO temp for testing
-import java.io.File;
-import java.time.format.DateTimeFormatter;
-import java.time.LocalDateTime;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.Files;
-
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.ControllerProperty;
-// TODO implement (then import) CAP message and alert bucket
-import us.mn.state.dot.tms.server.FeedBucket;
-import us.mn.state.dot.tms.server.FeedMsg;
 
 /**
  * Container for IPAWS alert property.
@@ -49,18 +38,7 @@ public class IpawsProperty extends ControllerProperty {
 	/** Decode a QUERY response */
 	@Override
 	public void decodeQuery(ControllerImpl c, InputStream is)
-		throws IOException
-	{
-		// TODO read and parse alerts and store in bucket
-		
-		// TODO temp/test code to write output to file
-//		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-//		LocalDateTime now = LocalDateTime.now();
-//		String fname = String.format("\\\\ply-cfile1\\Ctxply\\mjanson\\Folders\\Documents\\srf-iris-ipaws workspace\\srf-iris-ipaws\\var\\log\\iris\\ipaws_test_%s.xml", dtf.format(now));
-//
-//		File xmlFile = new File(fname);
-//		java.nio.file.Files.copy(is, xmlFile.toPath(),
-//				StandardCopyOption.REPLACE_EXISTING);
+			throws IOException {
 		IpawsReader.readIpaws(is);
 	}
 
