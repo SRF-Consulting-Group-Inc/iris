@@ -183,6 +183,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		identifier = i;
 	}
 
+	/** Set the identifier */
+	public void doSetIdentifier(String i) throws TMSException {
+		if (i != identifier) {
+			store.update(this, "identifier", i);
+			setIdentifier(i);
+		}
+	}
+
 	/** Get the identifier */
 	@Override
 	public String getIdentifier() {
@@ -198,6 +206,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		sender = se;
 	}
 
+	/** Set the sender */
+	public void doSetSender(String se) throws TMSException {
+		if (se != sender) {
+			store.update(this, "sender", se);
+			setSender(se);
+		}
+	}
+	
 	/** Get the sender */
 	@Override
 	public String getSender() {
@@ -211,6 +227,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public void setSentDate(Date sd) {
 		sent_date = sd;
+	}
+
+	/** Set the sent date */
+	public void doSetSentDate(Date sd) throws TMSException {
+		if (sd != sent_date) {
+			store.update(this, "sent_date", sd);
+			setSentDate(sd);
+		}
 	}
 
 	/** Get the sent date */
@@ -228,6 +252,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		status = sta;
 	}
 
+	/** Set the status */
+	public void doSetStatus(String sta) throws TMSException {
+		if (status != sta) {
+			store.update(this, "status", sta);
+			setStatus(sta);
+		}
+	}
+	
 	/** Get the status */
 	@Override
 	public String getStatus() {
@@ -243,6 +275,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		message_type = mt;
 	}
 
+	/** Set the message type */
+	public void doSetMsgType(String mt) throws TMSException {
+		if (message_type != mt) {
+			store.update(this, "message_type", mt);
+			setMsgType(mt);
+		}
+	}
+	
 	/** Get the message type */
 	@Override
 	public String getMsgType() {
@@ -256,6 +296,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public void setScope(String sc) {
 		scope = sc;
+	}
+
+	/** Set the scope */
+	public void doSetScope(String sc) throws TMSException {
+		if (scope != sc) {
+			store.update(this, "scope", sc);
+			setScope(sc);
+		}
 	}
 	
 	/** Get the scope */
@@ -273,6 +321,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		codes = cd;
 	}
 
+	/** Set the codes */
+	public void doSetCodes(List<String> cd) throws TMSException {
+		if (codes != cd) {
+			store.update(this, "codes", cd);
+			setCodes(cd);
+		}
+	}
+	
 	/** Get the codes */
 	@Override
 	public List<String> getCodes() {
@@ -288,6 +344,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		note = nt;
 	}
 
+	/** Set the note */
+	public void doSetNote(String nt) throws TMSException {
+		if (note != nt) {
+			store.update(this, "note", nt);
+			setNote(nt);
+		}
+	}
+	
 	/** Get the note */
 	@Override
 	public String getNote() {
@@ -303,6 +367,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		alert_references = ref;
 	}
 
+	/** Set the alert references */
+	public void doSetAlertReferences(List<String> ref) throws TMSException {
+		if (alert_references != ref) {
+			store.update(this, "alert_references", ref);
+			setAlertReferences(ref);
+		}
+	}
+	
 	/** Get the alert references */
 	@Override
 	public List<String> getAlertReferences() {
@@ -315,6 +387,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public void setIncidents(List<String> inc) {
 		incidents = inc;
+	}
+
+	/** Set the incidents */
+	public void doSetIncidents(List<String> inc) throws TMSException {
+		if (incidents != inc) {
+			store.update(this, "incidents", inc);
+			setIncidents(inc);
+		}
 	}
 
 	/** Get the incidents */
@@ -332,6 +412,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		categories = ct;
 	}
 
+	/** Set the categories */
+	public void doSetCategories(List<String> ct) throws TMSException {
+		if (categories != ct) {
+			store.update(this, "categories", ct);
+			setCategories(ct);
+		}
+	}
+
 	/** Get the categories */
 	@Override
 	public List<String> getCategories() {
@@ -347,6 +435,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		event = ev;
 	}
 
+	/** Set the event */
+	public void doSetEvent(String ev) throws TMSException {
+		if (event != ev) {
+			store.update(this, "event", ev);
+			setUrgency(ev);
+		}
+	}
+	
 	/** Get the event */
 	@Override
 	public String getEvent() {
@@ -360,6 +456,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public void setResponseTypes(List<String> rt) {
 		response_types = rt;
+	}
+
+	/** Set the response types */
+	public void doSetResponseTypes(List<String> rt) throws TMSException {
+		if (response_types != rt) {
+			store.update(this, "response_types", rt);
+			setResponseTypes(rt);
+		}
 	}
 
 	/** Get the response type(s) */
@@ -377,7 +481,15 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		urgency = u;
 	}
 
-	/** Get the ugency */
+	/** Set the urgency */
+	public void doSetUrgency(String u) throws TMSException {
+		if (urgency != u) {
+			store.update(this, "urgency", u);
+			setUrgency(u);
+		}
+	}
+	
+	/** Get the urgency */
 	@Override
 	public String getUrgency() {
 		return urgency;
@@ -392,6 +504,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		severity = sv;
 	}
 
+	/** Set the severity */
+	public void doSetSeverity(String sv) throws TMSException {
+		if (urgency != sv) {
+			store.update(this, "severity", sv);
+			setSeverity(sv);
+		}
+	}
+	
 	/** Get the severity */
 	@Override
 	public String getSeverity() {
@@ -407,6 +527,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		certainty = cy;
 	}
 
+	/** Set the certainty */
+	public void doSetCertainty(String cy) throws TMSException {
+		if (certainty != cy) {
+			store.update(this, "certainty", cy);
+			setCertainty(cy);
+		}
+	}
+	
 	/** Get the certainty */
 	@Override
 	public String getCertainty() {
@@ -422,6 +550,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		audience = au;
 	}
 
+	/** Set the audience */
+	public void doSetAudience(String au) throws TMSException {
+		if (audience != au) {
+			store.update(this, "audience", au);
+			setAudience(au);
+		}
+	}
+	
 	/** Get the audience */
 	@Override
 	public String getAudience() {
@@ -437,6 +573,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		effective_date = efd;
 	}
 
+	/** Set the effective date */
+	public void doSetEffectiveDate(Date efd) throws TMSException {
+		if (effective_date != efd) {
+			store.update(this, "effective_date", efd);
+			setEffectiveDate(efd);
+		}
+	}
+	
 	/** Get the effective date */
 	@Override
 	public Date getEffectiveDate() {
@@ -450,6 +594,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public void setOnsetDate(Date od) {
 		onset_date = od;
+	}
+
+	/** Set the onset date */
+	public void doSetOnsetDate(Date od) throws TMSException {
+		if (od != onset_date) {
+			store.update(this, "onset_date", od);
+			setOnsetDate(od);
+		}
 	}
 
 	/** Get the onset date */
@@ -467,6 +619,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		expiration_date = exd;
 	}
 
+	/** Set the expiration date */
+	public void doSetExpirationDate(Date exd) throws TMSException {
+		if (exd != expiration_date) {
+			store.update(this, "expiration_date", exd);
+			setExpirationDate(exd);
+		}
+	}
+
 	/** Get the expiration date */
 	@Override
 	public Date getExpirationDate() {
@@ -482,6 +642,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		sender_name = sn;
 	}
 
+	/** Set the sender's name */
+	public void doSetSenderName(String sn) throws TMSException {
+		if (sender_name != sn) {
+			store.update(this, "sender_name", sn);
+			setSenderName(sn);
+		}
+	}
+	
 	/** Get the sender's name */
 	@Override
 	public String getSenderName() {
@@ -497,6 +665,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		headline = hl;
 	}
 
+	/** Set the alert headline */
+	public void doSetHeadline(String hl) throws TMSException {
+		if (headline != hl) {
+			store.update(this, "headline", hl);
+			setHeadline(hl);
+		}
+	}
+	
 	/** Get the alert headline */
 	@Override
 	public String getHeadline() {
@@ -512,6 +688,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		alert_description = ad;
 	}
 
+	/** Set the alert description */
+	public void doSetAlertDescription(String ad) throws TMSException {
+		if (alert_description != ad) {
+			store.update(this, "alert_description", ad);
+			setAlertDescription(ad);
+		}
+	}
+	
 	/** Get the description */
 	@Override
 	public String getAlertDescription() {
@@ -527,6 +711,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		instruction = in;
 	}
 
+	/** Set the instruction */
+	public void doSetInstruction(String in) throws TMSException {
+		if (instruction != in) {
+			store.update(this, "instruction", in);
+			setInstruction(in);
+		}
+	}
+	
 	/** Get the description */
 	@Override
 	public String getInstruction() {
@@ -542,6 +734,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		parameters = par;
 	}
 
+	/** Set the parameters */
+	public void doSetParameters(String par) throws TMSException {
+		if (parameters != par) {
+			store.update(this, "parameters", par);
+			setParameters(par);
+		}
+	}
+	
 	/** Get the parameters */
 	@Override
 	public String getParameters() {
@@ -557,6 +757,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		area = ar;
 	}
 
+	/** Set the area */
+	public void doSetArea(String ar) throws TMSException {
+		if (area != ar) {
+			store.update(this, "area", ar);
+			setArea(ar);
+		}
+	}
+	
 	/** Get the area */
 	@Override
 	public String getArea() {
