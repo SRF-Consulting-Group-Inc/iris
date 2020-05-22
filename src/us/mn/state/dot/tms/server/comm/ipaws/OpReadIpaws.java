@@ -25,19 +25,25 @@ import us.mn.state.dot.tms.server.comm.PriorityLevel;
  * This operation reads alerts from the IPAWS system and parses them for
  * storage in the IPAWS Alert Bucket.
  *
- * @author Gordon Parikh
  * @author Douglas Lau
+ * @author Gordon Parikh
  */
 public class OpReadIpaws extends OpController<IpawsProperty> {
 
 	/** Alert feed name */
-	private final String alertFeed;
+	protected final String alertFeed;
 
-	/** Create a new operation to read alert feed */
+	/** Create a new operation to read alert feed with default priority level.
+	 */
 	protected OpReadIpaws(ControllerImpl c, String fid) {
-		super(PriorityLevel.DATA_30_SEC, c);
+		this(PriorityLevel.DATA_30_SEC, c, fid);
+	}
+	
+	/** Create a new operation to read alert feed with custom priority level.
+	 */
+	protected OpReadIpaws(PriorityLevel p, ControllerImpl c, String fid) {
+		super(p, c);
 		alertFeed = fid;
-		IpawsPoller.slog("Polling IPAWS alert feed " + alertFeed);
 	}
 
 	/** Create the first phase of the operation */
@@ -53,6 +59,7 @@ public class OpReadIpaws extends OpController<IpawsProperty> {
 		protected Phase<IpawsProperty> poll(
 			CommMessage<IpawsProperty> mess) throws IOException
 		{
+			IpawsPoller.slog("Polling IPAWS alert feed " + alertFeed);
 			mess.add(new IpawsProperty(alertFeed));
 			mess.queryProps();
 			return null;
