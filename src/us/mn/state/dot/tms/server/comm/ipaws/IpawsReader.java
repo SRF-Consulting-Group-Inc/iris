@@ -155,15 +155,21 @@ public class IpawsReader {
         	// and the exception too (ipaws_alert_<date>_exc.log)
         	String excfn = String.format(
         			"/var/log/iris/IpawsAlert_err_%s_exc.log", dts);
-        	PrintWriter pw = new PrintWriter(new FileWriter(excfn));
+        	FileWriter fw = new FileWriter(excfn);
+        	PrintWriter pw = new PrintWriter(fw);
         	e.printStackTrace(pw);
+        	pw.close();
+        	fw.close();
         	System.out.println(String.format("See %s for details", excfn));
         }
     }
     
     private static void getIpawsAlert(Node node)
     		throws ParseException, SonarException, TMSException {
-
+    	
+    	// TODO validate the X.509 certificate we receive to help avoid
+    	// potential attacks
+    	
 //    	System.out.println("In IpawsReader.getIpawsAlert");
         if (node.getNodeType() == Node.ELEMENT_NODE) {
             Element element = (Element) node;
@@ -175,47 +181,40 @@ public class IpawsReader {
             		(IpawsAlertImpl) IpawsAlertHelper.lookup(name);
             
             // if it doesn't, create a new one
-            boolean newObj = false;
             if (ia == null) {
             	System.out.println("Creating new alert with name: " + name);
             	ia = new IpawsAlertImpl(name);
-            	newObj = true;
+            	ia.notifyCreate();
             } else
             	System.out.println("Updating alert with name: " + name);
             
             // either way set all the values
-            ia.setIdentifier(getTagValue("identifier", element));
-            ia.setSender(getTagValue("sender", element));
-            ia.setSentDate(parseDate(getTagValue("sent", element)));
-            ia.setStatus(getTagValue("status", element));
-            ia.setMsgType(getTagValue("msgType", element));
-            ia.setScope(getTagValue("scope", element));
-            ia.setCodes(getTagValueArray("code", element));
-            ia.setNote(getTagValue("note", element));
-            ia.setAlertReferences(getTagValueArray("references", element));
-            ia.setIncidents(getTagValueArray("incidents", element));
-            ia.setCategories(getTagValueArray("category", element));
-            ia.setEvent(getTagValue("event", element));
-            ia.setResponseTypes(getTagValueArray("responseType", element));
-            ia.setUrgency(getTagValue("urgency", element));
-            ia.setSeverity(getTagValue("severity", element));
-            ia.setCertainty(getTagValue("certainty", element));
-            ia.setAudience(getTagValue("audience", element));
-            ia.setEffectiveDate(parseDate(getTagValue("effective", element)));
-            ia.setOnsetDate(parseDate(getTagValue("onset", element)));
-            ia.setExpirationDate(parseDate(getTagValue("expires", element)));
-            ia.setSenderName(getTagValue("senderName", element));
-            ia.setHeadline(getTagValue("headline", element));
-            ia.setAlertDescription(getTagValue("description", element));
-            ia.setInstruction(getTagValue("instruction", element));
-            
-            ia.setParameters(getValuePairJson("parameter", element));
-            ia.setArea(getAreaJson("area", element));
-            
-            if (newObj) {
-            	System.out.println("Creating alert object");
-            	ia.notifyCreate();
-            }
+            ia.doSetIdentifier(getTagValue("identifier", element));
+            ia.doSetSender(getTagValue("sender", element));
+            ia.doSetSentDate(parseDate(getTagValue("sent", element)));
+            ia.doSetStatus(getTagValue("status", element));
+            ia.doSetMsgType(getTagValue("msgType", element));
+            ia.doSetScope(getTagValue("scope", element));
+            ia.doSetCodes(getTagValueArray("code", element));
+            ia.doSetNote(getTagValue("note", element));
+            ia.doSetAlertReferences(getTagValueArray("references", element));
+            ia.doSetIncidents(getTagValueArray("incidents", element));
+            ia.doSetCategories(getTagValueArray("category", element));
+            ia.doSetEvent(getTagValue("event", element));
+            ia.doSetResponseTypes(getTagValueArray("responseType", element));
+            ia.doSetUrgency(getTagValue("urgency", element));
+            ia.doSetSeverity(getTagValue("severity", element));
+            ia.doSetCertainty(getTagValue("certainty", element));
+            ia.doSetAudience(getTagValue("audience", element));
+            ia.doSetEffectiveDate(parseDate(getTagValue("effective", element)));
+            ia.doSetOnsetDate(parseDate(getTagValue("onset", element)));
+            ia.doSetExpirationDate(parseDate(getTagValue("expires", element)));
+            ia.doSetSenderName(getTagValue("senderName", element));
+            ia.doSetHeadline(getTagValue("headline", element));
+            ia.doSetAlertDescription(getTagValue("description", element));
+            ia.doSetInstruction(getTagValue("instruction", element));
+            ia.doSetParameters(getValuePairJson("parameter", element));
+            ia.doSetArea(getAreaJson("area", element));
         }
 
     }
