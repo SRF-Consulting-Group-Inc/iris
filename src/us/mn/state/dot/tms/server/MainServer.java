@@ -213,6 +213,7 @@ public class MainServer {
 		TIMER.addJob(new ParkingAreaJob());
 		TIMER.addJob(new ReaperJob());
 		TIMER.addJob(new ActionPlanJob(TIMER));
+		TIMER.addJob(new IpawsProcJob());
 	}
 
 	/** Schedule jobs on FLUSH thread */

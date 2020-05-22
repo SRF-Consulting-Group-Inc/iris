@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import us.mn.state.dot.tms.IpawsAlert;
+import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
 
 /**
@@ -34,6 +35,9 @@ import us.mn.state.dot.tms.TMSException;
  * @author Gordon Parikh
  */
 public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
+	
+	/** Database table name */
+	static private final String TABLE = "event.ipaws";
 	
 	/** Load all the incidents */
 	static public void loadAll() throws TMSException {
@@ -47,7 +51,11 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			SONAR_TYPE + ";",new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
-				namespace.addObject(new IpawsAlertImpl(row));
+				try {
+					namespace.addObject(new IpawsAlertImpl(row));
+				} catch(Exception e) {
+					System.out.println(row.getString(1));
+				}
 			}
 		});
 	}
@@ -130,7 +138,28 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			row.getString(27)	//area
 		);
 	}
-	
+
+	/** Get IPAWS alert purge threshold (days) */
+	static private int getPurgeDays() {
+		return SystemAttrEnum.IPAWS_ALERT_PURGE_DAYS.getInt();
+	}
+
+	/** Purge old records that have been marked "purgeable". The age of the
+	 *  records is determined based on the expiration_date field.
+	 *  
+	 *  TODO should we have another method that also purges old non-purgeable
+	 *  records??
+	 */
+	static public void purgeRecords() throws TMSException {
+		int age = getPurgeDays();
+		System.out.println("Purging purgeable IPAWS alert records older than "
+				+ age + " days...");
+		if (store != null && age > 0) {
+			store.update("DELETE FROM " + TABLE +
+				" WHERE expiration_date < now() - '" + age +
+				" days'::interval;");
+		}
+	}
 
 	public IpawsAlertImpl(String n) throws TMSException {
 		super(n);
