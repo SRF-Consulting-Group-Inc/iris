@@ -187,4 +187,9 @@ public interface IpawsAlert extends SonarObject {
 	/** Get the areas */
 	String getArea();
 	
+	/** Set if this alert is purgeable (irrelevant to us) */
+	void setPurgeable(boolean p);
+	
+	/** Return if this alert is purgeable (irrelevant to us) */
+	boolean getPurgeable();
 }

@@ -47,7 +47,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			"categories, event, response_types, urgency, severity, " +
 			"certainty, audience, effective_date, onset_date, " +
 			"expiration_date, sender_name, headline, alert_description, " + 
-			"instruction, parameters, area FROM event." +
+			"instruction, parameters, area, purgeable FROM event." +
 			SONAR_TYPE + ";",new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
@@ -92,6 +92,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		map.put("instruction", instruction);
 		map.put("parameters", parameters);
 		map.put("area", area);
+		map.put("purgeable", purgeable);
 		return map;
 	}
 
@@ -135,7 +136,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			row.getString(24), // alert description
 			row.getString(25), // instruction
 			row.getString(26),	// parameters
-			row.getString(27)	//area
+			row.getString(27),	//area
+			row.getBoolean(28) // purgeable flag
 		);
 	}
 
@@ -171,7 +173,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			String[] inc, String[] ct, String ev, String[] rt, String u, 
 			String sv, String cy, String au, Date efd, Date od, Date exd, 
 			String sn, String hl, String ades, String in, 
-			String par, String ar) 
+			String par, String ar, boolean p) 
 	{
 		super(n);
 		identifier = i;
@@ -200,7 +202,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		instruction = in;
 		parameters = par;
 		area = ar;
-	
+		purgeable = p;
 	}
 
 	/** Identifier for the alert */
@@ -799,5 +801,27 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	public String getArea() {
 		return area;
 	}
+	
+	/** Purgeable flag. Set to true if alert is determined to be irrelevant
+	 *  to this system's users.
+	 */
+	private boolean purgeable;
+	
+	/** Set if this alert is purgeable (irrelevant to us) */
+	public void setPurgeable(boolean p) {
+		purgeable = p;
+	}
 
+	/** Set the area */
+	public void doSetPurgeable(boolean p) throws TMSException {
+		if (purgeable != p) {
+			store.update(this, "purgeable", p);
+			setPurgeable(p);
+		}
+	}
+	
+	/** Return if this alert is purgeable (irrelevant to us) */
+	public boolean getPurgeable() {
+		return purgeable;
+	}
 }
