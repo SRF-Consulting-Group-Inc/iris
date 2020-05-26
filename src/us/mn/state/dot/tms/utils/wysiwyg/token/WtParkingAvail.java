@@ -41,7 +41,7 @@ public class WtParkingAvail extends Wt_IrisToken {
 	 */
 	public WtParkingAvail(String pid, String l_txt, String c_txt) {
 		super(WTokenType.parkingAvail, "[pa");
-		this.pid   = pid;
+		this.pid = pid.startsWith("pa") ? pid.substring(2) : pid;
 		this.l_txt = l_txt;
 		this.c_txt = c_txt;
 		updateString();
@@ -95,7 +95,8 @@ public class WtParkingAvail extends Wt_IrisToken {
 	public Integer getBoxWidth(Integer chsp) {
 		int capacity = 20;  // arbitrary capacity for unknown parking area
 		if (pid != null) {
-			ParkingArea pa = ParkingAreaHelper.lookup(pid);
+			String pid_full = pid.startsWith("pa") ? pid : "pa" + pid; 
+			ParkingArea pa = ParkingAreaHelper.lookup(pid_full);
 			if (pa != null)
 				capacity = pa.getCapacity();
 		}
