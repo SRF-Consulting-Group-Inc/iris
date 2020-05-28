@@ -148,7 +148,8 @@ public class VidPanel extends JPanel implements FocusListener {
 	{
 		public void perform2() {
 			int frames = getReceivedFrameCount();
-//			System.err.println("frames: "+frames);
+//			System.err.println(String.format("state: %s | frames: %d",
+//					panelStatus.toString(), frames));
 			switch (panelStatus) {
 				case IDLE:
 				case FAILED:
@@ -225,7 +226,7 @@ public class VidPanel extends JPanel implements FocusListener {
 		PANEL_UPDATE.addJob(statusMonitor);
 	}
 
-	private void stopStatusMonitor() {
+	public void stopStatusMonitor() {
 		System.err.println("VidPanel.stopStatusMonitor()");
 		repeatStatusMonitor = false;
 		PANEL_UPDATE.removeJob(statusMonitor);
@@ -320,9 +321,9 @@ public class VidPanel extends JPanel implements FocusListener {
 
 //		defaultFgLabelColor = lbl.getForeground();
 
-		addLabel("");
+		addLabel(" ");
 		add(videoHolder);
-		addLabel("");
+		addLabel(" ");
 		
 		// Catch when panel using this is closed and
 		// shut down the stream if it's running.
