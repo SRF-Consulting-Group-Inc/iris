@@ -66,11 +66,13 @@ import static us.mn.state.dot.tms.client.widget.Widgets.UI;
  * @author Timothy Johnson
  * @author Douglas Lau
  * @author Travis Swanston
+ * @author Michael Janson
+ * @author Gordon Parikh
  */
 public class StreamPanel extends JPanel {
 
 	/** Status panel height */
-	static private final int HEIGHT_STATUS_PNL = 20;
+	static private final int HEIGHT_STATUS_PNL = 40;
 
 	/** Control panel height */
 	static private final int HEIGHT_CONTROL_PNL = 40;
@@ -88,10 +90,7 @@ public class StreamPanel extends JPanel {
 	private final boolean autoplay;
 
 	/** JPanel which holds the component used to render the video stream */
-	private final JPanel screen_pnl;
-
-	/** JPanel which holds the status widgets */
-	private final JPanel status_pnl;
+	private final VidPanel screen_pnl;
 
 	/** Stream controls panel and its components */
 	private final JPanel control_pnl;
@@ -126,6 +125,18 @@ public class StreamPanel extends JPanel {
 		SAVE,
 		RESTORE;
 	}
+	
+	/** Current Camera */
+	private Camera camera = null;
+
+	/** Current video stream */
+	private VideoStream stream = null;
+
+	/** External viewer from user/client properties.  Null means none. */
+	private final String external_viewer;
+
+	/** Most recent streaming state.  State variable for event FSM. */
+	private boolean stream_state = false;
 
 	/** Timer listener for updating video status */
 	private class StatusUpdater implements ActionListener {
@@ -139,37 +150,11 @@ public class StreamPanel extends JPanel {
 
 	/** Stream progress timer */
 	private final Timer timer = new Timer(STATUS_DELAY, stat_updater);
-
-	/** Mouse PTZ control */
-	private final MousePTZ mouse_ptz;
-
-	/** Current Camera */
-	private Camera camera = null;
-
-	/** Current video stream */
-	private VideoStream stream = null;
-
-	/** External viewer from user/client properties.  Null means none. */
-	private final String external_viewer;
-
-	/** Most recent streaming state.  State variable for event FSM. */
-	private boolean stream_state = false;
-
-	/** Create a mouse PTZ */
-	static private MousePTZ createMousePTZ(CameraPTZ cam_ptz, Dimension sz,
-		JPanel screen_pnl)
-	{
-		return (cam_ptz != null)
-		      ? new MousePTZ(cam_ptz, sz, screen_pnl)
-		      : null;
-	}
-
+	
 	/** Stream status listeners to notify on stream status change events */
 	private final Set<StreamStatusListener> ssl_set =
 		new HashSet<StreamStatusListener>();
 	
-    private static Pipeline pipe;
-    
     private CameraPTZ ptz;
     
     private Session session;
@@ -205,24 +190,21 @@ public class StreamPanel extends JPanel {
 		autoplay = auto;
 		VideoRequest.Size vsz = req.getSize();
 		Dimension sz = UI.dimension(vsz.width, vsz.height);
-		screen_pnl = createScreenPanel(sz);
-		mouse_ptz = createMousePTZ(cam_ptz, sz, screen_pnl);
-		status_pnl = createStatusPanel(vsz);
+		screen_pnl = new VidPanel(sz);
+		Dimension vpsz = screen_pnl.getPreferredSize();
 		control_pnl = createControlPanel(vsz);
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.gridx = 0;
 		c.gridy = GridBagConstraints.RELATIVE;
 		add(screen_pnl, c);
-		add(status_pnl, c);
 		if (ctrl)
 			add(control_pnl, c);
-		int pnlHeight = vsz.height + HEIGHT_STATUS_PNL
-			+ (ctrl ? HEIGHT_CONTROL_PNL : 0);
+		int pnlHeight = vpsz.height + (ctrl ? HEIGHT_CONTROL_PNL : 0);
 		
-		setPreferredSize(UI.dimension(vsz.width, pnlHeight));
-		setMinimumSize(UI.dimension(vsz.width, pnlHeight));
-		setMaximumSize(UI.dimension(vsz.width, pnlHeight));
+		setPreferredSize(UI.dimension(vpsz.width, pnlHeight));
+		setMinimumSize(UI.dimension(vpsz.width, pnlHeight));
+		setMaximumSize(UI.dimension(vpsz.width, pnlHeight));
 		updateButtonState();
 		
 		ptz = cam_ptz;
@@ -240,26 +222,7 @@ public class StreamPanel extends JPanel {
 	public StreamPanel(VideoRequest req) {
 		this(req, null, null, false, true);
 	}
-
-	/** Create the screen panel */
-	private JPanel createScreenPanel(Dimension sz) {
-		JPanel p = new JPanel(new BorderLayout());
-		p.setBorder(BorderFactory.createBevelBorder(
-			BevelBorder.LOWERED));
-		p.setPreferredSize(sz);
-		p.setMinimumSize(sz);
-		return p;
-	}
-
-	/** Create the status panel */
-	private JPanel createStatusPanel(VideoRequest.Size vsz) {
-		JPanel p = new JPanel(new BorderLayout());
-		p.add(status_lbl, BorderLayout.WEST);
-		p.setPreferredSize(UI.dimension(vsz.width, HEIGHT_STATUS_PNL));
-		p.setMinimumSize(UI.dimension(vsz.width, HEIGHT_STATUS_PNL));
-		return p;
-	}
-
+	
 	/** Create the control panel */
 	private JPanel createControlPanel(VideoRequest.Size vsz) {
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER,
@@ -275,7 +238,6 @@ public class StreamPanel extends JPanel {
 				LayoutCommand.SAVE);
 		restore_layout_button = createLayoutBtn("camera.template.restore.layout",
 				LayoutCommand.RESTORE);
-
 			
 		p.add(stop_button);
 		p.add(play_button);
@@ -405,11 +367,8 @@ public class StreamPanel extends JPanel {
 				}
 			});
 		}
-		else if (sc == StreamCommand.PLAY_EXTERNAL)
-		{
-			//launchExternalViewer(camera);
-			final CameraPTZ cam_ptz = new CameraPTZ(session);
-			cam_ptz.setCamera(ptz.getCamera());
+		else if (sc == StreamCommand.PLAY_EXTERNAL) {
+			stopStream();
 			desktop.showExtFrame(new VidWindow(camera, true, Size.MEDIUM));
 		}
 	}
@@ -433,8 +392,7 @@ public class StreamPanel extends JPanel {
 	 * This is normally called from the streamer thread.
 	 */
 	private void stopStream() {
-//		if (stream != null)
-	    if (pipe != null)
+	    if (screen_pnl != null)
 			clearStream();
 	}
 
@@ -442,13 +400,7 @@ public class StreamPanel extends JPanel {
 	private void updateStatus() {
 		STREAMER.addJob(new Job() {
 			public void perform() {
-//				VideoStream vs = stream;
-//				if (vs != null && vs.isPlaying())
-					//setStatusText(vs.getStatus());
-				if (pipe != null && pipe.isPlaying())
-					setStatusText(Encoding.fromOrdinal(camera.getEncoderType().getEncoding()).toString());
-				else
-					clearStream();
+				updateButtonState();
 			}
 		});
 	}
@@ -468,7 +420,6 @@ public class StreamPanel extends JPanel {
 				camera = c;
 				updateButtonState();
 				setStatusText(null);
-				boolean mjpeg = video_req.hasMJPEG(c);
 				if (autoplay)
 					playStream();
 			}
@@ -477,84 +428,23 @@ public class StreamPanel extends JPanel {
 
 	/** Request a new video stream */
 	private void requestStream(Camera c) {
-//		try {
-//			stream = createStream(c);
-	        Gst.init("CameraTest");
-	        
-//            SimpleVideoComponent vc = new SimpleVideoComponent();
-//            Bin bin = Gst.parseBinFromDescription(
-//                    "autovideosrc ! videoconvert",
-//                    true);
-//            Bin bin = Gst.parseBinFromDescription(
-//                    "souphttpsrc location=http://10.1.4.183/axis-cgi/mjpg/video.cgi ! jpegdec ! videoconvert",
-//                    true);
-//            Bin bin = Gst.parseBinFromDescription(
-//                    "rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264",
-//                    true);
-            
-//            System.out.println(System.getenv().get("GST_DEBUG_DUMP_DOT_DIR"));            
-//            bin.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "bingraph");
-            
-//            pipe = new Pipeline();
-//            pipe.addMany(bin, vc.getElement());
-//            Pipeline.linkMany(bin, vc.getElement());
-//            pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "mjpeg_pipe");
-////            vc.setPreferredSize(new Dimension(640, 480));           
-//            for ( Element e : bin.getElements()) {
-//            	System.out.println(e.toString());
-//            }
-	        
-
-	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=" + c.getEncoderType().getUriScheme() + 
-	        		c.getEncoder() + c.getEncoderType().getUriPath() + " protocols=tcp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
-	        
-//	        pipe = (Pipeline)Gst.parseLaunch("rtspsrc location=rtsp://10.1.4.183/axis-media/media.amp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink name=appsink");
-	        SimpleVideoComponent vc = new SimpleVideoComponent((AppSink) pipe.getElementByName("appsink"));
-           
-            pipe.play();
-
-//          pipe.debugToDotFile(Bin.DebugGraphDetails.SHOW_ALL, "mjpeg_pipe_play");
-			JComponent screen = vc;
-//			JComponent screen = stream.getComponent();
-			screen.setPreferredSize(screen_pnl.getPreferredSize());
-			screen_pnl.add(screen);
-			timer.start();
-			handleStateChange();
-//		}
-//		catch (IOException e) {
-//			setStatusText(e.getMessage());
-//		}
+		screen_pnl.setCamera(c);
+		handleStateChange();
+		timer.start();
 	}
-
-//	/** Create a new video stream */
-//	private VideoStream createStream(Camera c) throws IOException {
-//		if (video_req.hasMJPEG(c))
-//			return new MJPEGStream(STREAMER, video_req, c);
-//		else
-//			throw new IOException("Unable to stream");
-//	}
 
 	/** Clear the video stream */
 	private void clearStream() {
-		timer.stop();
-		pipe.stop();
-		screen_pnl.removeAll();
-		screen_pnl.repaint();
-//		VideoStream vs = stream;
-//		if (vs != null) {
-//			vs.dispose();
-//			stream = null;
-//		}
-		setStatusText(null);
+		screen_pnl.releaseStream();
+		screen_pnl.stopStatusMonitor();
 		handleStateChange();
 	}
 
 	/** Dispose of the stream panel */
 	public final void dispose() {
 		clearStream();
-		if (mouse_ptz != null)
-			mouse_ptz.dispose();
-		session.removeEditModeListener(edit_lsnr);
+		if (session != null)
+			session.removeEditModeListener(edit_lsnr);
 		save_layout_button.setEnabled(false);
 	}
 
@@ -565,7 +455,7 @@ public class StreamPanel extends JPanel {
 
 	/** Are we currently streaming? */
 	public boolean isStreaming() {
-		return pipe != null;//stream != null;
+		return screen_pnl != null && screen_pnl.isStreaming();
 	}
 
 	/**
@@ -597,9 +487,8 @@ public class StreamPanel extends JPanel {
 			return;
 		}
 		boolean streaming = isStreaming();
-		boolean mjpeg = video_req.hasMJPEG(camera);
-		stop_button.setEnabled(mjpeg && streaming);
-		play_button.setEnabled(mjpeg && !streaming);
+		stop_button.setEnabled(streaming);
+		play_button.setEnabled(!streaming);
 		playext_button.setEnabled(true);
 	}
 
@@ -617,33 +506,6 @@ public class StreamPanel extends JPanel {
 	public void unbindStreamStatusListener(StreamStatusListener ssl) {
 		if (ssl != null)
 			ssl_set.remove(ssl);
-	}
-
-	/** Launch the external viewer for a Camera. */
-	private void launchExternalViewer(Camera c) {
-		if (c == null)
-			return;
-		if (external_viewer == null) {
-			// FIXME: i18n
-			setStatusText("Error: no external viewer defined.");
-			return;
-		}
-		String uri = video_req.getUri(c).toString();
-		if (uri.length() == 0) {
-			// FIXME: i18n
-			setStatusText("Error: cannot determine URL.");
-			return;
-		}
-		String[] fields = external_viewer.split(",");
-		List<String> cmd =
-			new ArrayList<String>(fields.length + 1);
-		for (String f : fields)
-			cmd.add(f);
-		cmd.add(uri);
-		OSUtils.spawnProcess(cmd);
-		// FIXME: i18n
-		setStatusText("External viewer launched.");
-		return;
 	}
 	
 	/** Update the edit mode */
