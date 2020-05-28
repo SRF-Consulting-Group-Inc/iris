@@ -224,6 +224,14 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		      :	null;
 	}
 
+	/** Lookup a camera template */
+	static protected CameraTemplateImpl lookupCameraTemplate(String name) {
+		SonarObject so = lookupObject(CameraTemplateImpl.SONAR_TYPE, name);
+		return (so instanceof CameraTemplateImpl)
+				? (CameraTemplateImpl) so
+				: null;
+	}
+
 	/** Lookup a monitor style */
 	static protected MonitorStyleImpl lookupMonitorStyle(String name) {
 		SonarObject so = lookupObject(MonitorStyleImpl.SONAR_TYPE,name);
