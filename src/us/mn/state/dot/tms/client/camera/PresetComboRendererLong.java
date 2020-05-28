@@ -17,14 +17,26 @@ package us.mn.state.dot.tms.client.camera;
 import us.mn.state.dot.tms.CameraPreset;
 import us.mn.state.dot.tms.Direction;
 import us.mn.state.dot.tms.client.widget.IListCellRenderer;
+import us.mn.state.dot.tms.utils.I18N;
 
 /**
  * Renderer for camera preset combo boxes.
  *
- * @author Douglas Lau
+ * @author Michael Janson
+ * @author Gordon Parikh
  */
 public class PresetComboRendererLong extends IListCellRenderer<CameraPreset> {
 
+	/** Get a CameraPreset as a string. If null (used for the first entry as a
+	 *  "title"), an I18N message is returned.
+	 */
+	@Override
+	protected String asText(CameraPreset cp) {
+		if (cp == null)
+			return I18N.get("camera.camera_preset");
+		return super.asText(cp);
+	}
+	
 	/** Convert camera preset to a string */
 	@Override
 	protected String valueToString(CameraPreset cp) {

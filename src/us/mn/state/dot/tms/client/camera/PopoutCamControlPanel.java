@@ -32,6 +32,7 @@ import us.mn.state.dot.tms.client.proxy.ProxyView;
 import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.IComboBoxModel;
+import us.mn.state.dot.tms.utils.I18N;
 
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 
@@ -64,7 +65,6 @@ public class PopoutCamControlPanel extends JPanel {
 	/** Video monitor watcher */
 	private final ProxyWatcher<VideoMonitor> watcher;
 	
-
 	/** Video monitor view */
 	private final ProxyView<VideoMonitor> vm_view =
 		new ProxyView<VideoMonitor>()
@@ -92,14 +92,15 @@ public class PopoutCamControlPanel extends JPanel {
 	private final IAction preset_act = new IAction("camera.preset") {
 		protected void doActionPerformed(ActionEvent e) {
 			CameraPreset cp = (CameraPreset) preset_cbx.getSelectedItem();
-			camera_ptz.recallPreset(cp.getPresetNum());
-			preset_cbx.setEditable(false);
+			if (cp != null)
+				camera_ptz.recallPreset(cp.getPresetNum());
 		}
 	};
 	
 	/** Video monitor action */
 	private final IAction monitor_act = new IAction("video.monitor") {
 		protected void doActionPerformed(ActionEvent e) {
+			monitorSelected();
 		}
 	};
 
@@ -111,21 +112,11 @@ public class PopoutCamControlPanel extends JPanel {
 	
 		preset_mdl = createPresetModel(camera_ptz);
 		preset_cbx.setModel(preset_mdl);
-		preset_cbx.setEditable(true);
-		preset_cbx.setSelectedItem("Camera Preset");
 		preset_cbx.setAction(preset_act);
 		preset_cbx.setRenderer(new PresetComboRendererLong());
 		
 		monitor_cbx = createMonitorCombo();
-		monitor_cbx.setEditable(true);
-		monitor_cbx.setSelectedItem("Video Monitor");
 		monitor_cbx.setRenderer(new MonComboRendererLong());
-		monitor_cbx.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				monitor_cbx.setEditable(false);
-				monitorSelected();
-			}
-		});
 		monitor_cbx.setAction(monitor_act);
 		vm_cache = session.getSonarState().getCamCache()
                 .getVideoMonitors();
@@ -138,7 +129,12 @@ public class PopoutCamControlPanel extends JPanel {
 	/** Create the video output selection combo box */
 	private JComboBox<VideoMonitor> createMonitorCombo() {
 		JComboBox<VideoMonitor> box = new JComboBox<VideoMonitor>();
-		DefaultComboBoxModel<VideoMonitor> cbxm = new DefaultComboBoxModel<VideoMonitor>();
+		DefaultComboBoxModel<VideoMonitor> cbxm =
+				new DefaultComboBoxModel<VideoMonitor>();
+
+		// add a blank element at the beginning
+		cbxm.addElement(null);
+		
 		Iterator<VideoMonitor> it = VideoMonitorHelper.iterator();
 		while (it.hasNext()) {
 			cbxm.addElement(it.next());
@@ -154,9 +150,15 @@ public class PopoutCamControlPanel extends JPanel {
 	
 	
 	/** Create the camera preset model */
-	private DefaultComboBoxModel<CameraPreset> createPresetModel(CameraPTZ cam_ptz) {
+	private DefaultComboBoxModel<CameraPreset> createPresetModel(
+			CameraPTZ cam_ptz) {
 		Camera c = cam_ptz.getCamera();
-		DefaultComboBoxModel<CameraPreset> cbxm = new DefaultComboBoxModel<CameraPreset>();
+		DefaultComboBoxModel<CameraPreset> cbxm =
+				new DefaultComboBoxModel<CameraPreset>();
+		
+		// add a blank element at the beginning
+		cbxm.addElement(null);
+		
 		if (c != null) {
 			cam_ptz.setCamera(c);
 			for (int i = 1; i <= CameraPreset.MAX_PRESET; ++i) {
@@ -217,7 +219,10 @@ public class PopoutCamControlPanel extends JPanel {
 	
 	/** Called when a video monitor is selected */
 	private void monitorSelected() {
-		watcher.setProxy(getSelectedOutput());
+		VideoMonitor vm = getSelectedOutput();
+		String vmn = (vm != null) ? vm.getName() : "null";
+		System.out.println("Setting monitor output to " + vmn);
+		watcher.setProxy(vm);
 	}
 
 	/** Get the selected video monitor from UI */

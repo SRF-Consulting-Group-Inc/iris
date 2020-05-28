@@ -16,6 +16,7 @@ package us.mn.state.dot.tms.client.camera;
 
 import us.mn.state.dot.tms.VideoMonitor;
 import us.mn.state.dot.tms.client.widget.IListCellRenderer;
+import us.mn.state.dot.tms.utils.I18N;
 
 /**
  * Renderer for monitor numbers.
@@ -23,7 +24,17 @@ import us.mn.state.dot.tms.client.widget.IListCellRenderer;
  * @author Douglas Lau
  */
 public class MonComboRendererLong extends IListCellRenderer<VideoMonitor> {
-
+	
+	/** Get a VideoMonitor as a string. If null (used for the first entry as a
+	 *  "title"), an I18N message is returned.
+	 */
+	@Override
+	protected String asText(VideoMonitor vm) {
+		if (vm == null)
+			return I18N.get("video.monitor");
+		return super.asText(vm);
+	}
+	
 	/** Convert monitor number to a string */
 	@Override
 	protected String valueToString(VideoMonitor vm) {
