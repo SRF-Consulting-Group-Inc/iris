@@ -78,6 +78,29 @@ ALTER TABLE iris._camera ADD CONSTRAINT _camera_cam_template_fkey FOREIGN KEY (c
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 
+CREATE OR REPLACE FUNCTION iris.camera_update() RETURNS TRIGGER AS
+	$camera_update$
+BEGIN
+	UPDATE iris._device_io
+	   SET controller = NEW.controller,
+	       pin = NEW.pin
+	 WHERE name = OLD.name;
+	UPDATE iris._camera
+	   SET geo_loc = NEW.geo_loc,
+	       notes = NEW.notes,
+	       cam_num = NEW.cam_num,
+	       encoder_type = NEW.encoder_type,
+	       encoder = NEW.encoder,
+	       enc_mcast = NEW.enc_mcast,
+	       encoder_channel = NEW.encoder_channel,
+	       publish = NEW.publish,
+	       video_loss = NEW.video_loss,
+	       cam_template = NEW.cam_template
+	 WHERE name = OLD.name;
+	RETURN NEW;
+END;
+$camera_update$ LANGUAGE plpgsql;
+
 CREATE TABLE iris._cam_vid_src_ord
 (
 	name character varying(20),

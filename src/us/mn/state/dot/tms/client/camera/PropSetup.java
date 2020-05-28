@@ -24,9 +24,13 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
+import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.EncoderType;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.proxy.ProxyListModel;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.IComboBoxModel;
 import us.mn.state.dot.tms.client.widget.IPanel;
@@ -92,7 +96,50 @@ public class PropSetup extends IPanel {
 			camera.setPublish(publish_chk.isSelected());
 		}
 	});
-
+	
+	/** Camera Template ComboBox */
+	private final JComboBox<CameraTemplate> cam_tmplt_cbx = 
+			new JComboBox<CameraTemplate>();
+	
+	/** Camera template action */
+	private final IAction cam_tmplt_act = new IAction("camera.template"){
+		protected void doActionPerformed(ActionEvent e) {
+			CameraTemplate ct = getSelectedCameraTemplate();
+		    camera.setCameraTemplate(ct);
+		}
+		@Override
+		protected void doUpdateSelected() {
+			// TODO we SHOULD just be able to use setSelectedItem, but the
+			// object references aren't the same for some reason...
+			// for now this works almost as well
+			
+			CameraTemplate ct = camera.getCameraTemplate();
+			
+			if (ct != null) {
+				Integer indx = null;
+				for (int i = 0; i < cam_tmplt_cbx.getModel().getSize(); ++i) {
+					Object o = cam_tmplt_cbx.getItemAt(i);
+					if (o != null && o instanceof CameraTemplate) {
+						CameraTemplate oct = (CameraTemplate) o;
+						if (oct.getName().equals(ct.getName())) {
+							indx = i;
+							break;
+						}
+					}
+				}
+				if (indx != null)
+					cam_tmplt_cbx.setSelectedIndex(indx);
+			}
+//			cam_tmplt_cbx.setSelectedItem(ct);
+		}
+	};
+	
+	/** Get the selected camera template */
+	private CameraTemplate getSelectedCameraTemplate() {
+		Object ct = cam_tmplt_cbx.getSelectedItem();
+		return (ct instanceof CameraTemplate) ? (CameraTemplate) ct : null;
+	}
+	
 	/** User session */
 	private final Session session;
 
@@ -109,9 +156,13 @@ public class PropSetup extends IPanel {
 	@Override
 	public void initialize() {
 		super.initialize();
-		enc_type_cbx.setModel(new IComboBoxModel<EncoderType>(session
-			.getSonarState().getCamCache().getEncoderTypeModel()));
+		CamCache cc = session.getSonarState().getCamCache();
+		enc_type_cbx.setModel(new IComboBoxModel<EncoderType>(
+				cc.getEncoderTypeModel()));
 		enc_type_cbx.setAction(enc_type_act);
+		cam_tmplt_cbx.setModel(new IComboBoxModel<CameraTemplate>(
+				cc.getCameraTemplateModel()));
+		cam_tmplt_cbx.setAction(cam_tmplt_act);
 		add("camera.num");
 		add(cam_num_txt, Stretch.LAST);
 		add("camera.encoder.type");
@@ -120,9 +171,13 @@ public class PropSetup extends IPanel {
 		add(encoder_txt, Stretch.LAST);
 		add("camera.enc_mcast");
 		add(enc_mcast_txt, Stretch.LAST);
-		add("camera.encoder.note", Stretch.END);
+		// TODO not sure why this doesn't have a text box (label is missing in
+		// mainline too)
+//		add("camera.encoder.note", Stretch.END);
 		add("camera.encoder.channel");
 		add(enc_chn_spn, Stretch.LAST);
+		add("camera.template");
+		add(cam_tmplt_cbx, Stretch.LAST);
 		add("camera.publish");
 		add(publish_chk, Stretch.LAST);
 		createJobs();
@@ -156,7 +211,7 @@ public class PropSetup extends IPanel {
 			}
 		});
 	}
-
+	
 	/** Update the edit mode */
 	public void updateEditMode() {
 		cam_num_txt.setEnabled(canWrite("camNum"));
@@ -164,6 +219,7 @@ public class PropSetup extends IPanel {
 		encoder_txt.setEnabled(canWrite("encoder"));
 		enc_mcast_txt.setEnabled(canWrite("encMulticast"));
 		enc_chn_spn.setEnabled(canWrite("encoderChannel"));
+		cam_tmplt_act.setEnabled(canWrite("cameraTemplate"));
 		publish_chk.setEnabled(canWrite("publish"));
 	}
 
@@ -179,6 +235,8 @@ public class PropSetup extends IPanel {
 			encoder_txt.setText(camera.getEncoder());
 		if (a == null || a.equals("encMulticast"))
 			enc_mcast_txt.setText(camera.getEncMulticast());
+		if (a == null || a.equals("cameraTemplate"))
+			cam_tmplt_act.updateSelected();
 		if (a == null || a.equals("encoderChannel"))
 			enc_chn_spn.setValue(camera.getEncoderChannel());
 		if (a == null || a.equals("publish"))

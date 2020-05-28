@@ -24,6 +24,7 @@ import java.util.Map;
 import us.mn.state.dot.sched.TimeSteward;
 import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.tms.Camera;
+import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.ChangeVetoException;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.DeviceRequest;
@@ -135,13 +136,14 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		boolean vl, String ct)
 	{
 		this(n, lookupGeoLoc(l), lookupController(c), p, nt, cn,
-		     lookupEncoderType(et), e, em, ec, pb, vl, ct);
+		     lookupEncoderType(et), e, em, ec, pb, vl,
+		     lookupCameraTemplate(ct));
 	}
 
 	/** Create a camera */
 	private CameraImpl(String n, GeoLocImpl l, ControllerImpl c, int p,
 		String nt, Integer cn, EncoderType et, String e, String em,
-		int ec, boolean pb, boolean vl, String ct)
+		int ec, boolean pb, boolean vl, CameraTemplate ct)
 	{
 		super(n, c, p, nt);
 		geo_loc = l;
@@ -483,17 +485,25 @@ public class CameraImpl extends DeviceImpl implements Camera {
 	}
 
 	/** Camera template name */
-	private String cam_template = "";
+	private CameraTemplate cam_template;
 
 	/** Set the camera template */
 	@Override
-	public void setCameraTemplate(String camTemplate) {
-		this.cam_template = camTemplate;
+	public void setCameraTemplate(CameraTemplate ct) {
+		this.cam_template = ct;
+	}
+
+	/** Set the camera template */
+	public void doSetCameraTemplate(CameraTemplate ct) throws TMSException {
+		if (!ct.equals(cam_template)) {
+			store.update(this, "cam_template", ct);
+			setCameraTemplate(ct);
+		}
 	}
 
 	/** Get the camera template */
 	@Override
-	public String getCameraTemplate() {
+	public CameraTemplate getCameraTemplate() {
 		return cam_template;
 	}
 }
