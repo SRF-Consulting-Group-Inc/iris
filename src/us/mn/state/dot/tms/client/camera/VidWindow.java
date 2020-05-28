@@ -78,9 +78,12 @@ public class VidWindow extends AbstractForm {
 	/**
 
 	 */
+	@SuppressWarnings("static-access")
 	public VidWindow(Camera cam, Boolean ctrl, VideoRequest.Size vsz)
 	{
-		this(cam, ctrl, UI.dimension(vsz.width, vsz.height + HEIGHT_STATUS_PNL + (ctrl ? HEIGHT_CONTROL_PNL : 0)), 0);
+		this(cam, ctrl, UI.dimension(vsz.width,
+				vsz.height + HEIGHT_STATUS_PNL
+				+ (ctrl ? HEIGHT_CONTROL_PNL : 0)), 0);
 	}
 	
 	/**
