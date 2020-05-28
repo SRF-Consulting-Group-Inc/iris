@@ -106,8 +106,8 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	private final JScrollPane vid_src_scrl = new JScrollPane(vid_src_lst);
 
 	/** Insert video source button */
-	private final JButton insert_btn = new JButton(new IAction(
-		"play.list.insert")
+	private final JButton insert_btn = new JButton(
+			new IAction("play.list.insert")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			insertVideoSource();
@@ -145,8 +145,8 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	}
 	
 	/** Remove video source button */
-	private final JButton remove_btn = new JButton(new IAction(
-		"play.list.remove")
+	private final JButton remove_btn = new JButton(
+			new IAction("play.list.remove")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			int s = cam_vid_src_lst.getSelectedIndex();
@@ -162,8 +162,8 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	});
 
 	/** Up button */
-	private final JButton up_btn = new JButton(new IAction(
-		"play.list.up")
+	private final JButton up_btn = new JButton(
+			new IAction("play.list.up")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			moveVidSrcUp();
@@ -189,8 +189,8 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	}
 
 	/** Down action */
-	private final JButton down_btn = new JButton(new IAction(
-		"play.list.down")
+	private final JButton down_btn = new JButton(
+			new IAction("play.list.down")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			moveCameraDown();
@@ -487,15 +487,17 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	/** Update the camera video source list */
 	private void updateCamVidSrc() {
 		cam_vid_src = VidStreamReq.getCamVidSrcOrder(camera_template);
-		for (int i = 0; i < cam_vid_src.size(); i++) {
-			VidSourceTemplate vst= lookupVidSource(cam_vid_src.get(i));
-			if (i < cam_vid_src_mdl.size())
-				cam_vid_src_mdl.set(i, vst);
-			else
-				cam_vid_src_mdl.addElement(vst);
+		if (cam_vid_src != null) {
+			for (int i = 0; i < cam_vid_src.size(); i++) {
+				VidSourceTemplate vst = lookupVidSource(cam_vid_src.get(i));
+				if (i < cam_vid_src_mdl.size())
+					cam_vid_src_mdl.set(i, vst);
+				else
+					cam_vid_src_mdl.addElement(vst);
+			}
+			for (int i = cam_vid_src.size(); i < cam_vid_src_mdl.size(); i++)
+				cam_vid_src_mdl.remove(i);
 		}
-		for (int i = cam_vid_src.size(); i < cam_vid_src_mdl.size(); i++)
-			cam_vid_src_mdl.remove(i);
 	}
 	
 	/** Initialize video source list */
