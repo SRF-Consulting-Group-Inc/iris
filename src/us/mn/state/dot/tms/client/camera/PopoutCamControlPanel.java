@@ -71,6 +71,7 @@ public class PopoutCamControlPanel extends JPanel {
 	{
 		public void enumerationComplete() { }
 		public void update(VideoMonitor vm, String a) {
+			System.out.println("Updating monitor...");
 			video_monitor = vm;
 		}
 		public void clear() {
@@ -121,7 +122,7 @@ public class PopoutCamControlPanel extends JPanel {
 		vm_cache = session.getSonarState().getCamCache()
                 .getVideoMonitors();
 		watcher = new ProxyWatcher<VideoMonitor>(vm_cache,vm_view,true);
-		
+		watcher.initialize();
 		layoutPanel();
 
 
@@ -223,6 +224,10 @@ public class PopoutCamControlPanel extends JPanel {
 		String vmn = (vm != null) ? vm.getName() : "null";
 		System.out.println("Setting monitor output to " + vmn);
 		watcher.setProxy(vm);
+		if (vm != null) {
+			Camera c = camera_ptz.getCamera();
+			vm.setCamera(c);
+		}
 	}
 
 	/** Get the selected video monitor from UI */
