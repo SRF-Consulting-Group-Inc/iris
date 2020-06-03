@@ -103,7 +103,7 @@ $camera_update$ LANGUAGE plpgsql;
 
 CREATE TABLE iris._cam_vid_src_ord
 (
-	name character varying(20),
+	name character varying(24),
 	camera_template character varying(20),
 	src_order integer,
 	src_template character varying(20),
