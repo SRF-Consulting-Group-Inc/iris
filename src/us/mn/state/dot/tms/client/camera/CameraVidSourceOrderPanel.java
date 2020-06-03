@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -46,7 +47,9 @@ import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyView;
 import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.widget.IAction;
+import us.mn.state.dot.tms.client.widget.ILabel;
 import us.mn.state.dot.tms.client.widget.IListSelectionAdapter;
+import us.mn.state.dot.tms.client.widget.Icons;
 import us.mn.state.dot.tms.server.CameraVidSourceOrderImpl;
 
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
@@ -59,7 +62,8 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Douglas Lau
  * @author Michael Janson
  */
-public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<CameraVidSourceOrder>{
+public class CameraVidSourceOrderPanel extends JPanel
+		implements ProxyView<CameraVidSourceOrder>{
 
 	/** Parse an integer */
 	static private Integer parseInt(String t) {
@@ -90,24 +94,27 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 		new DefaultListModel<VidSourceTemplate>();
 
 	/** Camera template video source list */
-	private final JList<VidSourceTemplate> cam_vid_src_lst = new JList<VidSourceTemplate>(cam_vid_src_mdl);
+	private final JList<VidSourceTemplate> cam_vid_src_lst =
+			new JList<VidSourceTemplate>(cam_vid_src_mdl);
 
 	/** Camera template video source scroll pane */
-	private final JScrollPane cam_vid_src_scrl = new JScrollPane(cam_vid_src_lst);
+	private final JScrollPane cam_vid_src_scrl =
+			new JScrollPane(cam_vid_src_lst);
 	
 	/** Available video source list model */
 	private final DefaultListModel<VidSourceTemplate> vid_src_mdl =
 		new DefaultListModel<VidSourceTemplate>();
 
 	/** Available video source list */
-	private final JList<VidSourceTemplate> vid_src_lst = new JList<VidSourceTemplate>(vid_src_mdl);
+	private final JList<VidSourceTemplate> vid_src_lst =
+			new JList<VidSourceTemplate>(vid_src_mdl);
 
 	/** Available template video source scroll pane */
 	private final JScrollPane vid_src_scrl = new JScrollPane(vid_src_lst);
 
 	/** Insert video source button */
 	private final JButton insert_btn = new JButton(
-			new IAction("play.list.insert")
+			new IAction("camera.template.source.add")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			insertVideoSource();
@@ -115,16 +122,20 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	});
 	
 	/** Video source info */
-	private final JTextArea vid_src_info = new JTextArea(14, 20);
+	private final JTextArea vid_src_info =
+			new JTextArea(14, 20);
 	
 	/** Camera video source label */
-	private final JLabel cam_vid_src_lbl = new JLabel("Camera Video Sources"); //I18N.get("catalog.seq")
+	private final ILabel cam_vid_src_lbl =
+			new ILabel("camera.template.sources");
 	
 	/** Available video source label */
-	private final JLabel avail_vid_src_lbl = new JLabel("Available Video Sources"); 
+	private final ILabel avail_vid_src_lbl =
+			new ILabel("camera.template.available_sources"); 
 	
 	/** Video source info */
-	private final JLabel vid_src_info_lbl = new JLabel("Video Source Information");
+	private final ILabel vid_src_info_lbl =
+			new ILabel("camera.template.source.info");
 
 	/** Insert a video source */
 	private void insertVideoSource() {
@@ -134,7 +145,7 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 			cam_vid_src_lst.setSelectedIndex(cam_vid_src_mdl.size() - 1);
 			String src_name = vst.getName();
 			int src_order = cam_vid_src_mdl.size() - 1;
-			String n = camera_template + "_" + src_name + "_" + Integer.toString(src_order);
+			String n = camera_template + "_" + Integer.toString(src_order);
 			cache.createObject(n);
 			CameraVidSourceOrder cvo = cache.lookupObjectWait(n);
 			cvo.setCameraTemplate(camera_template.getName());
@@ -146,14 +157,14 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	
 	/** Remove video source button */
 	private final JButton remove_btn = new JButton(
-			new IAction("play.list.remove")
+			new IAction("camera.template.source.remove")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			int s = cam_vid_src_lst.getSelectedIndex();
 			VidSourceTemplate vst = cam_vid_src_lst.getSelectedValue();
 			if (s >= 0) {
 				cam_vid_src_mdl.remove(s);
-				String n = camera_template + "_" + vst.getName() + "_" + Integer.toString(s);
+				String n = camera_template + "_" + Integer.toString(s);
 				CameraVidSourceOrder cvo = cache.lookupObject(n);
 				cvo.destroy();
 				cam_vid_src.remove(cvo);
@@ -163,7 +174,7 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 
 	/** Up button */
 	private final JButton up_btn = new JButton(
-			new IAction("play.list.up")
+			new IAction("camera.template.source.up")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			moveVidSrcUp();
@@ -190,7 +201,7 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 
 	/** Down action */
 	private final JButton down_btn = new JButton(
-			new IAction("play.list.down")
+			new IAction("camera.template.source.down")
 	{
 		protected void doActionPerformed(ActionEvent e) {
 			moveCameraDown();
@@ -298,6 +309,25 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 		vid_src_info.setEditable(false);
 		vid_src_info.setBackground(UIManager.getColor("Panel.background"));
 		vid_src_info.setLineWrap(true);
+		ImageIcon insert_icon = Icons.getIconByPropName(
+				"camera.template.source.add");
+		insert_btn.setIcon(insert_icon);
+		insert_btn.setHideActionText(true);
+		insert_btn.setToolTipText(I18N.get("camera.template.source.add"));
+		remove_btn.setText("X");
+		remove_btn.setFont(
+				new java.awt.Font("Arial", java.awt.Font.PLAIN, 18));
+		remove_btn.setToolTipText(I18N.get("camera.template.source.remove"));
+		
+		ImageIcon up_icon = Icons.getIconByPropName(
+				"camera.template.source.up");
+		up_btn.setIcon(up_icon);
+		up_btn.setHideActionText(true);
+		ImageIcon down_icon = Icons.getIconByPropName(
+				"camera.template.source.down");
+		down_btn.setIcon(down_icon);
+		down_btn.setHideActionText(true);
+		
 		layoutPanel();
 		initializeVidSrc();
 		createJobs();
@@ -320,14 +350,6 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 	private GroupLayout.Group createHorizontalGroup(GroupLayout gl) {
 		GroupLayout.SequentialGroup hg = gl.createSequentialGroup();
 		
-		GroupLayout.ParallelGroup p0 = gl.createParallelGroup(
-			GroupLayout.Alignment.TRAILING);
-		p0.addComponent(up_btn);
-		p0.addComponent(down_btn);
-		hg.addGroup(p0);
-		
-		hg.addGap(UI.hgap);
-		
 		GroupLayout.ParallelGroup p1 = gl.createParallelGroup(
 			GroupLayout.Alignment.CENTER);
 		p1.addComponent(cam_vid_src_lbl);
@@ -339,9 +361,11 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 
 		GroupLayout.ParallelGroup p2 = gl.createParallelGroup(
 				GroupLayout.Alignment.TRAILING);
-			p2.addComponent(insert_btn);
-			p2.addComponent(remove_btn);
-			hg.addGroup(p2);
+		p2.addComponent(up_btn);
+		p2.addComponent(insert_btn);
+		p2.addComponent(remove_btn);
+		p2.addComponent(down_btn);
+		hg.addGroup(p2);
 		
 		hg.addGap(UI.hgap);
 
@@ -375,17 +399,15 @@ public class CameraVidSourceOrderPanel extends JPanel implements ProxyView<Camer
 			GroupLayout.Alignment.CENTER);
 		
 		GroupLayout.SequentialGroup v0 = gl.createSequentialGroup();
+		v0.addComponent(up_btn);
+		v0.addGap(10*UI.vgap);
 		v0.addComponent(insert_btn);
 		v0.addGap(UI.vgap);
 		v0.addComponent(remove_btn);
+		v0.addGap(10*UI.vgap);
+		v0.addComponent(down_btn);
 		p1.addGroup(v0);
-
-		GroupLayout.SequentialGroup v1 = gl.createSequentialGroup();
-		v1.addComponent(up_btn);
-		v1.addGap(UI.vgap);
-		v1.addComponent(down_btn);
-		p1.addGroup(v1);
-
+		
 		p1.addComponent(cam_vid_src_scrl);
 		p1.addComponent(vid_src_scrl);
 		
