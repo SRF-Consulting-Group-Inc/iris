@@ -28,11 +28,12 @@ import us.mn.state.dot.tms.client.proxy.ProxyDescriptor;
 import us.mn.state.dot.tms.client.proxy.ProxyTableModel;
 
 /**
- * Table model for cameras
+ * Table model for camera templates
  *
  * @author Douglas Lau
  * @author Michael Janson
  */
+@SuppressWarnings("serial")
 public class CameraTemplateModel extends ProxyTableModel<CameraTemplate> {
 
 	/** Create a proxy descriptor */
@@ -87,7 +88,7 @@ public class CameraTemplateModel extends ProxyTableModel<CameraTemplate> {
 		return cols;
 	}
 
-	/** Create a new camera table model */
+	/** Create a new camera template table model */
 	public CameraTemplateModel(Session s) {
 		super(s, descriptor(s), 12);
 	}
