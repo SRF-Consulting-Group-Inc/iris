@@ -22,17 +22,17 @@ import us.mn.state.dot.tms.client.proxy.SonarObjectForm;
 import us.mn.state.dot.tms.utils.I18N;
 
 /**
- * PlayListProperties is a dialog for entering and editing play lists.
+ * Dialog for creating and viewing CameraTemplate objects.
  *
  * @author Douglas Lau
  * @author Michael Janson
  */
 public class CameraTemplateProperties extends SonarObjectForm<CameraTemplate> {
 
-	/** Play list panel */
+	/** Camera template panel */
 	private final CameraVidSourceOrderPanel cam_vid_src_ord_pnl;
 
-	/** Create a new play list properties form */
+	/** Create a new camera template properties form */
 	public CameraTemplateProperties(Session s, CameraTemplate ct) {
 		super(I18N.get("camera.template") + ": ", s, ct);
 		cam_vid_src_ord_pnl = new CameraVidSourceOrderPanel(s, ct);
