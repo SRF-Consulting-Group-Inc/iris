@@ -20,10 +20,14 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.postgis.MultiPolygon;
+
 import us.mn.state.dot.tms.IpawsAlert;
+import us.mn.state.dot.tms.IteratorWrapper;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
 
@@ -47,7 +51,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			"categories, event, response_types, urgency, severity, " +
 			"certainty, audience, effective_date, onset_date, " +
 			"expiration_date, sender_name, headline, alert_description, " + 
-			"instruction, parameters, area, purgeable FROM event." +
+			"instruction, parameters, area, geo_poly, purgeable FROM event." +
 			SONAR_TYPE + ";",new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
@@ -92,6 +96,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		map.put("instruction", instruction);
 		map.put("parameters", parameters);
 		map.put("area", area);
+		map.put("geo_poly", geo_poly);
 		map.put("purgeable", purgeable);
 		return map;
 	}
@@ -137,7 +142,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			row.getString(25), // instruction
 			row.getString(26),	// parameters
 			row.getString(27),	//area
-			row.getBoolean(28) // purgeable flag
+			row.getString(28),	//geo_poly
+			row.getBoolean(29) // purgeable flag
 		);
 	}
 
@@ -163,6 +169,11 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		}
 	}
 
+	static public Iterator<IpawsAlertImpl> iterator() {
+		return new IteratorWrapper<IpawsAlertImpl>(namespace.iterator(
+				IpawsAlertImpl.SONAR_TYPE));
+	}
+	
 	public IpawsAlertImpl(String n) throws TMSException {
 		super(n);
 	}
@@ -173,7 +184,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			String[] inc, String[] ct, String ev, String[] rt, String u, 
 			String sv, String cy, String au, Date efd, Date od, Date exd, 
 			String sn, String hl, String ades, String in, 
-			String par, String ar, boolean p) 
+			String par, String ar, String gp, boolean p) 
 	{
 		super(n);
 		identifier = i;
@@ -202,6 +213,12 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		instruction = in;
 		parameters = par;
 		area = ar;
+		try {
+			geo_poly = new MultiPolygon(gp);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		purgeable = p;
 	}
 
@@ -793,6 +810,29 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (area != ar) {
 			store.update(this, "area", ar);
 			setArea(ar);
+		}
+	}
+	
+	/** Get the geographic polygon representing the area. */
+	@Override
+	public MultiPolygon getGeoPoly() {
+		return geo_poly;
+	}
+	
+	/** Geographic MultiPolygon */
+	private MultiPolygon geo_poly;
+	
+	/** Set the area */
+	@Override
+	public void setGeoPoly(MultiPolygon gp) {
+		geo_poly = gp;
+	}
+	
+	/** Set the area */
+	public void doSetGeoPoly(MultiPolygon gp) throws TMSException {
+		if (geo_poly != gp) {
+			store.update(this, "geo_poly", gp);
+			setGeoPoly(gp);
 		}
 	}
 	

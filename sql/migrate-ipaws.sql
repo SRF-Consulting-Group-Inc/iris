@@ -45,11 +45,11 @@ CREATE TABLE event.ipaws
     instruction text COLLATE pg_catalog."default",
     parameters jsonb,
     area jsonb,
-	purgeable boolean DEFAULT false
-)
+    geo_poly geography(polygon),
+    purgeable boolean DEFAULT false
+);
 
 TABLESPACE pg_default;
 
 ALTER TABLE event.ipaws
     OWNER to tms;
-

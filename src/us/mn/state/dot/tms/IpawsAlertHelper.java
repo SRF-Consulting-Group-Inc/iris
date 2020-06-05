@@ -15,6 +15,8 @@
 
 package us.mn.state.dot.tms;
 
+import java.util.Iterator;
+
 /**
  * Helper class for IPAWS Alerts. Used on the client and server.
  *
@@ -30,5 +32,11 @@ public class IpawsAlertHelper extends BaseHelper {
 	/** Lookup the alert with the specified name */
 	static public IpawsAlert lookup(String name) {
 		return (IpawsAlert) namespace.lookupObject(IpawsAlert.SONAR_TYPE, name);
+	}
+
+	/** Get an IpawsAlert object iterator */
+	static public Iterator<IpawsAlert> iterator() {
+		return new IteratorWrapper<IpawsAlert>(namespace.iterator(
+				IpawsAlert.SONAR_TYPE));
 	}
 }
