@@ -285,8 +285,10 @@ public class IpawsReader {
 	        
 	        // Loop through areas
 	        for (int i = 0; i < areaNodeList.getLength(); i++) {
-	            Element areaElement = (Element)  areaNodeList.item(i);
+	            Element areaElement = (Element) areaNodeList.item(i);
 	            
+	            // TODO verify this works as expected when there are multiple
+	            // polygons (it might just merge them)
 	            String [] element_list = {"areaDesc","polygon",
 	            		"circle","geocode","altitude","ceiling"};
 	            for (String child_element: element_list)
