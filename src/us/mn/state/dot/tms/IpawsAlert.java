@@ -18,6 +18,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.postgis.MultiPolygon;
+
 import us.mn.state.dot.sonar.SonarObject;
 
 /**
@@ -186,6 +188,12 @@ public interface IpawsAlert extends SonarObject {
 	
 	/** Get the areas */
 	String getArea();
+	
+	/** Set the areas */
+	void setGeoPoly(MultiPolygon gp);
+	
+	/** Get the areas */
+	MultiPolygon getGeoPoly();
 	
 	/** Set if this alert is purgeable (irrelevant to us) */
 	void setPurgeable(boolean p);
