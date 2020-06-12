@@ -43,7 +43,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	/** Database table name */
 	static private final String TABLE = "event.ipaws";
 	
-	/** Load all the incidents */
+	/** Load all the IPAWS alerts */
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, IpawsAlertImpl.class);
 		store.query("SELECT name, identifier, sender, sent_date, status, " +
@@ -51,8 +51,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			"categories, event, response_types, urgency, severity, " +
 			"certainty, audience, effective_date, onset_date, " +
 			"expiration_date, sender_name, headline, alert_description, " + 
-			"instruction, parameters, area, geo_poly, purgeable FROM event." +
-			SONAR_TYPE + ";",new ResultFactory()
+			"instruction, parameters, area, ST_AsText(geo_poly), purgeable " +
+			"FROM event." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				try {
@@ -151,7 +151,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	static private int getPurgeDays() {
 		return SystemAttrEnum.IPAWS_ALERT_PURGE_DAYS.getInt();
 	}
-
+	
 	/** Purge old records that have been marked "purgeable". The age of the
 	 *  records is determined based on the expiration_date field.
 	 *  
@@ -177,7 +177,6 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	public IpawsAlertImpl(String n) throws TMSException {
 		super(n);
 	}
-	
 	
 	public IpawsAlertImpl(String n, String i, String se, Date sd, String sta, 
 			String mt, String sc, String[] cd, String nt, String[]ref,
@@ -487,7 +486,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	public void doSetEvent(String ev) throws TMSException {
 		if (event != ev) {
 			store.update(this, "event", ev);
-			setUrgency(ev);
+			setEvent(ev);
 		}
 	}
 	

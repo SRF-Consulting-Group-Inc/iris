@@ -52,4 +52,15 @@ CREATE TABLE event.ipaws
 TABLESPACE pg_default;
 
 ALTER TABLE event.ipaws
-    OWNER to tms;
+    OWNER TO tms;
+
+-- IPAWS Alert Notifier table
+CREATE TABLE event.ipaws_alert_notifier (
+	name VARCHAR(24) PRIMARY KEY,
+	alert_id text,
+	dms text[],
+	multi text,
+	approved_by text
+);
+
+ALTER TABLE event.ipaws_alert_notifier OWNER TO tms;
