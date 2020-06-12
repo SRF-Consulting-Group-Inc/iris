@@ -82,7 +82,9 @@ public class SwitchProp extends MonProp {
 		sb.append(UNIT_SEP);
 		sb.append(getLatency());
 		sb.append(RECORD_SEP);
-		return sb.toString();
+		String req = sb.toString();
+		System.out.println(req.replace(String.valueOf(UNIT_SEP), " | "));
+		return req;
 	}
 
 	/** Get camera number */

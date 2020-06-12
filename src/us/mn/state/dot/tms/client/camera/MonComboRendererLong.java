@@ -21,7 +21,8 @@ import us.mn.state.dot.tms.utils.I18N;
 /**
  * Renderer for monitor numbers.
  *
- * @author Douglas Lau
+ * @author Michael Janson
+ * @author Gordon Parikh
  */
 public class MonComboRendererLong extends IListCellRenderer<VideoMonitor> {
 	

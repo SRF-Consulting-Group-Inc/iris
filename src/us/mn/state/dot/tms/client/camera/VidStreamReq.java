@@ -278,11 +278,17 @@ public class VidStreamReq {
 
 	/** Get list of VidStreamReq(s) for a given camera */
 	public static List<VidStreamReq> getVidStreamReqs(Camera c) {
+		List<VidStreamReq> vrList = new ArrayList<VidStreamReq>();
+		
 		// Get camera's CameraTemplate
-		String cstName = c.getCameraTemplate();
+		if (c.getCameraTemplate() == null)
+			return vrList;
+		
+		String cstName = c.getCameraTemplate().getName();
 		CameraTemplate ct = CameraTemplateHelper.lookup(cstName);
+		
 		if (ct == null)
-			return null;
+			return vrList;
 		// Iterate through CameraStreamOrder(s)
 		// (collecting those that match the CameraTemplate)
 		Iterator<CameraVidSourceOrder> itCSO = CameraVidSourceOrderHelper.iterator();
@@ -294,12 +300,12 @@ public class VidStreamReq {
 				csoList.add(cso);
 		}
 		if (csoList.size() == 0)
-			return null;
+			return vrList;
 		// sort the resulting list of CSO(s) by stream-order
 		csoList.sort(streamOrder);
 		// Iterate through sorted sublist
 		// (collecting VidStreamReq(s) generated from VidSourceTemplate(s))
-		List<VidStreamReq> vrList = new ArrayList<VidStreamReq>();
+		
 		itCSO = csoList.iterator();
 		VidStreamReq vsr;
 		VidSourceTemplate vst;
@@ -313,17 +319,17 @@ public class VidStreamReq {
 			if (vsr != null)
 				vrList.add(vsr);
 		}
-		return (vrList.size() == 0) ? null : vrList;
+		return /*(vrList.size() == 0) ? null :*/ vrList;
 	}
 
 	/** Get list of CameraVidSourceOrder objects for a given camera template */
 	public static List<CameraVidSourceOrder> getCamVidSrcOrder(CameraTemplate ct) {
+		List<CameraVidSourceOrder> csoList = new ArrayList<CameraVidSourceOrder>();
 		if (ct == null)
-			return null;
+			return csoList;
 		// Iterate through CameraStreamOrder(s)
 		// (collecting those that match the CameraTemplate)
 		Iterator<CameraVidSourceOrder> itCSO = CameraVidSourceOrderHelper.iterator();
-		List<CameraVidSourceOrder> csoList = new ArrayList<CameraVidSourceOrder>();
 		CameraVidSourceOrder cso;
 		while (itCSO.hasNext()) {
 			cso = itCSO.next();
@@ -331,10 +337,10 @@ public class VidStreamReq {
 				csoList.add(cso);
 		}
 		if (csoList.size() == 0)
-			return null;
+			return csoList;
 		// sort the resulting list of CSO(s) by stream-order
 		csoList.sort(streamOrder);
-		return (csoList.size() == 0) ? null : csoList;
+		return csoList;
 	}
 	
 	public String toString() {

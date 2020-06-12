@@ -25,7 +25,9 @@ import us.mn.state.dot.tms.utils.I18N;
  *
  * @author Douglas Lau
  * @author Michael Janson
+ * @author Gordon Parikh
  */
+@SuppressWarnings("serial")
 public class CameraTemplateForm extends ProxyTableForm<CameraTemplate> {
 
 	/** Check if the user is permitted to use the form */
@@ -35,6 +37,9 @@ public class CameraTemplateForm extends ProxyTableForm<CameraTemplate> {
 
 	/** Create a new incident detail form */
 	public CameraTemplateForm(Session s) {
-		super(I18N.get("camera.templates"), new CameraTemplateModel(s));
+		super(I18N.get("camera.templates"), 
+				new CameraTemplatePanel(
+						new CameraTemplateModel(s)));
 	}
 }
+

@@ -32,7 +32,35 @@ public class VidSourceTemplateHelper extends BaseHelper {
 		return (VidSourceTemplate) namespace.lookupObject(VidSourceTemplate.SONAR_TYPE,
 			name);
 	}
-
+	
+	/** Lookup the StreamTemplate with the specified label. */
+	static public VidSourceTemplate lookupLabel(String label) {
+		Iterator<VidSourceTemplate> it = iterator();
+		while (it.hasNext()) {
+			VidSourceTemplate vst = it.next();
+			if (vst.getLabel() != null && vst.getLabel().equals(label))
+				return vst;
+		}
+		return null;
+	}
+	
+	/** Return the first available name for a VidSourceTemplate object. Note
+	 *  that we won't allow more than 10,000,000,000,000 objects due to the
+	 *  database name length limit (though this is just an artificial limit).
+	 *  
+	 *  The name will be "VID_SRC_#".
+	 */
+	static public String getFirstAvailableName() {
+		for (int i = 0; i <= 9999999999999L; ++i) {
+			// generate a name with this number and try to lookup an object
+			String n = "VID_SRC_" + String.valueOf(i);
+			VidSourceTemplate vst = lookup(n);
+			if (vst == null)
+				return n;
+		}
+		return null;
+	}
+	
 	/** Get a StreamTemplate iterator */
 	static public Iterator<VidSourceTemplate> iterator() {
 		return new IteratorWrapper<VidSourceTemplate>(namespace.iterator(

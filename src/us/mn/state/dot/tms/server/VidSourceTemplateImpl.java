@@ -38,7 +38,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 			"default_port, subnets, latency, "+
 			"encoder, scheme, codec, "+
 			"rez_width, rez_height, multicast, "+
-			"notes FROM iris." +
+			"notes, gst_stream FROM iris." +
 			SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
@@ -64,6 +64,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		map.put("rez_height", rez_height);
 		map.put("multicast", multicast);
 		map.put("notes", notes);
+		map.put("gst_stream", gst_stream);
 		return map;
 	}
 
@@ -81,7 +82,8 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		     row.getObject(10),   // rez_width
 		     row.getObject(11),   // rez_height
 		     row.getObject(12),   // multicast
-		     row.getString(13));  // notes
+		     row.getString(13),   // notes
+		 	 row.getString(14));  // gst_sream
 	}
 
 	/** Get the database table name */
@@ -109,7 +111,8 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 			Object latency, String encoder,
 			String scheme, String codec,
 			Object rez_width, Object rez_height,
-			Object multicast, String notes) {
+			Object multicast, String notes,
+			Object gst_stream) {
 		super(sName);
 		this.label = label;
 		this.config = config;
@@ -122,6 +125,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		this.rez_width = (Integer)rez_width;
 		this.rez_height = (Integer)rez_height;
 		this.multicast = (Boolean)multicast;
+		this.gst_stream = (Boolean)gst_stream;
 		this.notes = notes;
 	}
 
@@ -160,6 +164,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	private Integer rez_height;
 	private Boolean multicast; // (T/F)
 	private String notes;
+	private Boolean gst_stream;
 	
 	//-- maybe implement later?
 //	String users; // Semicolon separated list of user-groups and users permitted to use that stream.
@@ -209,6 +214,9 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		if (config != this.config) {
 			store.update(this, "config", config);
 			setConfig(config);
+			
+			// also set the gst_stream flag based on the config we just set
+			doSetGstStream(isGstStream());
 		}
 	}
 	
@@ -393,7 +401,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 	/**
 	 * @return the multicast
 	 */
-	public Boolean isMulticast() {
+	public Boolean getMulticast() {
 		return multicast;
 	}
 
@@ -430,8 +438,22 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		}
 	}
 	
-	@Override
 	public boolean isGstStream() {
 		return (config != null) && config.contains("!");
+	}
+	
+	public Boolean getGstStream() {
+		return gst_stream;
+	}
+	
+	public void setGstStream(Boolean gst_stream) {
+		this.gst_stream = gst_stream;
+	}
+	
+	public void doSetGstStream(Boolean gst_stream) throws TMSException {
+		if (gst_stream != this.gst_stream) {
+			store.update(this, "gst_stream", gst_stream);
+			setGstStream(gst_stream);
+		}
 	}
 }

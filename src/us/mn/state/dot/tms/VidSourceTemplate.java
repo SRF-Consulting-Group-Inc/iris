@@ -137,7 +137,7 @@ public interface VidSourceTemplate extends SonarObject {
 	/** Get multicast-stream flag.
 	 * @return the multicast flag (or null)
 	 */
-	public Boolean isMulticast();
+	public Boolean getMulticast();
 
 	/** Set multicast-stream flag.
 	 * @param multicast the multicast flag to set (or null)
@@ -150,12 +150,17 @@ public interface VidSourceTemplate extends SonarObject {
 	public String getNotes();
 
 	/** Set the notes for this template.
-	 * @param notes the notes tring (or null)
+	 * @param notes the notes string (or null)
 	 */
 	public void setNotes(String notes);
 
 	/**
 	 * @return True if config appears to be a GStreamer gst-launch string
 	 */
-	public boolean isGstStream();
+	public Boolean getGstStream();
+
+	/**
+	 *  Set if the config is a GStreamer gst-launch string.
+	 */
+	public void setGstStream(Boolean gst_stream);
 }

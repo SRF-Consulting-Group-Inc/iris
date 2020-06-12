@@ -15,10 +15,8 @@
  */
 package us.mn.state.dot.tms.client.camera;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +24,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,8 +36,6 @@ import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.CameraVidSourceOrder;
 import us.mn.state.dot.tms.CameraVidSourceOrderHelper;
-import us.mn.state.dot.tms.DMS;
-import us.mn.state.dot.tms.Gps;
 import us.mn.state.dot.tms.VidSourceTemplate;
 import us.mn.state.dot.tms.VidSourceTemplateHelper;
 import us.mn.state.dot.tms.client.Session;
@@ -48,10 +43,9 @@ import us.mn.state.dot.tms.client.proxy.ProxyView;
 import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.ILabel;
+import us.mn.state.dot.tms.client.widget.IListCellRenderer;
 import us.mn.state.dot.tms.client.widget.IListSelectionAdapter;
 import us.mn.state.dot.tms.client.widget.Icons;
-import us.mn.state.dot.tms.server.CameraVidSourceOrderImpl;
-
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 import us.mn.state.dot.tms.utils.I18N;
 
@@ -62,6 +56,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Douglas Lau
  * @author Michael Janson
  */
+@SuppressWarnings("serial")
 public class CameraVidSourceOrderPanel extends JPanel
 		implements ProxyView<CameraVidSourceOrder>{
 
@@ -145,13 +140,19 @@ public class CameraVidSourceOrderPanel extends JPanel
 			cam_vid_src_lst.setSelectedIndex(cam_vid_src_mdl.size() - 1);
 			String src_name = vst.getName();
 			int src_order = cam_vid_src_mdl.size() - 1;
-			String n = camera_template + "_" + Integer.toString(src_order);
+			String n = CameraVidSourceOrderHelper.getFirstAvailableName(
+					camera_template.getName());
 			cache.createObject(n);
 			CameraVidSourceOrder cvo = cache.lookupObjectWait(n);
-			cvo.setCameraTemplate(camera_template.getName());
-			cvo.setVidSourceTemplate(src_name);
-			cvo.setSourceOrder(src_order);
-			cam_vid_src.add(cvo);
+			
+			// if we don't get the object it's probably because of a DB error
+			// which will pop up by itself (so doing nothing is fine)
+			if (cvo != null) {
+				cvo.setCameraTemplate(camera_template.getName());
+				cvo.setVidSourceTemplate(src_name);
+				cvo.setSourceOrder(src_order);
+				cam_vid_src.add(cvo);
+			}
 		}
 	}
 	
@@ -164,14 +165,15 @@ public class CameraVidSourceOrderPanel extends JPanel
 			VidSourceTemplate vst = cam_vid_src_lst.getSelectedValue();
 			if (s >= 0) {
 				cam_vid_src_mdl.remove(s);
-				String n = camera_template + "_" + Integer.toString(s);
-				CameraVidSourceOrder cvo = cache.lookupObject(n);
+				CameraVidSourceOrder cvo = cam_vid_src.remove(s);
 				cvo.destroy();
-				cam_vid_src.remove(cvo);
+				
+				int i = s < cam_vid_src.size() ? s : cam_vid_src_mdl.size()-1;
+				cam_vid_src_lst.setSelectedIndex(i);
 			}
 		}
 	});
-
+	
 	/** Up button */
 	private final JButton up_btn = new JButton(
 			new IAction("camera.template.source.up")
@@ -196,7 +198,7 @@ public class CameraVidSourceOrderPanel extends JPanel
 			cmvo2.setSourceOrder(s-1);
 			cam_vid_src.set(s, cmvo1);
 			cam_vid_src.set(s-1, cmvo2);
-			}
+		}
 	}
 
 	/** Down action */
@@ -210,6 +212,8 @@ public class CameraVidSourceOrderPanel extends JPanel
 	
 	/** Display information for video source */
 	private void displayVidSrcInfo(VidSourceTemplate vst) {
+		// TODO will probably change this some
+		
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n");
 		sb.append("Name: ");
@@ -238,10 +242,6 @@ public class CameraVidSourceOrderPanel extends JPanel
 		
 		sb.append("Subnets: ");
 		sb.append(checkNull(vst.getSubnets()));
-		sb.append("\n");
-		
-		sb.append("Type Name: ");
-		sb.append(checkNull(vst.getTypeName()));
 		sb.append("\n");
 		
 		sb.append("Default Port: ");
@@ -304,6 +304,8 @@ public class CameraVidSourceOrderPanel extends JPanel
 		setBorder(UI.border);
 		cam_vid_src_lst.setVisibleRowCount(12);
 		vid_src_lst.setVisibleRowCount(12);
+		cam_vid_src_lst.setCellRenderer(new LabelRenderer());
+		vid_src_lst.setCellRenderer(new LabelRenderer());
 		cam_vid_src_scrl.setPreferredSize(new Dimension(150,200));
 		vid_src_scrl.setPreferredSize(new Dimension(150,200));
 		vid_src_info.setEditable(false);
@@ -332,6 +334,14 @@ public class CameraVidSourceOrderPanel extends JPanel
 		initializeVidSrc();
 		createJobs();
 		watcher.initialize();
+	}
+	
+	private class LabelRenderer extends IListCellRenderer<VidSourceTemplate> {
+		/** Return the label of a VidSourceTemplate */
+		@Override
+		protected String valueToString(VidSourceTemplate vst) {
+			return vst.getLabel();
+		}
 	}
 
 	/** Layout the panel */
