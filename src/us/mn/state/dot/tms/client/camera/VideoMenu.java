@@ -15,6 +15,9 @@
 package us.mn.state.dot.tms.client.camera;
 
 import java.awt.event.ActionEvent;
+
+import javax.swing.JInternalFrame;
+
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.widget.IAction;
@@ -114,7 +117,10 @@ public class VideoMenu extends IMenu {
 		return VidSourceTemplateEditor.isPermitted(session) ?
 				new IAction("camera.video_source.templates") {
 			protected void doActionPerformed(ActionEvent e) {
-				desktop.show(new VidSourceTemplateEditor(session));
+				VidSourceTemplateEditor vste =
+						new VidSourceTemplateEditor(session);
+				JInternalFrame frame = desktop.show(vste);
+				vste.setFrame(frame);
 			}
 		} : null;
 	}

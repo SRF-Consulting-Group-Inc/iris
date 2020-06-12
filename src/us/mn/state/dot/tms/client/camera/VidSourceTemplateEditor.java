@@ -23,18 +23,15 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
-import javax.swing.DefaultListSelectionModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -43,6 +40,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.CameraTemplate;
@@ -55,8 +54,6 @@ import us.mn.state.dot.tms.VidSourceTemplateHelper;
 import us.mn.state.dot.tms.client.EditModeListener;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyTablePanel;
-import us.mn.state.dot.tms.client.proxy.ProxyView;
-import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.proxy.SwingProxyAdapter;
 import us.mn.state.dot.tms.client.widget.AbstractForm;
 import us.mn.state.dot.tms.client.widget.DisabledSelectionModel;
@@ -77,6 +74,9 @@ public class VidSourceTemplateEditor extends AbstractForm {
 
 	/** Client Session */
 	private Session session;
+	
+	/** Handle of the frame that contains this form */
+	JInternalFrame frame;
 	
 	/** Table of Video Source Templates */
 	private ProxyTablePanel<VidSourceTemplate> vidSrcTemplates;
@@ -120,7 +120,6 @@ public class VidSourceTemplateEditor extends AbstractForm {
 			if (waitingForVst != null &&
 					waitingForVst.getName() == vst.getName()) {
 				// if we are, it's because we wanted to select it
-				System.out.println("proxyAddedSwing: " + vst);
 				vidSrcTemplates.disableSelectionHandling();
 				vidSrcTemplates.selectProxy(vst);
 				setSelectedVideoSource(vst, false);
@@ -132,7 +131,6 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		}
 		@Override
 		protected void proxyChangedSwing(VidSourceTemplate vst, String attr) {
-			System.out.println("proxyChangedSwing: " + vst);
 			loadVidSrcTemplateFields(vst);
 		}
 	};
@@ -469,6 +467,19 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		updateButtons();
 	}
 	
+	public void setFrame(JInternalFrame f) {
+		frame = f;
+		
+		// add a window listener to capture the close event for confirmation
+		frame.addInternalFrameListener(new InternalFrameAdapter() {
+		    @Override
+		    public void internalFrameClosing(InternalFrameEvent e) {
+		    	cancel.actionPerformed(null);
+		    }
+		});
+		frame.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
+	}
+	
 	/** Dispose of the form */
 	@Override
 	public void dispose() {
@@ -482,13 +493,11 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		// first check if the user has changed any of the data in the fields
 		// if they have and it hasn't been saved, show a confirmation dialog
 		boolean changed = fieldsChanged();
-		System.out.println("setSelectedVideoSource");
 		boolean confirmed = false;
 		if (changed && loadFields)
 			confirmed = confirmDiscard();
 		if (!changed || !loadFields ||
 				(changed && loadFields && confirmed)) {
-			System.out.println("setting selectedVideoSource");
 			selectedVidSource = vst;
 			
 			// update various things
@@ -874,7 +883,8 @@ public class VidSourceTemplateEditor extends AbstractForm {
 					vsNameField.setBackground(OK_COLOR);
 				else {
 					// if there is a label conflict, give the user a hint
-					JOptionPane.showConfirmDialog(null,
+					JOptionPane.showConfirmDialog(
+					  Session.getCurrent().getDesktop(),
 					  I18N.get("camera.video_source.template.conflict_msg"),
 					  I18N.get("camera.video_source.template.conflict"),
 					  JOptionPane.DEFAULT_OPTION,
@@ -954,7 +964,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		// if there is a label conflict, give the user a hint
 		String msg = String.format(I18N.get(
 				"camera.video_source.template.field_required_msg"), fieldName);
-		JOptionPane.showConfirmDialog(null, msg,
+		JOptionPane.showConfirmDialog(Session.getCurrent().getDesktop(), msg,
 		  I18N.get("camera.video_source.template.field_required"),
 		  JOptionPane.DEFAULT_OPTION,
 		  JOptionPane.ERROR_MESSAGE);
@@ -967,7 +977,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		// if there is a label conflict, give the user a hint
 		String msg = String.format(I18N.get(
 				"camera.video_source.template.field_int_msg"), fieldName);
-		JOptionPane.showConfirmDialog(null, msg,
+		JOptionPane.showConfirmDialog(Session.getCurrent().getDesktop(), msg,
 				I18N.get("camera.video_source.template.field_int"),
 				JOptionPane.DEFAULT_OPTION,
 				JOptionPane.ERROR_MESSAGE);
@@ -984,7 +994,8 @@ public class VidSourceTemplateEditor extends AbstractForm {
 				"camera.video_source.template.unsaved_changes_discard");
 		Object[] choices = {goBack, discardChanges};
 		Object defaultChoice = choices[0];
-		int ret = JOptionPane.showOptionDialog(null,
+		int ret = JOptionPane.showOptionDialog(
+				Session.getCurrent().getDesktop(),
 				I18N.get("camera.video_source.template.unsaved_changes_msg"),
 				I18N.get("camera.video_source.template.unsaved_changes_title"),
 				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -1023,8 +1034,6 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		String defPort = getString(selectedVidSource.getDefaultPort());
 		String rezWidth = getString(selectedVidSource.getRezWidth());
 		String rezHeight = getString(selectedVidSource.getRezHeight());
-		System.out.println("encoder types: " + etn + " vs "
-						+ selectedVidSource.getEncoder());
 		return !vsNameField.getText().equals(selectedVidSource.getLabel())
 			|| !vsCodecField.getText().equals(selectedVidSource.getCodec())
 			|| !etEq
@@ -1071,7 +1080,6 @@ public class VidSourceTemplateEditor extends AbstractForm {
 			// check if the fields have unsaved changes
 			if (fieldsChanged()) {
 				// if they do, open a dialog and only close if they confirm
-				System.out.println("cancel");
 				if (confirmDiscard())
 					closeForm();
 			} else
