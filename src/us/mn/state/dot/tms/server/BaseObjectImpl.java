@@ -115,6 +115,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		DMSImpl.updateAllStyles();
 		RptConduitImpl.loadAll();
 		IpawsAlertImpl.loadAll();
+		IpawsAlertNotifierImpl.loadAll();
 	}
 
 	/** Get the time as a time stamp */
@@ -317,6 +318,15 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 	static protected PlanPhaseImpl lookupPlanPhase(String name) {
 		SonarObject so = lookupObject(PlanPhaseImpl.SONAR_TYPE, name);
 		return (so instanceof PlanPhaseImpl) ? (PlanPhaseImpl)so : null;
+	}
+	
+	/** Lookup an IPAWS Alert Notifier */
+	static protected IpawsAlertNotifierImpl
+				lookupIpawsAlertNotifier(String name) {
+		SonarObject so = lookupObject(
+				IpawsAlertNotifierImpl.SONAR_TYPE, name);
+		return (so instanceof IpawsAlertNotifierImpl)
+				? (IpawsAlertNotifierImpl)so : null;
 	}
 
 	/** Get the primary key name */
