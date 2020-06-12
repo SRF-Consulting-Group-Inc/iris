@@ -53,6 +53,8 @@ TABLESPACE pg_default;
 
 ALTER TABLE event.ipaws
     OWNER TO tms;
+	
+INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
 
 -- IPAWS Alert Notifier table
 CREATE TABLE event.ipaws_alert_notifier (
@@ -64,3 +66,25 @@ CREATE TABLE event.ipaws_alert_notifier (
 );
 
 ALTER TABLE event.ipaws_alert_notifier OWNER TO tms;
+
+-- Extend sonar type fields to allow a longer name
+
+ALTER TABLE iris.sonar_type ALTER COLUMN name TYPE varchar(32);
+
+INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_notifier');
+
+-- Need to drop the privilege view first
+DROP VIEW public.role_privilege_view;
+
+ALTER TABLE iris.privilege ALTER COLUMN type_n TYPE varchar(32);
+
+-- Recreate view
+CREATE VIEW role_privilege_view AS
+    SELECT role, role_capability.capability, type_n, obj_n, group_n, attr_n,
+	       write
+	FROM iris.role
+	JOIN iris.role_capability ON role.name = role_capability.role
+	JOIN iris.capability ON role_capability.capability = capability.name
+	JOIN iris.privilege ON privilege.capability = capability.name
+	WHERE role.enabled = 't' AND capability.enabled = 't';
+GRANT SELECT ON role_privilege_view TO PUBLIC;
