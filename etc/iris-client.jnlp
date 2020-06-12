@@ -15,11 +15,12 @@
 	</shortcut>
     </information>
     <resources>
-	<j2se version="1.7+" max-heap-size="1024m"/>
+	<j2se version="1.8+" max-heap-size="1024m"/>
 	<jar href="lib/iris-client-@@VERSION@@.jar"/>
 	<jar href="lib/iris-common-@@VERSION@@.jar"/>
+	<jar href="lib/jna-5.3.1.jar"/>
+	<jar href="lib/gst1-java-core-1.1.0.jar"/>
 	<extension name="mail" href="mail.jnlp"/>
-	<extension name="gstreamer-java" href="gstreamer-java.jnlp"/>
     </resources>
     <security>
        <all-permissions/>
