@@ -19,6 +19,7 @@
 	<jar href="lib/iris-client-@@VERSION@@.jar"/>
 	<jar href="lib/iris-common-@@VERSION@@.jar"/>
 	<extension name="mail" href="mail.jnlp"/>
+	<extension name="gstreamer-java" href="gstreamer-java.jnlp"/>
     </resources>
     <security>
        <all-permissions/>
