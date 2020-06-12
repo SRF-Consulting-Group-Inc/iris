@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW iris.camera_template
    FROM iris._camera_template;
 
 ALTER TABLE iris.camera_template
-    OWNER TO tms
+    OWNER TO tms;
 
 	
 CREATE TABLE iris._vid_src_template
@@ -69,7 +69,7 @@ CREATE OR REPLACE VIEW iris.vid_src_template
    FROM iris._vid_src_template;
 
 ALTER TABLE iris.vid_src_template
-    OWNER TO tms
+    OWNER TO tms;
 	
 ALTER TABLE iris._camera ADD COLUMN cam_template character varying(20);
  
@@ -122,17 +122,17 @@ CREATE OR REPLACE VIEW iris.cam_vid_src_ord
    FROM iris._cam_vid_src_ord;
 
 ALTER TABLE iris.cam_vid_src_ord
-    OWNER TO tms
+    OWNER TO tms;
 	
-ALTER TABLE iris._camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_camera_template_fkey FOREIGN KEY (camera_template)
+ALTER TABLE iris._cam_vid_src_ord ADD CONSTRAINT cam_vid_src_ord_camera_template_fkey FOREIGN KEY (camera_template)
         REFERENCES iris._camera_template (name) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 		
-ALTER TABLE iris.camera_vid_src_order ADD CONSTRAINT camera_vid_src_order_src_template_fkey FOREIGN KEY (src_template)
-        REFERENCES iris.vid_src_template (name) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION;
+--ALTER TABLE iris.cam_vid_src_ord ADD CONSTRAINT cam_vid_src_ord_src_template_fkey FOREIGN KEY (src_template)
+--        REFERENCES iris.vid_src_template (name) MATCH SIMPLE
+--        ON UPDATE NO ACTION
+--        ON DELETE NO ACTION;
 		
 CREATE OR REPLACE VIEW iris.camera
  AS
@@ -156,9 +156,10 @@ INSERT INTO iris.sonar_type(name) VALUES ('cam_vid_src_ord');
 INSERT INTO iris.sonar_type(name) VALUES ('camera_template');
 INSERT INTO iris.sonar_type(name) VALUES ('vid_src_template');
 
-INSERT INTO iris.privileges VALUES('PRV_003F','camera_tab','camera_template',,,,false),
-								('PRV_003G','camera_tab','cam_vid_src_ord',,,,false),
-								('PRV_003H','camera_tab','vid_src_template',,,,false),
-								('PRV_004A','camera_admin','camera_template',,,,true),
-								('PRV_004B','camera_admin','cam_vid_src_ord',,,,true),
-								('PRV_004C','camera_admin','vid_src_template',,,,true);
+INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) VALUES
+						   ('PRV_003F','camera_tab','camera_template','','','',false),
+						   ('PRV_003G','camera_tab','cam_vid_src_ord','','','',false),
+						   ('PRV_003H','camera_tab','vid_src_template','','','',false),
+						   ('PRV_004A','camera_admin','camera_template','','','',true),
+						   ('PRV_004B','camera_admin','cam_vid_src_ord','','','',true),
+						   ('PRV_004C','camera_admin','vid_src_template','','','',true);
