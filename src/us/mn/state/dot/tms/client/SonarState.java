@@ -17,6 +17,7 @@
 package us.mn.state.dot.tms.client;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Properties;
 import us.mn.state.dot.sched.ExceptionHandler;
 import us.mn.state.dot.sonar.Capability;
@@ -44,6 +45,7 @@ import us.mn.state.dot.tms.GateArmArray;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.Gps;
 import us.mn.state.dot.tms.Graphic;
+import us.mn.state.dot.tms.IpawsAlertNotifier;
 import us.mn.state.dot.tms.LaneAction;
 import us.mn.state.dot.tms.LaneMarking;
 import us.mn.state.dot.tms.MapExtent;
@@ -264,6 +266,14 @@ public class SonarState extends Client {
 	/** Get the Incident cache */
 	public IncCache getIncCache() {
 		return inc_cache;
+	}
+
+	/** Cache of IpawsAlertNotifier objects */
+	private final TypeCache<IpawsAlertNotifier> ipaws_cache;
+	
+	/** Get the IPAWS cache */
+	public TypeCache<IpawsAlertNotifier> getIpawsCache() {
+		return ipaws_cache;
 	}
 
 	/** Cache of LCS objects */
@@ -500,6 +510,8 @@ public class SonarState extends Client {
 		det_cache = new DetCache(this);
 		dms_cache = new DmsCache(this);
 		inc_cache = new IncCache(this);
+		ipaws_cache = new TypeCache<IpawsAlertNotifier>(
+				IpawsAlertNotifier.class, this);
 		lcs_cache = new LcsCache(this);
 		gate_arm_array_model = new ProxyListModel<GateArmArray>(
 			gate_arm_arrays);
@@ -626,6 +638,7 @@ public class SonarState extends Client {
 			gpses.ignoreAttribute("latestPoll");
 			gpses.ignoreAttribute("latestSample");
 		}
+		populateReadable(ipaws_cache);
 	}
 
 	/** Look up the specified connection */
