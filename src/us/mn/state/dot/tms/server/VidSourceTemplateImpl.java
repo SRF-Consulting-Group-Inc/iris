@@ -83,7 +83,7 @@ public class VidSourceTemplateImpl extends BaseObjectImpl implements VidSourceTe
 		     row.getObject(11),   // rez_height
 		     row.getObject(12),   // multicast
 		     row.getString(13),   // notes
-		 	 row.getString(14));  // gst_sream
+		 	 row.getBoolean(14));  // gst_stream
 	}
 
 	/** Get the database table name */
