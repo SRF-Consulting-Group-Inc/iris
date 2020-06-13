@@ -283,6 +283,8 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		vsSubnetsLbl = new JLabel(I18N.get(
 				"camera.video_source.template.subnets") + ":");
 		vsSubnetsField = new JTextArea(1, 60);
+		vsSubnetsField.setLineWrap(true);
+		vsSubnetsField.setWrapStyleWord(true);
 		Border border = BorderFactory.createLineBorder(Color.GRAY);
 		vsSubnetsField.setBorder(BorderFactory.createCompoundBorder(border,
 	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
@@ -290,12 +292,16 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		vsConfigLbl = new JLabel(I18N.get(
 				"camera.video_source.template.config") + ":");
 		vsConfigField = new JTextArea(2, 58);
+		vsConfigField.setLineWrap(true);
+		vsConfigField.setWrapStyleWord(true);
 		vsConfigField.setBorder(BorderFactory.createCompoundBorder(border,
 	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
 		vsNotesLbl = new JLabel(I18N.get(
 				"camera.video_source.template.notes") + ":");
 		vsNotesField = new JTextArea(3, 62);
+		vsNotesField.setLineWrap(true);
+		vsNotesField.setWrapStyleWord(true);
 		vsNotesField.setBorder(BorderFactory.createCompoundBorder(border,
 	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
