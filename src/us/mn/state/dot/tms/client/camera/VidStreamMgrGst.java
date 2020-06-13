@@ -117,9 +117,11 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			pipe.play();
 			setComponent(gstComponent);
 			return true;
-		}
-		catch (GstException e) {
+		} catch (GstException e) {
 			setErrorMsg(e, "Unknown GStreamer error");
+			return false;
+		} catch (Exception e) {
+			setErrorMsg(e, "Unknown error");
 			return false;
 		}
 	}
