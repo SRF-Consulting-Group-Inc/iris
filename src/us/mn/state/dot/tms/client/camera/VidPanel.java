@@ -19,6 +19,7 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -29,11 +30,16 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
@@ -365,58 +371,85 @@ public class VidPanel extends JPanel implements FocusListener {
 		});
 
 		setFocusable(true);
-		addKeyListener(new KeyListener() {
-			public void keyPressed(KeyEvent e) {
-				int iMod = e.getModifiers();
-				String sMod = e.getKeyModifiersText(iMod);
-				int iKey = e.getExtendedKeyCode();
-				String sKey = e.getKeyText(iKey);
-					System.out.println(">> ("+sMod+") ("+sKey+")");
-				if ("Ctrl".equals(sMod)) {
-					if ("Alt".equals(sKey))
-						return;
-					if ("Right".equals(sKey))
-						startNextStream();
-					else if ("Left".equals(sKey))
-						startPreviousStream();
-					else if ("F5".equals(sKey)) {
-						panelStatus = PanelStatus.SCANNING;
-						timeoutSec = 0;
-						startCurrentStream();
-					}
-					else if ("Space".equals(sKey)) {
-						pausePanel = !pausePanel;
-						if (pausePanel)
-							stopStream();
-						else
-							switch (panelStatus) {
-								case FAILED:
-								case IDLE:
-									break; // do nothing
-								case SCANNING:
-									if (streamError)
-										startNextStream();
-									else
-										startCurrentStream();
-									break;
-								case RECONNECT:
-								case VIEWING:
-									startCurrentStream();
-							}
-						queueUpdatePanel();
-					}
-				}
-			}
-			
-			@Override
-			public void keyTyped(KeyEvent e) {
-			}
-			
-			@Override
-			public void keyReleased(KeyEvent e) {
-			}
-		});
+		setupKeyBindings();
 	}
+	
+	/** Setup key bindings on the panel */
+	private void setupKeyBindings() {
+		InputMap im = getInputMap(
+				JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		ActionMap am = getActionMap();
+		
+		/* Ctrl + Right Arrow - Start next stream */
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,
+				KeyEvent.CTRL_DOWN_MASK), "startNextStream");
+		am.put("startNextStream", startNextStreamAction);
+		
+		/* Ctrl + Left Arrow - Start previous stream */
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,
+				KeyEvent.CTRL_DOWN_MASK), "startPreviousStream");
+		am.put("startPreviousStream", startPreviousStreamAction);
+		
+		/* Ctrl + F5 - Restart stream */
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5,
+				KeyEvent.CTRL_DOWN_MASK), "restartStream");
+		am.put("restartStream", restartStream);
+		
+		/* Ctrl + Space - Pause stream */
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE,
+				KeyEvent.CTRL_DOWN_MASK), "pauseStream");
+		am.put("pauseStream", pauseStream);
+	}
+	
+	private Action startNextStreamAction = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			startNextStream();
+		}
+	};
+	
+	private Action startPreviousStreamAction = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			startPreviousStream();
+		}
+	};
+	
+	/** Restart the stream that is currently playing. */
+	private Action restartStream = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			panelStatus = PanelStatus.SCANNING;
+			timeoutSec = 0;
+			startCurrentStream();
+		}
+	};
+	
+	/** Pause the video playing in the panel. */
+	private Action pauseStream = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			pausePanel = !pausePanel;
+			if (pausePanel)
+				stopStream();
+			else
+				switch (panelStatus) {
+					case FAILED:
+					case IDLE:
+						break; // do nothing
+					case SCANNING:
+						if (streamError)
+							startNextStream();
+						else
+							startCurrentStream();
+						break;
+					case RECONNECT:
+					case VIEWING:
+						startCurrentStream();
+				}
+			queueUpdatePanel();
+		}
+	};
 	
 //	/** Dispose of the video panel */
 //	public void dispose() {
