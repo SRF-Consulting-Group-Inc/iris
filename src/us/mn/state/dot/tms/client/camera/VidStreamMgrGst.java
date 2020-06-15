@@ -244,8 +244,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 				Gst.init("StreamMgrGst");
 				System.out.println("GStreamer "+Gst.getVersionString()+" installed");
 				bGstInstalled = true;
-			}
-			catch (GstException ex) {
+			} catch (GstException|UnsatisfiedLinkError ex) {
 				System.out.println("GStreamer not available: "+ex.getMessage());
 				bGstInstalled = false;
 			}
