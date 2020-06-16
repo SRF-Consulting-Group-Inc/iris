@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.sun.jna.Native;
 import org.freedesktop.gstreamer.Bus;
 import org.freedesktop.gstreamer.Element;
 import org.freedesktop.gstreamer.FlowReturn;
@@ -256,21 +257,26 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			if (isRunningJavaWebStart()) {
 				// TODO multi platform
 				
-				// load 
-				InputStream is = InputStream.class.getResourceAsStream(
-						"gstreamer-1.0-mingw-x86_64-1.16.2.jar");
-				ZipInputStream zis = new ZipInputStream(is);
-				ZipEntry ze;
 				
-				System.out.println("Reading zip file...");
-				try {
-					while ((ze = zis.getNextEntry()) != null) {
-						System.out.println(ze.getName());
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
+//				System.loadLibrary("");
+				
+				
+				// load 
+//				InputStream is = InputStream.class.getResourceAsStream(
+//						"gstreamer-1.0-mingw-x86_64-1.16.2.jar");
+//				ZipInputStream zis = new ZipInputStream(is);
+//				ZipEntry ze;
+//				
+//				System.out.println("Reading zip file...");
+//				try {
+//					while ((ze = zis.getNextEntry()) != null) {
+//						System.out.println(ze.getName());
+//					}
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 				
 //				if (tmpDir == null ) {
 //					tmpDir = createTempDirectory("gstreamer");
