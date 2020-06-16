@@ -18,26 +18,20 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.MutableComboBoxModel;
-
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraPreset;
 import us.mn.state.dot.tms.CameraPresetHelper;
-import us.mn.state.dot.tms.PlayList;
 import us.mn.state.dot.tms.VideoMonitor;
-import us.mn.state.dot.tms.VideoMonitorHelper;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyView;
 import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.widget.IAction;
-import us.mn.state.dot.tms.client.widget.IComboBoxModel;
-import us.mn.state.dot.tms.utils.I18N;
-
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 
 /**
@@ -132,21 +126,40 @@ public class PopoutCamControlPanel extends JPanel {
 		JComboBox<VideoMonitor> box = new JComboBox<VideoMonitor>();
 		DefaultComboBoxModel<VideoMonitor> cbxm =
 				new DefaultComboBoxModel<VideoMonitor>();
-
+		
+		// sort the monitor list first based on monitor number and permissions
+		TypeCache<VideoMonitor> vms = session.getSonarState()
+				.getCamCache().getVideoMonitors();
+		ArrayList<VideoMonitor> lst = new ArrayList<VideoMonitor>();
+		Iterator<VideoMonitor> it = vms.iterator();
+		while (it.hasNext()) {
+			lst.add(it.next());
+		}
+		lst.sort(new Comparator<VideoMonitor>() {
+			@Override
+			public int compare(VideoMonitor vm0, VideoMonitor vm1) {
+				Integer n0 = vm0.getMonNum();
+				Integer n1 = vm1.getMonNum();
+				int c = n0.compareTo(n1);
+				if (c!= 0)
+					return c;
+				else {
+					boolean p0 = session.isWritePermitted(vm0, "camera");
+					boolean p1 = session.isWritePermitted(vm1, "camera");
+					return Boolean.compare(p0, p1);
+				}
+			}
+		});
+		
+		// now put stuff in the model
 		// add a blank element at the beginning
 		cbxm.addElement(null);
 		
-		Iterator<VideoMonitor> it = VideoMonitorHelper.iterator();
-		while (it.hasNext()) {
-			cbxm.addElement(it.next());
-		}
+		for (VideoMonitor vm: lst)
+			cbxm.addElement(vm);
+		
 		box.setModel(cbxm);
 		return box;
-//		FilteredMonitorModel m = FilteredMonitorModel.create(session);
-//		box.setModel(new IComboBoxModel<VideoMonitor>(m));
-//		if (m.getSize() > 1)
-//			box.setSelectedIndex(1);
-//		return box;
 	}
 	
 	
