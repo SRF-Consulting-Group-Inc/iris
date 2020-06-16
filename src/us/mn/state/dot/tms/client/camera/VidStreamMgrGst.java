@@ -258,7 +258,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 				
 				// load 
 				InputStream is = InputStream.class.getResourceAsStream(
-						"/gstreamer-1.0-mingw-x86_64-1.16.2.zip");
+						"gstreamer-1.0-mingw-x86_64-1.16.2.zip");
 				ZipInputStream zis = new ZipInputStream(is);
 				ZipEntry ze;
 				
