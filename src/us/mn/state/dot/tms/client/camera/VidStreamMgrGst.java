@@ -14,7 +14,13 @@
  */
 package us.mn.state.dot.tms.client.camera;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.freedesktop.gstreamer.Bus;
 import org.freedesktop.gstreamer.Element;
@@ -237,18 +243,86 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	
 	private static Boolean bGstInstalled = null;
 	
+	private static File tmpDir;
+	
 	/** See if we have access to GStreamer library */
 	public static boolean isGstInstalled() {
 		if (bGstInstalled == null) {
-			try {
-				Gst.init("StreamMgrGst");
-				System.out.println("GStreamer "+Gst.getVersionString()+" installed");
-				bGstInstalled = true;
-			} catch (GstException|UnsatisfiedLinkError ex) {
-				System.out.println("GStreamer not available: "+ex.getMessage());
-				bGstInstalled = false;
+			// try to load with whatever environment settings we have now
+			bGstInstalled = initGst();
+			
+			// if we didn't get it and we're using WebStart, try to load from
+			// a JAR from the server
+			if (isRunningJavaWebStart()) {
+				// TODO multi platform
+				
+				// load 
+				InputStream is = InputStream.class.getResourceAsStream(
+						"/gstreamer-1.0-mingw-x86_64-1.16.2.zip");
+				ZipInputStream zis = new ZipInputStream(is);
+				ZipEntry ze;
+				
+				System.out.println("Reading zip file...");
+				try {
+					while ((ze = zis.getNextEntry()) != null) {
+						System.out.println(ze.getName());
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+//				if (tmpDir == null ) {
+//					tmpDir = createTempDirectory("gstreamer");
+//					tmpDir.deleteOnExit();
+//				}
+				
+				
+				
+//				try {
+//					
+//					File tmp = new File
+//					Files.copy(is, tmpDir)
+//				}
 			}
 		}
 		return bGstInstalled;
 	}
+	
+	/** Try to initialize GStreamer. */
+	private static boolean initGst() {
+		try {
+			Gst.init("StreamMgrGst");
+			System.out.println("GStreamer "+Gst.getVersionString()+" installed");
+			return true;
+		} catch (GstException|UnsatisfiedLinkError ex) {
+			System.out.println("GStreamer not available: "+ex.getMessage());
+			return false;
+		}
+	}
+	
+	/** Test if we're running via Java WebStart */
+	private static boolean isRunningJavaWebStart() {
+	    boolean hasJNLP = false;
+	    try {
+	      Class.forName("javax.jnlp.ServiceManager");
+	      hasJNLP = true;
+	      System.out.println("Running in WebStart");
+	    } catch (ClassNotFoundException ex) {
+	      hasJNLP = false;
+	      System.out.println("NOT Running in WebStart");
+	    }
+	    return hasJNLP;
+	}
+	
+	private static File createTempDirectory(String prefix) throws IOException {
+        String tempDir = System.getProperty("java.io.tmpdir");
+        File generatedDir = new File(tempDir, prefix + System.nanoTime());
+        
+        if (!generatedDir.mkdir())
+            throw new IOException("Failed to create temp directory " +
+            		generatedDir.getName());
+        
+        return generatedDir;
+    }
 }
