@@ -23,7 +23,7 @@
 	<extension name="mail" href="mail.jnlp"/>
     </resources>
 	<resources os="Windows" arch="amd64">
-		<nativelib href="lib/gstreamer-1.0-mingw-x86_64-1.16.2.zip"/>
+		<nativelib href="lib/gstreamer-1.0-mingw-x86_64-1.16.2.jar"/>
 	</resources>
     <security>
        <all-permissions/>
