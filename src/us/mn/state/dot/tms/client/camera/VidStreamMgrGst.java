@@ -260,10 +260,10 @@ public class VidStreamMgrGst extends VidStreamMgr {
 				// TODO multi platform
 				
 				try {
-					String path = Native.getWebStartLibraryPath("gstbase");
+					String path = Native.getWebStartLibraryPath("libgstbase-1.0-0.dll");
 					System.out.println(path);
 					if (path != null)
-						NativeLibrary.addSearchPath("gstbase", path);
+						NativeLibrary.addSearchPath("gstreamer", path);
 				} catch (UnsatisfiedLinkError e) {
 					e.printStackTrace();
 				}
