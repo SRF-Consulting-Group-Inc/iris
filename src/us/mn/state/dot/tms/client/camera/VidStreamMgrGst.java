@@ -23,6 +23,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+
 import org.freedesktop.gstreamer.Bus;
 import org.freedesktop.gstreamer.Element;
 import org.freedesktop.gstreamer.FlowReturn;
@@ -257,6 +259,14 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			if (isRunningJavaWebStart()) {
 				// TODO multi platform
 				
+				try {
+					String path = Native.getWebStartLibraryPath("gstbase");
+					System.out.println(path);
+					if (path != null)
+						NativeLibrary.addSearchPath("gstbase", path);
+				} catch (UnsatisfiedLinkError e) {
+					e.printStackTrace();
+				}
 				
 				try {
 					File f = Native.extractFromResourcePath("gstbase");
