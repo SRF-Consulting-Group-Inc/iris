@@ -269,7 +269,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 				}
 				
 				try {
-					File f = Native.extractFromResourcePath("gstbase");
+					File f = Native.extractFromResourcePath("libgstbase-1.0-0");
 					System.out.println(f.getAbsolutePath());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
