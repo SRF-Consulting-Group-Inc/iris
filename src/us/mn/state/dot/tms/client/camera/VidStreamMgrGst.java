@@ -258,7 +258,13 @@ public class VidStreamMgrGst extends VidStreamMgr {
 				// TODO multi platform
 				
 				
-				
+				try {
+					File f = Native.extractFromResourcePath("gstbase");
+					System.out.println(f.getAbsolutePath());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 //				System.loadLibrary("");
 				
 				
