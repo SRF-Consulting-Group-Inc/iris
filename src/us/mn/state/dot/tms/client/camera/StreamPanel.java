@@ -361,8 +361,6 @@ public class StreamPanel extends JPanel {
 	    			hmap.get(UserProperty.NUM_STREAM.name));
 	    }
 	    
-	    // TODO pop warning if no streams
-	    
 		for (int i=0; i < num_streams; i++) {
 			String cam_name = hmap.get(UserProperty.STREAM_CCTV.name
 					+ "." + Integer.toString(i));
