@@ -42,8 +42,7 @@ CREATE TABLE iris._vid_src_template
 	rez_width integer,
 	rez_height integer,
 	multicast boolean,
-	notes text,
-	gst_stream boolean,
+	notes text
 	CONSTRAINT vid_src_template_pkey PRIMARY KEY (name)
 );
 
@@ -64,8 +63,7 @@ CREATE OR REPLACE VIEW iris.vid_src_template
 		rez_width,
 		rez_height,
 		multicast,
-		notes,
-		gst_stream
+		notes
    FROM iris._vid_src_template;
 
 ALTER TABLE iris.vid_src_template

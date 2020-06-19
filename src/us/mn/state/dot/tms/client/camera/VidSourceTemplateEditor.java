@@ -779,7 +779,6 @@ public class VidSourceTemplateEditor extends AbstractForm {
 				vst.setRezHeight(selectedVidSource.getRezHeight());
 				vst.setMulticast(selectedVidSource.getMulticast());
 				vst.setNotes(selectedVidSource.getNotes());
-				vst.setGstStream(selectedVidSource.getGstStream());
 				
 				// make a note that we are waiting for this proxy to show up
 				// in the table

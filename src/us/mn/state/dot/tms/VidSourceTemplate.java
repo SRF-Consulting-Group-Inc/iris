@@ -153,14 +153,4 @@ public interface VidSourceTemplate extends SonarObject {
 	 * @param notes the notes string (or null)
 	 */
 	public void setNotes(String notes);
-
-	/**
-	 * @return True if config appears to be a GStreamer gst-launch string
-	 */
-	public Boolean getGstStream();
-
-	/**
-	 *  Set if the config is a GStreamer gst-launch string.
-	 */
-	public void setGstStream(Boolean gst_stream);
 }
