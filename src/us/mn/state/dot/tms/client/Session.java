@@ -80,6 +80,11 @@ public class Session {
 		edit_mode = m;
 		fireEditModeChange();
 	}
+	
+	/** Get the edit mode */
+	public boolean getEditMode() {
+		return edit_mode;
+	}
 
 	/** SONAR state */
 	private final SonarState state;
