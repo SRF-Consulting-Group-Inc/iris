@@ -79,7 +79,7 @@ public enum UserProperty {
 		+ "comm, weather_sensor";
 
 	/** Get the directory to store user properties */
-	static private File getDir() {
+	static public File getDir() {
 		String home = System.getProperty("user.home");
 		return new File(home, "iris");
 	}
