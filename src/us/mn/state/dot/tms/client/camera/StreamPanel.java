@@ -337,6 +337,17 @@ public class StreamPanel extends JPanel {
 
 		// get the layout name from the ComboBox
 		String layoutName = (String) layout_list.getSelectedItem();
+		
+		// if the layout name is empty, generate a new, unique name
+		if (layoutName == null || layoutName.isEmpty()) {
+			HashSet<String> hSet = new HashSet<String>(
+					UserProperty.getStreamLayoutNames(p));
+			for (int i = 1; i < 999; ++i) {
+				layoutName = "layout_" + Integer.toString(i);
+				if (!hSet.contains(layoutName))
+					break;
+			}
+		}
 
 		if (lc == LayoutCommand.SAVE)
 			UserProperty.saveStreamLayout(p, layoutName);
