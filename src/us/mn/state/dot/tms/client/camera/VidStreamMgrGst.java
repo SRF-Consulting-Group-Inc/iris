@@ -14,16 +14,29 @@
  */
 package us.mn.state.dot.tms.client.camera;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
 
-import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
+import com.sun.jna.platform.win32.Kernel32;
+
+import us.mn.state.dot.tms.SystemAttrEnum;
+import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.UserProperty;
+import us.mn.state.dot.tms.client.widget.ZipDownloader;
+import us.mn.state.dot.tms.utils.I18N;
 
 import org.freedesktop.gstreamer.Bus;
 import org.freedesktop.gstreamer.Element;
@@ -33,7 +46,6 @@ import org.freedesktop.gstreamer.GstException;
 import org.freedesktop.gstreamer.GstObject;
 import org.freedesktop.gstreamer.Pipeline;
 import org.freedesktop.gstreamer.State;
-import org.freedesktop.gstreamer.StateChangeReturn;
 import org.freedesktop.gstreamer.elements.AppSink;
 
 /**
@@ -246,69 +258,60 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	
 	private static Boolean bGstInstalled = null;
 	
-	private static File tmpDir;
-	
 	/** See if we have access to GStreamer library */
 	public static boolean isGstInstalled() {
 		if (bGstInstalled == null) {
-			// try to load with whatever environment settings we have now
-			bGstInstalled = initGst();
+			// test to see if we can load GStreamer with whatever environment
+			// settings we have now
+			bGstInstalled = testGst();
 			
 			// if we didn't get it and we're using WebStart, try to load from
 			// a JAR from the server
-			if (isRunningJavaWebStart()) {
-				// TODO multi platform
-				
-				try {
-					String path = Native.getWebStartLibraryPath("libgstbase-1.0-0");
-					System.out.println(path);
-					if (path != null)
-						NativeLibrary.addSearchPath("gstreamer", path);
-				} catch (UnsatisfiedLinkError e) {
-					e.printStackTrace();
-				}
-				
-				try {
-					File f = Native.extractFromResourcePath("libgstbase-1.0-0");
-					System.out.println(f.getAbsolutePath());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-//				System.loadLibrary("");
-				
-				
-				// load 
-//				InputStream is = InputStream.class.getResourceAsStream(
-//						"gstreamer-1.0-mingw-x86_64-1.16.2.jar");
-//				ZipInputStream zis = new ZipInputStream(is);
-//				ZipEntry ze;
-//				
-//				System.out.println("Reading zip file...");
-//				try {
-//					while ((ze = zis.getNextEntry()) != null) {
-//						System.out.println(ze.getName());
-//					}
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-				
-//				if (tmpDir == null ) {
-//					tmpDir = createTempDirectory("gstreamer");
-//					tmpDir.deleteOnExit();
-//				}
-				
-				
-				
-//				try {
-//					
-//					File tmp = new File
-//					Files.copy(is, tmpDir)
-//				}
-			}
+			if (!bGstInstalled) { // && isRunningJavaWebStart()) {
+				bGstInstalled = false;
+				checkDownloadGStreamer();
+			} else
+				initGst();
 		}
 		return bGstInstalled;
+	}
+	
+	/** Test whether the GStreamer native library is installed using a
+	 *  temporary class loader. Testing is performed in a contained environment
+	 *  to allow proper initialization later after the JNA path is modified.
+	 */
+	private static boolean testGst() {
+		ClassLoader cl = VidStreamMgr.class.getClassLoader();
+		Method m;
+		try {
+			// load the low-level classes we need from GStreamer
+			Class gstApi = cl.loadClass(
+					"org.freedesktop.gstreamer.lowlevel.GstAPI");
+			Class gstNative = cl.loadClass(
+					"org.freedesktop.gstreamer.lowlevel.GstNative");
+			
+			// try the load method
+			m = gstNative.getDeclaredMethod("load", Class.class);
+			m.invoke(null, gstApi);
+			
+			// nullify everything to allow garbage collection
+			gstNative = null;
+			gstApi = null;
+			return true;
+		} catch (ClassNotFoundException | NoSuchMethodException
+				| SecurityException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+//			e.printStackTrace();
+			// loading failed, probably/hopefully because we don't have
+			// GStreamer installed
+		} finally {
+			// garbage collect the class loader environment we used for testing
+			// so we can reinit Gst/JNA later after modifying the library path
+			m = null;
+			cl = null;
+			System.gc();
+		}
+		return false;
 	}
 	
 	/** Try to initialize GStreamer. */
@@ -337,14 +340,163 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	    return hasJNLP;
 	}
 	
-	private static File createTempDirectory(String prefix) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
-        File generatedDir = new File(tempDir, prefix + System.nanoTime());
+	/** GStreamer native library naming conventions for building directory/
+	 *  zipfile name. Combined with the version (taken from a system attribute)
+	 *  it will look something like this:
+	 *  	gstreamer-1.0-mingw-x86_64-1.16.2[.zip]
+	 *  
+	 *  TODO may ultimately want to make this system attributes too.
+	 */
+	private static final String GST_SERVER_DIR = "/iris-client/lib/";
+	private static final String GST_BASE = "gstreamer-1.0";
+	private static final String GST_WIN = "mingw";
+	private static final String GST_LINUX = "linux";
+	// TODO BSD/other Unix would probably be supported along with Linux, but
+	// should test first
+	// TODO Mac (probably won't support for a while)
+	private static final String GST_ARCH_32 = "x86";
+	private static final String GST_ARCH_64 = "x86_64";
+	
+	/** Paths inside GStreamer directory (combined with other constants) */
+	private static final String GST_ROOT_DIR = "1.0";
+	private static final String GST_BIN_DIR = "bin";
+	private static final String GST_LIB_DIR = "lib"; // TODO not needed?
+	
+	/** Check for a private copy of the native GStreamer binaries in the
+	 *  user's $HOME/iris/ directory (the same place where user properties
+	 *  are stored). If not found, the appropriate binaries for the current
+	 *  platform are downloaded automatically. In both cases, the Java system
+	 *  path is modified to allow gst1-java-core to find the native library.
+	 * 	
+	 *  This should only be run if GStreamer is not found with the current
+	 *  environment settings, and only if running in WebStart.
+	 */
+	private static void checkDownloadGStreamer() {
+		// get the $HOME/iris directory and make sure it exists
+		File uIris = UserProperty.getDir();
+		if (!uIris.canWrite())
+			uIris.mkdirs();
+		
+		// check the current OS and architecture
+		String gstOS = null;
+		
+		if (Platform.isWindows())
+			gstOS = GST_WIN;
+		else if (Platform.isLinux())
+			gstOS = GST_LINUX;
+		// TODO Mac, BSD
+		
+		// TODO no ARM support, maybe later
+		String gstArch = Platform.is64Bit() ? GST_ARCH_64 : GST_ARCH_32;
+		
+		// if we don't have a matching OS and architecture, we're done
+		if (gstOS == null || gstArch == null)
+			return;
+		
+		// look for a directory with the files we want (indicated by the name)
+		String gstDirName = GST_BASE + "-" + gstOS + "-" + gstArch + "-"
+				+ SystemAttrEnum.GSTREAMER_CURRENT_VERSION.getString();
+		
+		File gstDir = new File(uIris, gstDirName);
+		String gstPath;
+		try {
+			gstPath = gstDir.getCanonicalPath().toString();
+		} catch (IOException e1) { return; }
+		
+		// check for the directory
+		if (!gstDir.isDirectory()) {
+			// if we can't find it, download it as a zip file from the server
+			String gstZipFile = gstDirName + ".zip";
+			
+			// get the server host from the client properties and build the URL
+			// we will take the host:port from SONAR and strip off the :port
+			String hostport = Session.getCurrent().getSonarState().getName();
+			String host = hostport.split(":")[0];
+			String urlStr = "http://" + host + GST_SERVER_DIR + gstZipFile;
+			
+			// check the server for the file - if we can't find it, we're done
+			URL url;
+			try {
+				url = new URL(urlStr);
+				
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				System.out.println("Could not download GStreamer from server"
+						+ "With URL: '" + urlStr + "'");
+				return;
+			}
+			
+			// create an action to be completed when the download completes
+			Action addToPath = new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent ev) {
+					addUserGstToPath(gstPath, gstArch);
+				}
+			};
+			
+			// create a ZipDownloader, show it, and start the download
+			ZipDownloader zd = new ZipDownloader(
+					"camera.gstreamer.downloading.title",
+					"camera.gstreamer.downloading.msg", url, gstDir);
+			JInternalFrame f = Session.getCurrent().getDesktop().show(zd);
+			zd.setFrame(f);
+			
+			// addToPath will be run when the download is complete
+			zd.execute(addToPath);
+		} else
+			// if we already have the directory, add it to the path
+			addUserGstToPath(gstPath, gstArch);
+	}
+	
+	private static void addUserGstToPath(String gstPath, String gstArch) {
+		// build the full paths we need
+		String libPath = Paths.get(gstPath, GST_ROOT_DIR,
+				gstArch, GST_LIB_DIR).toString();
+		String binPath = Paths.get(gstPath, GST_ROOT_DIR,
+				gstArch, GST_BIN_DIR).toString();
+		
+		// add the gstDir to the system path
+		if (Platform.isWindows()) {
+            try {
+                Kernel32 k32 = Kernel32.INSTANCE;
+                String path = System.getenv("path");
+                System.out.println("path: " + path);
+                if (path == null || path.trim().isEmpty()) {
+                    k32.SetEnvironmentVariable("path", binPath);
+                } else {
+                    k32.SetEnvironmentVariable("path", binPath
+                    		+ File.pathSeparator + path);
+                }
+                char[] pth = new char[32767];
+                k32.GetEnvironmentVariable("path", pth, 32767);
+                System.out.println(new String(pth));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+		} else {
+			String jnaPath = System.getProperty(
+					"jna.library.path", "").trim();
+			System.out.println(jnaPath);
+	        if (jnaPath.isEmpty()) {
+	            System.setProperty("jna.library.path", libPath);
+	        } else {
+	            System.setProperty("jna.library.path",
+	            		jnaPath + File.pathSeparator + libPath);
+	        }
+	        System.out.println(jnaPath);
+		}
         
-        if (!generatedDir.mkdir())
-            throw new IOException("Failed to create temp directory " +
-            		generatedDir.getName());
+        // try to initialize GStreamer now
+        bGstInstalled = initGst();
         
-        return generatedDir;
-    }
+        // show a success/failure dialog to the user
+        String title = bGstInstalled
+        		? I18N.get("camera.gstreamer.downloading.success")
+				: I18N.get("camera.gstreamer.downloading.failed");
+        String msg = bGstInstalled
+        		? I18N.get("camera.gstreamer.downloading.success.msg")
+				: I18N.get("camera.gstreamer.downloading.failed.msg");
+        JOptionPane.showConfirmDialog(Session.getCurrent().getDesktop(), msg,
+        		title, JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+	}
 }
