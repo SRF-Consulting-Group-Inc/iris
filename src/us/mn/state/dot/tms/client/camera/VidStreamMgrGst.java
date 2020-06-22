@@ -267,7 +267,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			
 			// if we didn't get it and we're using WebStart, try to load from
 			// a JAR from the server
-			if (!bGstInstalled) { // && isRunningJavaWebStart()) {
+			if (!bGstInstalled && isRunningJavaWebStart()) {
 				bGstInstalled = false;
 				checkDownloadGStreamer();
 			} else
@@ -283,6 +283,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	private static boolean testGst() {
 		ClassLoader cl = VidStreamMgr.class.getClassLoader();
 		Method m;
+		System.out.println("Checking for existing GStreamer installation...");
 		try {
 			// load the low-level classes we need from GStreamer
 			Class gstApi = cl.loadClass(
@@ -297,6 +298,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			// nullify everything to allow garbage collection
 			gstNative = null;
 			gstApi = null;
+			System.out.println("GStreamer installation found!");
 			return true;
 		} catch (ClassNotFoundException | NoSuchMethodException
 				| SecurityException | IllegalAccessException
@@ -311,6 +313,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			cl = null;
 			System.gc();
 		}
+		System.out.println("NO GStreamer installation found!");
 		return false;
 	}
 	
@@ -430,7 +433,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			Action addToPath = new AbstractAction() {
 				@Override
 				public void actionPerformed(ActionEvent ev) {
-					addUserGstToPath(gstPath, gstArch);
+					addUserGstToPath(gstPath, gstArch, true);
 				}
 			};
 			
@@ -445,10 +448,11 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			zd.execute(addToPath);
 		} else
 			// if we already have the directory, add it to the path
-			addUserGstToPath(gstPath, gstArch);
+			addUserGstToPath(gstPath, gstArch, false);
 	}
 	
-	private static void addUserGstToPath(String gstPath, String gstArch) {
+	private static void addUserGstToPath(String gstPath,
+			String gstArch, boolean confirm) {
 		// build the full paths we need
 		String libPath = Paths.get(gstPath, GST_ROOT_DIR,
 				gstArch, GST_LIB_DIR).toString();
@@ -489,14 +493,17 @@ public class VidStreamMgrGst extends VidStreamMgr {
         // try to initialize GStreamer now
         bGstInstalled = initGst();
         
-        // show a success/failure dialog to the user
-        String title = bGstInstalled
-        		? I18N.get("camera.gstreamer.downloading.success")
-				: I18N.get("camera.gstreamer.downloading.failed");
-        String msg = bGstInstalled
-        		? I18N.get("camera.gstreamer.downloading.success.msg")
-				: I18N.get("camera.gstreamer.downloading.failed.msg");
-        JOptionPane.showConfirmDialog(Session.getCurrent().getDesktop(), msg,
-        		title, JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (confirm) {
+	        // show a success/failure dialog to the user
+	        String title = bGstInstalled
+	        		? I18N.get("camera.gstreamer.downloading.success")
+					: I18N.get("camera.gstreamer.downloading.failed");
+	        String msg = bGstInstalled
+	        		? I18N.get("camera.gstreamer.downloading.success.msg")
+					: I18N.get("camera.gstreamer.downloading.failed.msg");
+	        JOptionPane.showConfirmDialog(Session.getCurrent().getDesktop(),
+	        		msg, title, JOptionPane.DEFAULT_OPTION,
+	        		JOptionPane.PLAIN_MESSAGE);
+        }
 	}
 }
