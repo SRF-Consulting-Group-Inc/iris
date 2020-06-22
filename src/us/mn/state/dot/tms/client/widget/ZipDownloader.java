@@ -323,14 +323,14 @@ public class ZipDownloader extends AbstractForm {
 	};
 	
 	/** Query the size of the file to be downloaded from the server using a
-	 *  HEAD request.
+	 *  GET request.
 	 */
 	private static int getFileSize(URL url) {
 		URLConnection conn = null;
 		try {
 			conn = url.openConnection();
 			if(conn instanceof HttpURLConnection) {
-	            ((HttpURLConnection)conn).setRequestMethod("HEAD");
+	            ((HttpURLConnection)conn).setRequestMethod("GET");
 	        }
 	        conn.getInputStream();
 	        return conn.getContentLength();
