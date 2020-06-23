@@ -16,14 +16,19 @@
 package us.mn.state.dot.tms.client.camera;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -117,8 +122,9 @@ public class CameraVidSourceOrderPanel extends JPanel
 	});
 	
 	/** Video source info */
-	private final JTextArea vid_src_info =
-			new JTextArea(14, 20);
+//	private final JTextArea vid_src_info =
+//			new JTextArea(14, 20);
+	private final JPanel vid_src_info;
 	
 	/** Camera video source label */
 	private final ILabel cam_vid_src_lbl =
@@ -209,68 +215,6 @@ public class CameraVidSourceOrderPanel extends JPanel
 			moveCameraDown();
 		}
 	});
-	
-	/** Display information for video source */
-	private void displayVidSrcInfo(VidSourceTemplate vst) {
-		// TODO will probably change this some
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("\n");
-		sb.append("Name: ");
-		sb.append(checkNull(vst.getLabel()));
-		sb.append("\n");
-		
-		sb.append("Configuration: ");
-		sb.append(checkNull(vst.getConfig()));
-		sb.append("\n");
-
-		sb.append("Codec: ");
-		sb.append(checkNull(vst.getCodec()));
-		sb.append("\n");
-		
-		sb.append("Encoder: ");
-		sb.append(checkNull(vst.getEncoder()));
-		sb.append("\n");
-		
-		sb.append("Notes: ");
-		sb.append(checkNull(vst.getNotes()));
-		sb.append("\n");
-		
-		sb.append("Scheme: ");
-		sb.append(checkNull(vst.getScheme()));
-		sb.append("\n");
-		
-		sb.append("Subnets: ");
-		sb.append(checkNull(vst.getSubnets()));
-		sb.append("\n");
-		
-		sb.append("Default Port: ");
-		sb.append(checkNull(vst.getDefaultPort()));
-		sb.append("\n");
-		
-		sb.append("Latency: ");
-		sb.append(checkNull(vst.getLatency()));
-		sb.append("\n");
-		
-		sb.append("Resolution Height: ");
-		sb.append(checkNull(vst.getRezHeight()));
-		sb.append("\n");
-		
-		sb.append("Resolution Width: ");
-		sb.append(checkNull(vst.getRezWidth()));
-		
-		vid_src_info.setText(sb.toString());
-	}
-	
-	/** Return blank string if field is null */
-	private static String checkNull(String s) {
-		return s != null ? s : "";
-	}
-	
-	/** Return blank string if field is null */
-	private static String checkNull(Integer i) {
-		return i != null ? i.toString() : "";
-	}
 
 	/** Move selected camera down */
 	private void moveCameraDown() {
@@ -289,7 +233,107 @@ public class CameraVidSourceOrderPanel extends JPanel
 			cam_vid_src.set(s, cmvo2);
 		}
 	}
+	
+	/** Video Source Fields */
+	
+	/** Name (Label) Label and Field */
+	private final JLabel vsNameLbl = new JLabel(I18N.get(
+			"camera.video_source.template.name") + ":");
+	private final JLabel vsNameField = new JLabel();
+	
+	/** Codec Label and Field */
+	private final JLabel vsCodecLbl = new JLabel(I18N.get(
+			"camera.video_source.template.codec") + ":");
+	private final JLabel vsCodecField = new JLabel();
 
+	/** Encoder (Type) Label and Field */
+	private final JLabel vsEncoderLbl = new JLabel(I18N.get(
+			"camera.video_source.template.encoder") + ":");
+	private final JLabel vsEncoderField = new JLabel();
+
+	/** Scheme Label and Field */
+	private final JLabel vsSchemeLbl = new JLabel(I18N.get(
+			"camera.video_source.template.scheme") + ":");
+	private final JLabel vsSchemeField = new JLabel();
+
+	/** Default Port Label and Field */
+	private final JLabel vsLatencyLbl = new JLabel(I18N.get(
+			"camera.video_source.template.latency") + ":");
+	private final JLabel vsLatencyField = new JLabel();
+
+	/** Default Port Label and Field */
+	private final JLabel vsDefPortLbl = new JLabel(I18N.get(
+			"camera.video_source.template.default_port") + ":");
+	private final JLabel vsDefPortField = new JLabel();
+
+	/** Resolution Width Label and Field */
+	private final JLabel vsRezWidthLbl = new JLabel(I18N.get(
+			"camera.video_source.template.rez_width") + ":");
+	private final JLabel vsRezWidthField = new JLabel();
+
+	/** Resolution Height Label and Field */
+	private final JLabel vsRezHeightLbl = new JLabel(I18N.get(
+			"camera.video_source.template.rez_height") + ":");
+	private final JLabel vsRezHeightField = new JLabel();
+
+	/** Subnets Label and Field */
+	private final JLabel vsSubnetsLbl = new JLabel(I18N.get(
+			"camera.video_source.template.subnets") + ":");
+	private final JTextArea vsSubnetsField = new JTextArea(1, 52);
+
+	/** (GStreamer) Configuration Label and Field */
+	private final JLabel vsConfigLbl = new JLabel("<html>" + I18N.get(
+			"camera.video_source.template.config") + ":<br>&nbsp;</html>");
+	private final JTextArea vsConfigField = new JTextArea(2, 50);
+
+	/** Notes Label and Field */
+	private final JLabel vsNotesLbl = new JLabel("<html>" + I18N.get(
+			"camera.video_source.template.notes") + ":<br><br>&nbsp;</html>");
+	private final JTextArea vsNotesField = new JTextArea(3, 54);
+
+	/** Separator size between fields on the same line */
+	private final static int hGap = 10;
+	
+	
+	/** Display information for video source */
+	private void displayVidSrcInfo(VidSourceTemplate vst) {
+		if (vst != null) {
+			vsNameField.setText(checkNull(vst.getLabel()));
+			vsCodecField.setText(checkNull(vst.getCodec()));
+			vsEncoderField.setText(checkNull(vst.getEncoder()));
+			vsSchemeField.setText(checkNull(vst.getScheme()));
+			vsLatencyField.setText(checkNull(vst.getLatency()));
+			vsDefPortField.setText(checkNull(vst.getDefaultPort()));
+			vsRezWidthField.setText(checkNull(vst.getRezHeight()));
+			vsRezHeightField.setText(checkNull(vst.getRezWidth()));
+			vsSubnetsField.setText(checkNull(vst.getSubnets()));
+			vsConfigField.setText(checkNull(vst.getConfig()));
+			vsNotesField.setText(checkNull(vst.getNotes()));
+		} else {
+			vsNameField.setText("");
+			vsCodecField.setText("");
+			vsEncoderField.setText("");
+			vsSchemeField.setText("");
+			vsLatencyField.setText("");
+			vsDefPortField.setText("");
+			vsRezWidthField.setText("");
+			vsRezHeightField.setText("");
+			vsSubnetsField.setText("");
+			vsConfigField.setText("");
+			vsNotesField.setText("");
+		}
+	}
+	
+	/** Return blank string if field is null */
+	private static String checkNull(String s) {
+		return s != null ? s : "";
+	}
+	
+	/** Return blank string if field is null */
+	private static String checkNull(Integer i) {
+		return i != null ? i.toString() : "";
+	}
+	
 	/** Create a new play list panel */
 	public CameraVidSourceOrderPanel(Session s, CameraTemplate ct) {
 		session = s;
@@ -297,6 +341,7 @@ public class CameraVidSourceOrderPanel extends JPanel
 		cache = s.getSonarState().getCamVidSrcOrder();
 		watcher = new ProxyWatcher<CameraVidSourceOrder>(cache, this, false);
 		cam_vid_src = VidStreamReq.getCamVidSrcOrder(camera_template);
+		vid_src_info = new JPanel();
 	}
 
 	/** Initialize the widgets */
@@ -306,11 +351,11 @@ public class CameraVidSourceOrderPanel extends JPanel
 		vid_src_lst.setVisibleRowCount(12);
 		cam_vid_src_lst.setCellRenderer(new LabelRenderer());
 		vid_src_lst.setCellRenderer(new LabelRenderer());
-		cam_vid_src_scrl.setPreferredSize(new Dimension(150,200));
-		vid_src_scrl.setPreferredSize(new Dimension(150,200));
-		vid_src_info.setEditable(false);
-		vid_src_info.setBackground(UIManager.getColor("Panel.background"));
-		vid_src_info.setLineWrap(true);
+		cam_vid_src_scrl.setPreferredSize(new Dimension(300,200));
+		vid_src_scrl.setPreferredSize(new Dimension(300,200));
+		vid_src_info.setLayout(new BoxLayout(vid_src_info, BoxLayout.Y_AXIS));
+		vid_src_info.setPreferredSize(new Dimension(650,200));
+		initVstFields();
 		ImageIcon insert_icon = Icons.getIconByPropName(
 				"camera.template.source.add");
 		insert_btn.setIcon(insert_icon);
@@ -344,8 +389,113 @@ public class CameraVidSourceOrderPanel extends JPanel
 		}
 	}
 
+	/** Initialize the video source template fields (sets various options). */
+	private void initVstFields() {
+		// we're using text areas for the long fields - disable editing, change
+		// color, and allow wrapping to make them useful
+		vsSubnetsField.setEditable(false);
+		vsSubnetsField.setBackground(UIManager.getColor("Panel.background"));
+		vsSubnetsField.setLineWrap(true);
+		vsSubnetsField.setWrapStyleWord(true);
+		
+		vsConfigField.setEditable(false);
+		vsConfigField.setBackground(UIManager.getColor("Panel.background"));
+		vsConfigField.setLineWrap(true);
+		vsConfigField.setWrapStyleWord(true);
+		
+		vsNotesField.setEditable(false);
+		vsNotesField.setBackground(UIManager.getColor("Panel.background"));
+		vsNotesField.setLineWrap(true);
+		vsNotesField.setWrapStyleWord(true);
+		
+		// change all other fields to use non-bold text
+		Font f = vsNameField.getFont();
+		Font fnb = f.deriveFont(f.getStyle() & ~Font.BOLD);
+		vsNameField.setFont(fnb);
+		vsCodecField.setFont(fnb);
+		vsEncoderField.setFont(fnb);
+		vsSchemeField.setFont(fnb);
+		vsLatencyField.setFont(fnb);
+		vsDefPortField.setFont(fnb);
+		vsRezWidthField.setFont(fnb);
+		vsRezHeightField.setFont(fnb);
+		
+		// set size for the first 2 rows of fields
+		vsNameField.setText(" ");
+		Dimension d = vsNameField.getPreferredSize();
+		vsNameField.setPreferredSize(new Dimension(120, d.height));
+		vsCodecField.setPreferredSize(new Dimension(80, d.height));
+		vsEncoderField.setPreferredSize(new Dimension(80, d.height));
+		vsSchemeField.setPreferredSize(new Dimension(60, d.height));
+		vsLatencyField.setPreferredSize(new Dimension(60, d.height));
+		vsDefPortField.setPreferredSize(new Dimension(40, d.height));
+		vsRezWidthField.setPreferredSize(new Dimension(40, d.height));
+		vsRezHeightField.setPreferredSize(new Dimension(40, d.height));
+	}
+	
+	/** Layout the video source template fields on the panel. */
+	private void layoutVstFields() {
+		// add fields to the panel (in rows of panels)
+		JPanel fRow1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		fRow1.setAlignmentY(TOP_ALIGNMENT);
+		fRow1.add(vsNameLbl);
+		fRow1.add(vsNameField);
+		fRow1.add(Box.createHorizontalStrut(hGap));
+		
+		fRow1.add(vsCodecLbl);
+		fRow1.add(vsCodecField);
+		fRow1.add(Box.createHorizontalStrut(hGap));
+		
+		fRow1.add(vsEncoderLbl);
+		fRow1.add(vsEncoderField);
+		fRow1.add(Box.createHorizontalStrut(3*hGap));
+		
+		fRow1.add(vsSchemeLbl);
+		fRow1.add(vsSchemeField);
+		
+		JPanel fRow2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		fRow2.setAlignmentY(TOP_ALIGNMENT);
+		fRow2.add(vsLatencyLbl);
+		fRow2.add(vsLatencyField);
+		fRow2.add(Box.createHorizontalStrut(hGap));
+		
+		fRow2.add(vsDefPortLbl);
+		fRow2.add(vsDefPortField);
+		fRow2.add(Box.createHorizontalStrut(hGap));
+		
+		fRow2.add(vsRezWidthLbl);
+		fRow2.add(vsRezWidthField);
+		fRow2.add(Box.createHorizontalStrut(hGap));
+		
+		fRow2.add(vsRezHeightLbl);
+		fRow2.add(vsRezHeightField);
+		
+		JPanel fRow3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		fRow3.setAlignmentY(TOP_ALIGNMENT);
+		fRow3.add(vsSubnetsLbl);
+		fRow3.add(vsSubnetsField);
+		
+		JPanel fRow4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		fRow4.setAlignmentY(TOP_ALIGNMENT);
+		fRow4.add(vsConfigLbl);
+		fRow4.add(vsConfigField);
+		
+		JPanel fRow5 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		fRow5.setAlignmentY(TOP_ALIGNMENT);
+		fRow5.add(vsNotesLbl);
+		fRow5.add(vsNotesField);
+		
+		// add the rows of fields to the panel
+		vid_src_info.add(fRow1);
+		vid_src_info.add(fRow2);
+		vid_src_info.add(fRow3);
+		vid_src_info.add(fRow4);
+		vid_src_info.add(fRow5);
+	}
+	
 	/** Layout the panel */
 	private void layoutPanel() {
+		layoutVstFields();
 		GroupLayout gl = new GroupLayout(this);
 		gl.setHonorsVisibility(false);
 		gl.setAutoCreateGaps(false);
@@ -448,7 +598,8 @@ public class CameraVidSourceOrderPanel extends JPanel
 				if (isCamSrcSelected()) {
 					vid_src_lst.clearSelection();
 					displayVidSrcInfo(cam_vid_src_lst.getSelectedValue());
-				}
+				} else if (!isVidSrcSelected())
+					displayVidSrcInfo(null);
 				updateButtons();
 			}
 		});
@@ -461,7 +612,8 @@ public class CameraVidSourceOrderPanel extends JPanel
 				if (isVidSrcSelected()) {
 					cam_vid_src_lst.clearSelection();
 					displayVidSrcInfo(vid_src_lst.getSelectedValue());
-				}
+				} else if (!isCamSrcSelected())
+					displayVidSrcInfo(null);
 				updateButtons();
 			}
 		});

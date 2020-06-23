@@ -289,16 +289,16 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		vsSubnetsField.setBorder(BorderFactory.createCompoundBorder(border,
 	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
-		vsConfigLbl = new JLabel(I18N.get(
-				"camera.video_source.template.config") + ":");
+		vsConfigLbl = new JLabel("<html>" + I18N.get(
+			"camera.video_source.template.config") + ":<br>&nbsp;</html>");
 		vsConfigField = new JTextArea(2, 58);
 		vsConfigField.setLineWrap(true);
 		vsConfigField.setWrapStyleWord(true);
 		vsConfigField.setBorder(BorderFactory.createCompoundBorder(border,
 	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
-		vsNotesLbl = new JLabel(I18N.get(
-				"camera.video_source.template.notes") + ":");
+		vsNotesLbl = new JLabel("<html>" +I18N.get(
+			"camera.video_source.template.notes") + ":<br><br>&nbsp;</html>");
 		vsNotesField = new JTextArea(3, 62);
 		vsNotesField.setLineWrap(true);
 		vsNotesField.setWrapStyleWord(true);
@@ -308,14 +308,10 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		// instantiate the buttons (TODO ACTIONS)
 		deleteBtn = new JButton(deleteConfirm);
 		clearBtn = new JButton(clear);
-		helpBtn = new JButton(I18N.get(
-				"camera.video_source.template.help"));
+		helpBtn = new JButton(help);
 		cancelBtn = new JButton(cancel);
 		saveBtn = new JButton(save);
 		cloneBtn = new JButton(clone);
-		
-		// TODO temporary
-		helpBtn.setEnabled(false);
 	}
 	
 	/** Check if the user is permitted to use the form. */
@@ -738,6 +734,16 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		protected void doActionPerformed(ActionEvent ev) throws Exception {
 			// set the video source to null - it will do the rest
 			setSelectedVideoSource(null);
+		}
+	};
+
+	/** Action triggered when pressing the config field help button. */
+	private IAction help = new IAction(
+			"camera.video_source.template.help") {
+		@Override
+		protected void doActionPerformed(ActionEvent ev) throws Exception {
+			// open the dialog with config substitution field info
+			session.getDesktop().show(new VidSrcTemplateConfigHelp());
 		}
 	};
 
