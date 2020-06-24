@@ -16,7 +16,7 @@ package us.mn.state.dot.tms;
 
 import java.util.Iterator;
 
-import us.mn.state.dot.tms.util.UniqueNameCreator;
+import us.mn.state.dot.tms.utils.UniqueNameCreator;
 
 /**
  * @author John L. Stanley - SRF Consulting

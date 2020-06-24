@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  */
 
-package us.mn.state.dot.tms.util;
+package us.mn.state.dot.tms.utils;
 
 /** Helper class for creating
  *  unique SONAR record names.
