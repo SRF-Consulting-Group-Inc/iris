@@ -16,6 +16,8 @@ package us.mn.state.dot.tms;
 
 import java.util.Iterator;
 
+import us.mn.state.dot.tms.util.UniqueNameCreator;
+
 /**
  * @author John L. Stanley - SRF Consulting
  *
@@ -44,26 +46,21 @@ public class VidSourceTemplateHelper extends BaseHelper {
 		return null;
 	}
 	
-	/** Return the first available name for a VidSourceTemplate object. Note
-	 *  that we won't allow more than 10,000,000,000,000 objects due to the
-	 *  database name length limit (though this is just an artificial limit).
-	 *  
-	 *  The name will be "VID_SRC_#".
-	 */
-	static public String getFirstAvailableName() {
-		for (int i = 0; i <= 9999999999999L; ++i) {
-			// generate a name with this number and try to lookup an object
-			String n = "VID_SRC_" + String.valueOf(i);
-			VidSourceTemplate vst = lookup(n);
-			if (vst == null)
-				return n;
-		}
-		return null;
-	}
-	
 	/** Get a StreamTemplate iterator */
 	static public Iterator<VidSourceTemplate> iterator() {
 		return new IteratorWrapper<VidSourceTemplate>(namespace.iterator(
 			VidSourceTemplate.SONAR_TYPE));
+	}
+
+	static UniqueNameCreator unc;
+
+	static {
+		unc = new UniqueNameCreator("VID_SRC_%d", (n)->lookup(n));
+		unc.setMaxLength(20);
+	}
+	
+	/** Create a unique video-source-template record name */
+	static public String createUniqueName() {
+		return unc.createUniqueName();
 	}
 }

@@ -16,6 +16,8 @@ package us.mn.state.dot.tms;
 
 import java.util.Iterator;
 
+import us.mn.state.dot.tms.util.UniqueNameCreator;
+
 /**
  * Helper class for CameraTemplate objects.
  * 
@@ -39,5 +41,17 @@ public class CameraTemplateHelper extends BaseHelper {
 	static public Iterator<CameraTemplate> iterator() {
 		return new IteratorWrapper<CameraTemplate>(namespace.iterator(
 			CameraTemplate.SONAR_TYPE));
+	}
+
+	static UniqueNameCreator unc;
+
+	static {
+		unc = new UniqueNameCreator("CAM_TMPLT_%d", (n)->lookup(n));
+		unc.setMaxLength(20);
+	}
+	
+	/** Create a unique camera-template record name */
+	static public String createUniqueName() {
+		return unc.createUniqueName();
 	}
 }
