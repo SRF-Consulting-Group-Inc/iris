@@ -74,7 +74,6 @@ abstract public class ProxyTableModel<T extends SonarObject>
 			return ProxyTableModel.this.comparator();
 		}
 		protected void proxyAddedSwing(T proxy) {
-			System.out.println("proxyAddedSwing");
 			int i = doProxyAdded(proxy);
 			if (i >= 0)
 				fireTableRowsInserted(i, i);

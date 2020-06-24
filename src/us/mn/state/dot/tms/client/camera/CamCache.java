@@ -152,8 +152,7 @@ public class CamCache {
 			client);
 		enc_type_mdl = new ProxyListModel<EncoderType>(encoder_types);
 		enc_type_mdl.initialize();
-		cam_templates = new TypeCache<CameraTemplate>(CameraTemplate.class,
-				client);
+		cam_templates = client.getCamTemplates();
 		cam_tmplt_mdl = new ProxyListModel<CameraTemplate>(cam_templates);
 		cam_tmplt_mdl.initialize();
 		cameras = new TypeCache<Camera>(Camera.class, client);
