@@ -754,7 +754,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		protected void doActionPerformed(ActionEvent ev) throws Exception {
 			if (selectedVidSource != null) {
 				// generate a new, unique name for the video source
-				String n = VidSourceTemplateHelper.getFirstAvailableName();
+				String n = VidSourceTemplateHelper.createUniqueName();
 				
 				// generate a new, unique label for the source based on the
 				// selected one
@@ -842,7 +842,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		// get a new, unique name for the video source, then create the object
 		// and set it as the selected one
 		if (selectedVidSource == null && validateFormFields()) {
-			String n = VidSourceTemplateHelper.getFirstAvailableName();
+			String n = VidSourceTemplateHelper.createUniqueName();
 			cache.createObject(n);
 			selectedVidSource = cache.lookupObjectWait(n);
 			
