@@ -28,7 +28,6 @@ CREATE OR REPLACE VIEW iris.camera_template
 ALTER TABLE iris.camera_template
     OWNER TO tms;
 
-	
 CREATE TABLE iris._vid_src_template
 (
 	name character varying(20),
