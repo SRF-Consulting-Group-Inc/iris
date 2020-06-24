@@ -25,7 +25,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -49,30 +48,28 @@ import javax.swing.event.ChangeListener;
 import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sched.Scheduler;
 import us.mn.state.dot.tms.Camera;
-import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
 
 /** JPanel that shows video.
  *
- * This handles:
+ * This class handles:
  *   Switching between cameras.
  *   Switching between available streams for the current camera.
  *   Manages camera name label at top of panel.
  *   Manages status/error label at bottom of panel.
+ *   Manages MousePTZ link for panel.
  * 
  * @author John L. Stanley - SRF Consulting
  */
 
+@SuppressWarnings("serial")
 public class VidPanel extends JPanel implements FocusListener {
 
 	/** Current camera */
 	private Camera camera;
 	
-	/** Current camera template */
-	private CameraTemplate ct;
-
 	/** List of available StreamReq(s) for current camera.
 	 * (Only includes those that "should" work in current context.) */
 	private List<VidStreamReq> streamReqList = new ArrayList<VidStreamReq>();
@@ -80,28 +77,14 @@ public class VidPanel extends JPanel implements FocusListener {
 	/** Current stream request number */
 	private int streamReqNum = 0;
 
-	/** Current stream request */
-	private VidStreamReq streamReq;
-
 	/** Current stream manager */
 	private VidStreamMgr streamMgr;
 
 	/** placeholder gray panel used while stopped */
 	protected JComponent placeholderComponent;
 	
-//	protected final GridBagConstraints wideLabelConstr;
-//	private BoxLayoutConstraint;
-	
-//	protected final Color defaultFgLabelColor;
-	
 	/** dimension of video */
 	protected Dimension videoDimension;
-
-	/** width of video */
-	private int vidWidth;
-	
-	/** height of video */
-	private int vidHeight;
 
 	/** Camera PTZ control */
 	private CameraPTZ cam_ptz;
@@ -143,19 +126,15 @@ public class VidPanel extends JPanel implements FocusListener {
 	private boolean pausePanel = false;
 	private boolean streamError = false;
 	
-	private int reconnectAttempts = 0;
 	private int timeoutSec = 0;
 
 	private boolean repeatStatusMonitor = false;
-	private int reconCount = 0;
 	
 	/** Status monitor job called once per second */
 	private final Job statusMonitor = new Job(Calendar.SECOND, 1)
 	{
 		public void perform2() {
 			int frames = getReceivedFrameCount();
-//			System.err.println(String.format("state: %s | frames: %d",
-//					panelStatus.toString(), frames));
 			switch (panelStatus) {
 				case IDLE:
 				case FAILED:
@@ -199,22 +178,18 @@ public class VidPanel extends JPanel implements FocusListener {
 					if (frames > 0) {
 						timeoutSec = 0;
 						panelStatus = PanelStatus.VIEWING;
-						++reconCount;
 					}
 					else if (++timeoutSec >= reconnectTimeoutSec) {
 						timeoutSec = 0;
 						startCurrentStream();
-						++reconnectAttempts;
 					}
 			}
 		}
 		
 		@Override
 		public void perform() {
-			if (repeatStatusMonitor) {
+			if (repeatStatusMonitor)
 				perform2();
-//				System.err.println(panelStatus.toString()+": "+timeoutSec+", "+reconCount);
-			}
 			queueUpdatePanel();
 		}
 
@@ -227,13 +202,11 @@ public class VidPanel extends JPanel implements FocusListener {
 
 	/** Start status monitor */
 	private void startStatusMonitor() {
-		System.err.println("VidPanel.startStatusMonitor()");
 		repeatStatusMonitor = true;
 		PANEL_UPDATE.addJob(statusMonitor);
 	}
 
 	public void stopStatusMonitor() {
-		System.err.println("VidPanel.stopStatusMonitor()");
 		repeatStatusMonitor = false;
 		PANEL_UPDATE.removeJob(statusMonitor);
 		panelStatus = PanelStatus.IDLE;
@@ -295,20 +268,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
 		addFocusListener(this);
 
-//		wideLabelConstr = new GridBagConstraints();
-////		wideLabelConstr.fill = GridBagConstraints.HORIZONTAL;
-////		wideLabelConstr.weighty = 0.5;
-////		wideLabelConstr.anchor = GridBagConstraints.NORTH;
-////		wideLabelConstr.gridwidth = GridBagConstraints.REMAINDER;
-//		wideLabelConstr.fill = GridBagConstraints.HORIZONTAL;
-////		wideLabelConstr.ipady = 40;      //make this component tall
-//		wideLabelConstr.weightx = 1.0;
-//		wideLabelConstr.gridwidth = GridBagConstraints.REMAINDER;
-////		wideLabelConstr.gridx = 0;
-////		wideLabelConstr.gridy = 1;
-		
-		vidWidth = width;
-		vidHeight = height;
 		videoDimension = new Dimension(width, height);
 		placeholderComponent = new JPanel();
 		placeholderComponent.setPreferredSize(videoDimension);
@@ -325,8 +284,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		vhc.weighty = 1;
 		videoHolder.add(placeholderComponent, vhc);
 
-//		defaultFgLabelColor = lbl.getForeground();
-
 		addLabel(" ");
 		add(videoHolder);
 		addLabel(" ");
@@ -336,7 +293,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		addAncestorListener(new AncestorListener() {
 			@Override
 			public void ancestorAdded(AncestorEvent event) {
-				System.err.println("*** AncestorListener.ancestorAdded");
 		    	startStatusMonitor();
 		    	if (autostart)
 		    		startCurrentStream();
@@ -345,7 +301,6 @@ public class VidPanel extends JPanel implements FocusListener {
 			public void ancestorMoved(AncestorEvent event) {}
 			@Override
 			public void ancestorRemoved(AncestorEvent event) {
-				System.err.println("*** AncestorListener.ancestorRemoved");
 				stopStatusMonitor();
 				releaseStream();
 			}
@@ -361,12 +316,9 @@ public class VidPanel extends JPanel implements FocusListener {
 			}
 			@Override
 		    public void componentShown(ComponentEvent e) {
-//				System.err.println("*** ComponentAdapter.componentShown");
 		    }
 			@Override
 		    public void componentHidden(ComponentEvent e) {
-//				System.err.println("*** ComponentAdapter.componentHidden");
-//		    	stopStatusMonitor();
 		    }
 		});
 
@@ -451,15 +403,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		}
 	};
 	
-//	/** Dispose of the video panel */
-//	public void dispose() {
-//		System.err.println("VidPanel.dispose()");
-//		releaseStream();
-//		stopStatusMonitor();
-//		PANEL_UPDATE.removeJob(updatePanel);
-////		PANEL_UPDATE.removeJob(fireChangeListenersJob);
-//	}
-
 	public Dimension getVideoDimension() {
 		return videoDimension;
 	}
@@ -487,13 +430,10 @@ public class VidPanel extends JPanel implements FocusListener {
 	private final Job updatePanel = new Job(100) {
 		public void perform() {
 			Camera     cam;
-			VidStreamReq sreq;
 			VidStreamMgr smgr;
 			removeAll();
-//			System.out.println(VidPanel.this.toString());
 			synchronized (this) {
 				cam  = camera;
-				sreq = streamReq;
 				smgr = streamMgr;
 			}
 			if (cam == null) {
@@ -519,7 +459,9 @@ public class VidPanel extends JPanel implements FocusListener {
 					String msg = smgr.getErrorMsg();
 					streamError = !isNothing(msg);
 					if (streamError)
-						addBottomLabel(lbl+": "+msg, Color.BLACK, Color.ORANGE);
+						addBottomLabel(lbl+": "+msg,
+								Color.BLACK,
+								Color.ORANGE);
 					else {
 						msg = smgr.getStatus();
 						if (isNothing(msg))
@@ -541,9 +483,13 @@ public class VidPanel extends JPanel implements FocusListener {
 			Color nameColorBG;
 			Color nameColorFG = Color.BLACK;
 			if (VidPanel.this.isFocusOwner())
-				nameColorBG = pausePanel ? Color.BLUE : Color.WHITE;
+				nameColorBG = pausePanel 
+						? Color.BLUE
+						: Color.WHITE;
 			else
-				nameColorBG = pausePanel ? LIGHT_BLUE : Color.LIGHT_GRAY;
+				nameColorBG = pausePanel
+						? LIGHT_BLUE 
+						: Color.LIGHT_GRAY;
 			if (pausePanel) {
 //				if (isNothing(txt))
 //					txt = "<PAUSED>";
@@ -568,7 +514,8 @@ public class VidPanel extends JPanel implements FocusListener {
 	}
 
 	/** Add bottom label line, with optional colors */
-	private void addBottomLabel(String txt, Color fgColor, Color bgColor) {
+	private void addBottomLabel(String txt, 
+			Color fgColor, Color bgColor) {
 		if (isFlagSet(TEMPLATE_LABEL))
 			addLabel(txt, fgColor, bgColor);
 	}
@@ -580,9 +527,8 @@ public class VidPanel extends JPanel implements FocusListener {
 
 	/** Add a full-width label, with text FG & BG color.
 	 * (Adds a tool-tip if the text is wider than the label */
-	private void addLabel(String txt, Color fgColor, Color bgColor) {
-//		System.out.println("addLabel(\""+txt+"\")");
-//		JLabel lbl = new JLabel(txt);
+	private void addLabel(String txt, 
+			Color fgColor, Color bgColor) {
 		JLabel lbl = makeWideLabel(txt);
 		FontMetrics lblFontMetrics =
 				lbl.getFontMetrics(lbl.getFont());
@@ -622,12 +568,10 @@ public class VidPanel extends JPanel implements FocusListener {
 	}
 
 	public void focusGained(FocusEvent fe) {
-//		System.out.println("Focus gained");
 		queueUpdatePanel();
 	}
 
 	public void focusLost(FocusEvent fe){
-//		System.out.println("Focus lost");
 		queueUpdatePanel();
 	}
 
@@ -664,25 +608,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		releaseStream();
 		camera = cam;
 		
-//		ct = CameraTemplateHelper.lookup(camera.getName());
-//		autostart = getCamTempBool(
-//				ct.getAutoStart(),
-//				SystemAttrEnum.VID_CONNECT_AUTOSTART);
-//		failover = getCamTempBool(
-//				ct.getFailover(),
-//				SystemAttrEnum.VID_CONNECT_FAIL_NEXT_SOURCE);
-//		connectFailSec = getCamTempInt(
-//				ct.getConnectFailSec(),
-//				SystemAttrEnum.VID_CONNECT_FAIL_SEC);
-//		lostTimeoutSec = getCamTempInt(
-//				ct.getLostTimeoutSec(),
-//				SystemAttrEnum.VID_LOST_TIMEOUT_SEC);
-//		autoReconnect = getCamTempBool(
-//				ct.getAutoReconnect(),
-//				SystemAttrEnum.VID_RECONNECT_AUTO);
-//		reconnectTimeoutSec = getCamTempInt(
-//				ct.getReconnectTimeoutSec(),
-//				SystemAttrEnum.VID_RECONNECT_TIMEOUT_SEC);
 		autostart = getCamTempBool(
 				null,
 				SystemAttrEnum.VID_CONNECT_AUTOSTART);
@@ -705,7 +630,7 @@ public class VidPanel extends JPanel implements FocusListener {
 //		streamReqList = VidStreamReq.getStreamRequests_test(camera);
 		Session s = Session.getCurrent();
 		streamReqList = VidStreamReq.getVidStreamReqs(camera);
-		CameraPTZ cam_ptz = new CameraPTZ(s);
+		cam_ptz = new CameraPTZ(s);
 		cam_ptz.setCamera(cam);
 		if (isFlagSet(MOUSE_PTZ))
 			mouse_ptz = createMousePTZ(cam_ptz, videoDimension, videoHolder);
@@ -741,7 +666,6 @@ public class VidPanel extends JPanel implements FocusListener {
 		int len = (srl == null) ? 0 : srl.size();
 		if (len == 0) {
 			streamReqNum = 0;
-			streamReq = null;
 			queueUpdatePanel();
 			return false;
 		}
@@ -750,10 +674,7 @@ public class VidPanel extends JPanel implements FocusListener {
 		else if (snum >= len)
 			snum = 0;
 		streamReqNum = snum;
-		streamReq = srl.get(snum);
-		System.out.println("VidPanel.playStream("+snum+"): "
-				+streamReq.getVidSourceTemplate().getLabel());
-		streamMgr = createStreamMgr(streamReq);
+		streamMgr = createStreamMgr(srl.get(snum));
 		streamMgr.queueStartStream();
 		queueUpdatePanel();
 		return true;
@@ -761,26 +682,22 @@ public class VidPanel extends JPanel implements FocusListener {
 
 	/** Start playing previous stream */
 	public boolean startPreviousStream() {
-//		System.out.println("VidPanel.startPreviousStream()");
 		return playStream(streamReqNum-1);
 	}
 
 	/** Start/restart playing current stream */
 	public boolean startCurrentStream() {
-//		System.out.println("VidPanel.startCurrentStream()");
 		return playStream(streamReqNum);
 	}
 
 	/** Start playing next stream */
 	public boolean startNextStream() {
-//		System.out.println("VidPanel.startNextStream()");
 		return playStream(streamReqNum+1);
 	}
 
 	/** Stop playing current stream.
 	 *  (Leaves last frame and status on screen.) */
 	public void stopStream() {
-//		System.out.println("VidPanel.stopStream()");
 		VidStreamMgr vmOld = streamMgr;
 		if (vmOld != null) {
 			vmOld.queueStopStream();
@@ -791,7 +708,6 @@ public class VidPanel extends JPanel implements FocusListener {
 	/** Release the current stream manager
 	 * (Blanks the video portion of the panel.) */
 	public void releaseStream() {
-//		System.out.println("VidPanel.releaseStream()");
 		VidStreamMgr vmOld = streamMgr;
 		if (vmOld != null) {
 			vmOld.queueStopStream();
