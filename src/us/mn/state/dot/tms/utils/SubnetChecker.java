@@ -20,8 +20,13 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import us.mn.state.dot.tms.SystemAttribute;
+import us.mn.state.dot.tms.SystemAttributeHelper;
 
 /** SubnetChecker is a self-launching daemon thread 
  *  that identifies which subnet the Iris client is
@@ -30,13 +35,6 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author John L. Stanley - SRF Consulting
  */
-
-//#######################################################
-//TODO:  MUST modify this to allow loading a list of 
-// administrator-determined ping target on the client.
-// The list may come from iris-client.properties, from
-// the Iris system attributes table, or somewhere else.
-//#######################################################
 
 public class SubnetChecker extends Thread {
 
@@ -85,9 +83,12 @@ public class SubnetChecker extends Thread {
 
 	//-------------------------------------------
 
-    //TODO:  MUST CHANGE TO ALLOW LOADING SUBNET TARGET LIST FROM EXTERNAL SOURCE!!
-    
-	// test/sample list of ping targets and subnet names
+	/** List of ping targets and subnet names.
+	 * Default list uses google.com to detect
+	 * if we have generic internet access.
+	 * This is replaced by system-attribute
+	 * subnet_target_# entries, if any exist.
+	 */
 	private static String[] targets = {
 		"www.google.com=internet",    // icmp ping
 		"www.google.com:80=internet", // tcp ping
@@ -98,7 +99,70 @@ public class SubnetChecker extends Thread {
 	/** Construct/initialize the subnet checker */
 	private SubnetChecker() {
 		super("SubnetChecker");
+		loadSubnetTargets();
 		ipAddressList = getAllMyAddresses();
+	}
+
+	/** Load subnet target list.
+	 * 
+	 * Searches system-attributes for ping target
+	 * attributes named "subnet_target_#" where #
+	 * is a positive int in the range 0..MAX_INT.
+	 * Stops searching after 10 consecutive fails
+	 * or if the attribute-name gets too long.
+	 */
+	private void loadSubnetTargets() {
+		int i = 0, gap = 0;
+		String aName, target;
+		List<String> list = new ArrayList<String>();
+		while ((i > 0) && (gap < 10)) {
+			aName = "subnet_target_"+i;
+			if (aName.length() > SystemAttribute.MAXLEN_ANAME)
+				break; // VERY unlikely
+			++i;
+			target = getTarget(aName);
+			if (target == null) {
+				// missing attribute
+				++gap;
+				continue;
+			}
+			else if (target.isEmpty()) {
+				// target string error
+				System.err.println(
+					"System attribute error: "+aName);
+				++gap;
+				continue;
+			}
+			// Found a valid target string
+			list.add(target);
+			gap = 0;
+		}
+		// Only override default targets if we found
+		// at least one valid subnet_target_# entry.
+		if (list.isEmpty() == false)
+			targets = (String[]) list.toArray();
+	}
+		
+	/** Try to load subnet-target attribute.
+	 *  Tests target string for basic format rules.
+	 *  
+	 *@return Target string if found.  Null if no
+	 *  such attribute.  Zero-length string if
+	 *  target string is malformed.
+	 */
+	private String getTarget(String aName) {
+		SystemAttribute attrib =
+			SystemAttributeHelper.get(aName);
+		if (attrib == null)
+			return null; // missing attribute
+		String target = attrib.getValue();
+		String [] strs = target.split("=");
+		if (strs.length != 2)
+			return ""; // bad target string
+		strs = strs[0].trim().split(":");
+		if ((strs.length < 1) || (strs.length > 2))
+			return ""; // bad target string
+		return target;
 	}
 
 	//-------------------------------------------
@@ -121,8 +185,8 @@ public class SubnetChecker extends Thread {
 		// the main checker loop
 		while (true) {
 			doPings();
-			System.out.println("Address list: "+ipAddressList);
-			System.out.println("Subnet: "+subnetName);
+//			System.out.println("Address list: "+ipAddressList);
+//			System.out.println("Subnet: "+subnetName);
 			updateReq = false;
 			doWait();
 		}
@@ -182,8 +246,11 @@ public class SubnetChecker extends Thread {
 		for (int i = 0; (i < len); ++i) {
 			target = targets[i];
 			strs = target.split("=");
-			if (strs.length != 2)
+			if (strs.length != 2) {
+				System.err.println(
+					"Subnet target error: \""+target+"\"");
 				continue;  // bad target string
+			}
 			host = strs[0].trim();
 			subnet = strs[1].trim();
 			strs = host.split(":");
