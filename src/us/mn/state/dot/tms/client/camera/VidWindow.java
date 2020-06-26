@@ -91,7 +91,7 @@ public class VidWindow extends AbstractForm {
 	 */
 	public VidWindow(Camera cam, Boolean ctrl, Dimension pdm, int strm_num)
 	{
-		super("Stream Panel: " + cam.getName(), true);
+		super(getWindowTitle(cam), true);
 		
 		setLayout(new BorderLayout());
 
@@ -118,6 +118,10 @@ public class VidWindow extends AbstractForm {
 
 		videoPanel.addChangeListener(new StateChangeListener());
 		setCamera(cam);
+	}
+	
+	public static String getWindowTitle(Camera cam) {
+		return "Stream Panel: " + cam.getName();
 	}
 
 	/**
