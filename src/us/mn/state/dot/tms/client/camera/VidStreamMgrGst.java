@@ -348,6 +348,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	 *  zipfile name. Combined with the version (taken from a system attribute)
 	 *  it will look something like this:
 	 *  	gstreamer-1.0-mingw-x86_64-1.16.2[.zip]
+	 *  	gstreamer-1.0-linux-x86_64-1.17.1[.zip]
 	 *  
 	 *  TODO may ultimately want to make this system attributes too.
 	 */
@@ -381,13 +382,18 @@ public class VidStreamMgrGst extends VidStreamMgr {
 		if (!uIris.canWrite())
 			uIris.mkdirs();
 		
-		// check the current OS and architecture
+		// check the current OS and architecture - note that we allow different
+		// versions for different OSes
 		String gstOS = null;
+		String gstVersion = null;
 		
-		if (Platform.isWindows())
+		if (Platform.isWindows()) {
 			gstOS = GST_WIN;
-		else if (Platform.isLinux())
+			gstVersion = SystemAttrEnum.GSTREAMER_VERSION_WINDOWS.getString();
+		} else if (Platform.isLinux()) {
 			gstOS = GST_LINUX;
+			gstVersion = SystemAttrEnum.GSTREAMER_VERSION_LINUX.getString();
+		}
 		// TODO Mac, BSD
 		
 		// TODO no ARM support, maybe later
@@ -398,8 +404,8 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			return;
 		
 		// look for a directory with the files we want (indicated by the name)
-		String gstDirName = GST_BASE + "-" + gstOS + "-" + gstArch + "-"
-				+ SystemAttrEnum.GSTREAMER_CURRENT_VERSION.getString();
+		String gstDirName = GST_BASE + "-" + gstOS
+				+ "-" + gstArch + "-" + gstVersion;
 		
 		File gstDir = new File(uIris, gstDirName);
 		String gstPath;
@@ -483,10 +489,12 @@ public class VidStreamMgrGst extends VidStreamMgr {
 					"jna.library.path", "").trim();
 			System.out.println(jnaPath);
 	        if (jnaPath.isEmpty()) {
-	            System.setProperty("jna.library.path", libPath);
+	            System.setProperty("jna.library.path", binPath
+	            		+ File.pathSeparator + libPath);
 	        } else {
 	            System.setProperty("jna.library.path",
-	            		jnaPath + File.pathSeparator + libPath);
+	            		binPath + File.pathSeparator + libPath
+	            		+ File.pathSeparator + jnaPath);
 	        }
 	        System.out.println(jnaPath);
 		}

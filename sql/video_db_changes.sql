@@ -5,7 +5,8 @@ VALUES ('vid_connect_autostart', true),
 		('vid_lost_timeout_sec', 10),
 		('vid_reconnect_auto', true),
 		('vid_reconnect_timeout_sec', 10),
-		('gstreamer_current_version','1.16.2');
+		('gstreamer_version_linux','1.17.1'),
+		('gstreamer_version_windows','1.16.2');
 
 CREATE TABLE iris._camera_template
 (
