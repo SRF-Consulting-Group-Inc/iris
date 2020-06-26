@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.client.camera;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -40,6 +41,7 @@ import us.mn.state.dot.sched.Scheduler;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraHelper;
 import us.mn.state.dot.tms.client.EditModeListener;
+import us.mn.state.dot.tms.client.IrisClient;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.UserProperty;
 import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
@@ -372,25 +374,50 @@ public class StreamPanel extends JPanel {
 	    			hmap.get(UserProperty.NUM_STREAM.name));
 	    }
 	    
+	    // get a list of open frames before opening more - we won't open
+	    // duplicates from layouts
+	    Frame[] frames = IrisClient.getFrames();
+	    HashMap<String, Frame> vidFrames = new HashMap<String, Frame>();
+	    for (Frame f: frames) {
+	    	if (f.getTitle().contains("Stream Panel") && f.isVisible())
+	    		vidFrames.put(f.getTitle(), f);
+	    }
+	    
 		for (int i=0; i < num_streams; i++) {
 			String cam_name = hmap.get(UserProperty.STREAM_CCTV.name
 					+ "." + Integer.toString(i));
 			Camera cam = CameraHelper.lookup(cam_name);
-			int w = Integer.parseInt(hmap.get(UserProperty.STREAM_WIDTH.name
-					+ "." + Integer.toString(i)));
-			int h = Integer.parseInt(hmap.get(UserProperty.STREAM_HEIGHT.name
-					+ "." + Integer.toString(i)));
-			Dimension d = new Dimension(w, h);
 			
-			int x = Integer.parseInt(hmap.get(UserProperty.STREAM_X.name
-					+ "." + Integer.toString(i)));
-			int y = Integer.parseInt(hmap.get(UserProperty.STREAM_Y.name
-					+ "." + Integer.toString(i)));
+			// check if we already have this frame open
+			String t = (cam != null) ? VidWindow.getWindowTitle(cam) : "";
+			
+			if (!vidFrames.containsKey(t)) {
+				// if we don't, open it
+				int w = Integer.parseInt(hmap.get(
+						UserProperty.STREAM_WIDTH.name
+						+ "." + Integer.toString(i)));
+				int h = Integer.parseInt(hmap.get(
+						UserProperty.STREAM_HEIGHT.name
+						+ "." + Integer.toString(i)));
+				Dimension d = new Dimension(w, h);
 				
-			int strm_num = Integer.parseInt(hmap.get(UserProperty.STREAM_SRC.name
-					+ "." + Integer.toString(i)));
-			
-			desktop.showExtFrame(new VidWindow(cam, true, d, strm_num), x, y);	
+				int x = Integer.parseInt(hmap.get(
+						UserProperty.STREAM_X.name
+						+ "." + Integer.toString(i)));
+				int y = Integer.parseInt(hmap.get(
+						UserProperty.STREAM_Y.name
+						+ "." + Integer.toString(i)));
+					
+				int strm_num = Integer.parseInt(hmap.get(
+						UserProperty.STREAM_SRC.name
+						+ "." + Integer.toString(i)));
+				desktop.showExtFrame(new VidWindow(cam, true, d, strm_num), x, y);
+			} else {
+				// if we do, bring it to the top
+				Frame f = vidFrames.get(t);
+				f.setVisible(true);
+				f.toFront();
+			}
 		}
 	}
 	
@@ -407,9 +434,7 @@ public class StreamPanel extends JPanel {
 		IAction ia = null;
 		ia = new IAction(text_id) {
 			@Override
-			protected void doActionPerformed(ActionEvent
-				ev)
-			{
+			protected void doActionPerformed(ActionEvent ev) {
 				handleControlBtn(sc);
 			}
 		};
