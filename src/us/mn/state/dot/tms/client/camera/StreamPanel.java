@@ -388,35 +388,39 @@ public class StreamPanel extends JPanel {
 					+ "." + Integer.toString(i));
 			Camera cam = CameraHelper.lookup(cam_name);
 			
-			// check if we already have this frame open
-			String t = (cam != null) ? VidWindow.getWindowTitle(cam) : "";
 			
-			if (!vidFrames.containsKey(t)) {
-				// if we don't, open it
-				int w = Integer.parseInt(hmap.get(
-						UserProperty.STREAM_WIDTH.name
-						+ "." + Integer.toString(i)));
-				int h = Integer.parseInt(hmap.get(
-						UserProperty.STREAM_HEIGHT.name
-						+ "." + Integer.toString(i)));
-				Dimension d = new Dimension(w, h);
+			if (cam != null) {
+				// check if we already have this frame open
+				String t = VidWindow.getWindowTitle(cam);
 				
-				int x = Integer.parseInt(hmap.get(
-						UserProperty.STREAM_X.name
-						+ "." + Integer.toString(i)));
-				int y = Integer.parseInt(hmap.get(
-						UserProperty.STREAM_Y.name
-						+ "." + Integer.toString(i)));
+				if (!vidFrames.containsKey(t)) {
+					// if we don't, open it
+					int w = Integer.parseInt(hmap.get(
+							UserProperty.STREAM_WIDTH.name
+							+ "." + Integer.toString(i)));
+					int h = Integer.parseInt(hmap.get(
+							UserProperty.STREAM_HEIGHT.name
+							+ "." + Integer.toString(i)));
+					Dimension d = new Dimension(w, h);
 					
-				int strm_num = Integer.parseInt(hmap.get(
-						UserProperty.STREAM_SRC.name
-						+ "." + Integer.toString(i)));
-				desktop.showExtFrame(new VidWindow(cam, true, d, strm_num), x, y);
-			} else {
-				// if we do, bring it to the top
-				Frame f = vidFrames.get(t);
-				f.setVisible(true);
-				f.toFront();
+					int x = Integer.parseInt(hmap.get(
+							UserProperty.STREAM_X.name
+							+ "." + Integer.toString(i)));
+					int y = Integer.parseInt(hmap.get(
+							UserProperty.STREAM_Y.name
+							+ "." + Integer.toString(i)));
+						
+					int strm_num = Integer.parseInt(hmap.get(
+							UserProperty.STREAM_SRC.name
+							+ "." + Integer.toString(i)));
+					desktop.showExtFrame(new VidWindow(
+							cam, true, d, strm_num), x, y);
+				} else {
+					// if we do, bring it to the top
+					Frame f = vidFrames.get(t);
+					f.setVisible(true);
+					f.toFront();
+				}
 			}
 		}
 	}
