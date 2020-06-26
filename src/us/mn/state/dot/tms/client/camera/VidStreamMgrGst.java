@@ -121,7 +121,8 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	/** Open the video stream */
 	private synchronized boolean openStream() {
 		try {
-			pipe = (Pipeline)Gst.parseLaunch(vreq.getConfig()+" ! appsink name=appsink");
+			pipe = (Pipeline)Gst.parseLaunch(
+					vreq.getConfig()+" ! appsink name=appsink");
 			appsink = (AppSink) pipe.getElementByName("appsink");
 			List<Element> elements = pipe.getElements();
 			srcElem = elements.get(0);
