@@ -106,6 +106,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 	private final EditModeListener edit_lsnr = new EditModeListener() {
 		public void editModeChanged() {
 			updateButtons();
+			updateEditFields();
 		}
 	};
 	
@@ -285,25 +286,18 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		vsSubnetsField = new JTextArea(1, 60);
 		vsSubnetsField.setLineWrap(true);
 		vsSubnetsField.setWrapStyleWord(true);
-		Border border = BorderFactory.createLineBorder(Color.GRAY);
-		vsSubnetsField.setBorder(BorderFactory.createCompoundBorder(border,
-	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
 		vsConfigLbl = new JLabel("<html>" + I18N.get(
 			"camera.video_source.template.config") + ":<br>&nbsp;</html>");
 		vsConfigField = new JTextArea(2, 58);
 		vsConfigField.setLineWrap(true);
 		vsConfigField.setWrapStyleWord(true);
-		vsConfigField.setBorder(BorderFactory.createCompoundBorder(border,
-	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
 		vsNotesLbl = new JLabel("<html>" +I18N.get(
 			"camera.video_source.template.notes") + ":<br><br>&nbsp;</html>");
 		vsNotesField = new JTextArea(3, 62);
 		vsNotesField.setLineWrap(true);
 		vsNotesField.setWrapStyleWord(true);
-		vsNotesField.setBorder(BorderFactory.createCompoundBorder(border,
-	            BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 		
 		// instantiate the buttons (TODO ACTIONS)
 		deleteBtn = new JButton(deleteConfirm);
@@ -467,6 +461,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		add(gbPanel);
 		session.addEditModeListener(edit_lsnr);
 		updateButtons();
+		updateEditFields();
 	}
 	
 	public void setFrame(JInternalFrame f) {
@@ -571,6 +566,31 @@ public class VidSourceTemplateEditor extends AbstractForm {
 			saveBtn.setText(I18N.get("camera.video_source.template.save"));
 		else
 			saveBtn.setText(I18N.get("camera.video_source.template.create"));
+	}
+	
+	/** Update edit fields based on edit mode on or off. */
+	private void updateEditFields() {
+		boolean perm = session.canWrite(VidSourceTemplate.SONAR_TYPE);
+		vsNameField.setEnabled(perm);
+		vsCodecField.setEnabled(perm);
+		vsEncoderField.setEnabled(perm);
+		vsSchemeField.setEnabled(perm);
+		vsLatencyField.setEnabled(perm);
+		vsDefPortField.setEnabled(perm);
+		vsRezWidthField.setEnabled(perm);
+		vsRezHeightField.setEnabled(perm);
+		vsSubnetsField.setEnabled(perm);
+		vsConfigField.setEnabled(perm);
+		vsNotesField.setEnabled(perm);
+		
+		// use the same border as the other fields (text areas are weird)		
+		Border border = vsNameField.getBorder();
+		vsSubnetsField.setBorder(BorderFactory.createCompoundBorder(
+				border, BorderFactory.createEmptyBorder(1, 1, 1, 1)));
+		vsConfigField.setBorder(BorderFactory.createCompoundBorder(
+				border, BorderFactory.createEmptyBorder(1, 1, 1, 1)));
+		vsNotesField.setBorder(BorderFactory.createCompoundBorder(
+				border, BorderFactory.createEmptyBorder(1, 1, 1, 1)));
 	}
 	
 	/** Update the list of camera templates associated with the currently
