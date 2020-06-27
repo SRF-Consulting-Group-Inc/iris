@@ -355,6 +355,9 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	private static final String GST_SERVER_DIR = "/iris-client/lib/";
 	private static final String GST_BASE = "gstreamer-1.0";
 	private static final String GST_WIN = "mingw";
+	
+	// TODO Linux isn't working yet - difficult to package like Windows, but
+	// there is promise from gst-build's new gstreamer-full feature
 	private static final String GST_LINUX = "linux";
 	// TODO BSD/other Unix would probably be supported along with Linux, but
 	// should test first
