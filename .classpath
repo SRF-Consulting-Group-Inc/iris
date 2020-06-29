@@ -7,11 +7,11 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="etc/i18n"/>
-	<classpathentry kind="lib" path="lib/jna-5.3.1.jar"/>
-	<classpathentry kind="lib" path="lib/jna-platform-5.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/jna-5.5.0.jar"/>
+	<classpathentry kind="lib" path="lib/jna-platform-5.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/postgresql-42.2.5.jar"/>
-	<classpathentry kind="lib" path="lib/prop.jar"/>
+	<classpathentry kind="lib" path="prop.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gst1-java-core"/>
 	<classpathentry kind="output" path="bin/eclipse"/>
 </classpath>
