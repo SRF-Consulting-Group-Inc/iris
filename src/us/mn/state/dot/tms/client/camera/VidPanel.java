@@ -334,22 +334,22 @@ public class VidPanel extends JPanel implements FocusListener {
 		
 		/* Ctrl + Right Arrow - Start next stream */
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,
-				KeyEvent.CTRL_DOWN_MASK), "startNextStream");
+				KeyEvent.ALT_DOWN_MASK), "startNextStream");
 		am.put("startNextStream", startNextStreamAction);
 		
 		/* Ctrl + Left Arrow - Start previous stream */
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT,
-				KeyEvent.CTRL_DOWN_MASK), "startPreviousStream");
+				KeyEvent.ALT_DOWN_MASK), "startPreviousStream");
 		am.put("startPreviousStream", startPreviousStreamAction);
 		
 		/* Ctrl + F5 - Restart stream */
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_F5,
-				KeyEvent.CTRL_DOWN_MASK), "restartStream");
+				KeyEvent.ALT_DOWN_MASK), "restartStream");
 		am.put("restartStream", restartStream);
 		
 		/* Ctrl + Space - Pause stream */
-		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE,
-				KeyEvent.CTRL_DOWN_MASK), "pauseStream");
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
+				KeyEvent.ALT_DOWN_MASK), "pauseStream");
 		am.put("pauseStream", pauseStream);
 	}
 	
