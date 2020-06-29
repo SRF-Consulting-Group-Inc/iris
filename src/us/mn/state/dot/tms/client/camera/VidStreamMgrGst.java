@@ -366,7 +366,6 @@ public class VidStreamMgrGst extends VidStreamMgr {
 	private static final String GST_ARCH_64 = "x86_64";
 	
 	/** Paths inside GStreamer directory (combined with other constants) */
-	private static final String GST_ROOT_DIR = "1.0";
 	private static final String GST_BIN_DIR = "bin";
 	private static final String GST_LIB_DIR = "lib"; // TODO not needed?
 	
@@ -395,7 +394,9 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			gstVersion = SystemAttrEnum.GSTREAMER_VERSION_WINDOWS.getString();
 		} else if (Platform.isLinux()) {
 			gstOS = GST_LINUX;
-			gstVersion = SystemAttrEnum.GSTREAMER_VERSION_LINUX.getString();
+			// TODO get working for Linux
+			gstVersion = "";
+//			gstVersion = SystemAttrEnum.GSTREAMER_VERSION_LINUX.getString();
 		}
 		// TODO Mac, BSD
 		
@@ -443,7 +444,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			Action addToPath = new AbstractAction() {
 				@Override
 				public void actionPerformed(ActionEvent ev) {
-					addUserGstToPath(gstPath, gstArch, true);
+					addUserGstToPath(gstPath, true);
 				}
 			};
 			
@@ -458,16 +459,13 @@ public class VidStreamMgrGst extends VidStreamMgr {
 			zd.execute(addToPath);
 		} else
 			// if we already have the directory, add it to the path
-			addUserGstToPath(gstPath, gstArch, false);
+			addUserGstToPath(gstPath, false);
 	}
 	
-	private static void addUserGstToPath(String gstPath,
-			String gstArch, boolean confirm) {
+	private static void addUserGstToPath(String gstPath, boolean confirm) {
 		// build the full paths we need
-		String libPath = Paths.get(gstPath, GST_ROOT_DIR,
-				gstArch, GST_LIB_DIR).toString();
-		String binPath = Paths.get(gstPath, GST_ROOT_DIR,
-				gstArch, GST_BIN_DIR).toString();
+		String libPath = Paths.get(gstPath, GST_LIB_DIR).toString();
+		String binPath = Paths.get(gstPath, GST_BIN_DIR).toString();
 		
 		// add the gstDir to the system path
 		if (Platform.isWindows()) {
