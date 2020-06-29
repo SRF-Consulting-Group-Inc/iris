@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2018  Minnesota Department of Transportation
+ * Copyright (C) 2007-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,12 +78,14 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		DetectorImpl.loadAll();
 		TollZoneImpl.loadAll();
 		EncoderTypeImpl.loadAll();
+		EncoderStreamImpl.loadAll();
 		CameraImpl.loadAll();
 		CameraPresetImpl.loadAll();
 		PlayListImpl.loadAll();
 		CatalogImpl.loadAll();
 		MonitorStyleImpl.loadAll();
 		VideoMonitorImpl.loadAll();
+		FlowStreamImpl.loadAll();
 		BeaconImpl.loadAll();
 		WeatherSensorImpl.loadAll();
 		RampMeterImpl.loadAll();
@@ -109,6 +111,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		TimeActionImpl.loadAll();
 		DmsActionImpl.loadAll();
 		BeaconActionImpl.loadAll();
+		CameraActionImpl.loadAll();
 		LaneActionImpl.loadAll();
 		MeterActionImpl.loadAll();
 		WordImpl.loadAll();
@@ -289,6 +292,12 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		return (so instanceof QuickMessageImpl)
 		      ? (QuickMessageImpl) so
 		      : null;
+	}
+
+	/** Lookup an LCS */
+	static protected LCSImpl lookupLCS(String name) {
+		SonarObject so = lookupObject(LCSImpl.SONAR_TYPE, name);
+		return (so instanceof LCSImpl) ? (LCSImpl) so : null;
 	}
 
 	/** Lookup an incident detail */

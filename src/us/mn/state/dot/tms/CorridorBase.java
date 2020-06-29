@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2019  Minnesota Department of Transportation
+ * Copyright (C) 2007-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import static us.mn.state.dot.tms.GeoLocHelper.distanceTo;
@@ -25,6 +26,7 @@ import static us.mn.state.dot.tms.GeoLocHelper.segmentDistance;
 import us.mn.state.dot.tms.geo.Position;
 import us.mn.state.dot.tms.geo.SphericalMercatorPosition;
 import us.mn.state.dot.tms.units.Distance;
+import static us.mn.state.dot.tms.units.Distance.Units.METERS;
 import static us.mn.state.dot.tms.units.Distance.Units.MILES;
 
 /**
@@ -33,6 +35,9 @@ import static us.mn.state.dot.tms.units.Distance.Units.MILES;
  * @author Douglas Lau
  */
 public class CorridorBase<T extends R_Node> implements Iterable<T> {
+
+	/** Maximum distance from corridor to location */
+	static private final Distance MAX_DIST = new Distance(1000, METERS);
 
 	/** Adjustment for r_node milepoints falling on exact same spot */
 	static protected float calculateEpsilon(float v) {
@@ -49,9 +54,9 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 		return distanceTo(n.getGeoLoc(), l);
 	}
 
-	/** Check if the r_node location is valid */
-	static private boolean hasLocation(R_Node n) {
-		return !GeoLocHelper.isNull(n.getGeoLoc());
+	/** Check if the r_node is valid */
+	static private boolean isValid(R_Node n) {
+		return n.getActive() && !GeoLocHelper.isNull(n.getGeoLoc());
 	}
 
 	/** Corridor name */
@@ -103,7 +108,7 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 
 	/** Add a roadway node to the corridor */
 	public void addNode(T r_node) {
-		if (hasLocation(r_node) && !r_node.getAbandoned()) {
+		if (isValid(r_node)) {
 			unsorted.add(r_node);
 			unsorted.addAll(r_nodes);
 			r_nodes.clear();
@@ -207,12 +212,6 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 			return pf.getLongitude() < pl.getLongitude();
 		case WEST:
 			return pf.getLongitude() > pl.getLongitude();
-		case INNER_LOOP:
-			// FIXME: this might be tricky
-			return false;
-		case OUTER_LOOP:
-			// FIXME: this might be tricky
-			return false;
 		}
 		return false;
 	}
@@ -238,8 +237,36 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 
 	/** Calculate the mile point for a location.
 	 * @param loc Location to calculate.
-	 * @return Mile point for location, or null if no r_nodes exist. */
+	 * @return Mile point for location, or null on error. */
 	public Float calculateMilePoint(GeoLoc loc) {
+		if (loc != null &&
+		    loc.getRoadway() == getRoadway() &&
+		    loc.getRoadDir() == getRoadDir())
+		{
+			GeoLocDist gld = snapGeoLoc(loc);
+			if (gld != null)
+				return calculateMilePointNoLimit(gld.loc);
+		}
+		return null;
+	}
+
+	/** Snap a geo location to the corridor */
+	private GeoLocDist snapGeoLoc(GeoLoc loc) {
+		Double lat = loc.getLat();
+		Double lon = loc.getLon();
+		if (lat != null && lon != null) {
+			Position pos = new Position(lat, lon);
+			SphericalMercatorPosition smp =
+				 SphericalMercatorPosition.convert(pos);
+			return snapGeoLoc2(smp, LaneType.MAINLINE, MAX_DIST);
+		}
+		return null;
+	}
+
+	/** Calculate the mile point for a location.
+	 * @param loc Location to calculate.
+	 * @return Mile point for location, or null if no r_nodes exist. */
+	private Float calculateMilePointNoLimit(GeoLoc loc) {
 		if (n_points.isEmpty())
 			return null;
 		T nearest = null;
@@ -323,23 +350,24 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 		return nearest;
 	}
 
-	/** Find the nearest node to the given location with given type.
+	/** Pick the nearest node to the given location with given type.
 	 * @param pos Location to search.
 	 * @param checker Node type checker.
-	 * @param pickable Pickable flag.
-	 * @return Nearest matching node. */
-	public T findNearest(Position pos, R_NodeType.Checker checker,
-		boolean pickable)
-	{
+	 * @return Nearest matching pickable node. */
+	public T pickNearest(Position pos, R_NodeType.Checker checker) {
 		T nearest = null;
 		double n_meters = 0;
 		for (T n: r_nodes) {
+			if (!n.getPickable())
+				continue;
+			GeoLoc loc = n.getGeoLoc();
+			if (loc.getCrossStreet() == null &&
+			    loc.getLandmark() == null)
+				continue;
 			R_NodeType nt = R_NodeType.fromOrdinal(n.getNodeType());
 			if (!checker.check(nt))
 				continue;
-			if (n.getPickable() != pickable)
-				continue;
-			Distance m = distanceTo(n.getGeoLoc(), pos);
+			Distance m = distanceTo(loc, pos);
 			if (m != null && (nearest == null || m.m() < n_meters)) {
 				nearest = n;
 				n_meters = m.m();
@@ -449,12 +477,16 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 		return null;
 	}
 
+	/** Check if the road class is a CD road */
+	private boolean isCDRoad() {
+		return RoadClass.CD_ROAD == RoadClass.fromOrdinal(
+			roadway.getRClass());
+	}
+
 	/** Check if the road class matches a lane type */
 	private boolean checkLaneType(LaneType lt) {
-		RoadClass rc = RoadClass.fromOrdinal(roadway.getRClass());
-		boolean cd_cls = (rc == RoadClass.CD_ROAD);
 		boolean cd_typ = (lt == LaneType.CD_LANE);
-		return cd_cls == cd_typ;
+		return isCDRoad() == cd_typ;
 	}
 
 	/** Snap a point to the corridor.
@@ -472,11 +504,6 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 		for (T n: r_nodes) {
 			if (!n.getActive())
 				continue;
-			if (R_NodeHelper.isContinuityBreak(n)) {
-				np = null;
-				lp = null;
-				continue;
-			}
 			GeoLoc l = n.getGeoLoc();
 			if ((lp != null) &&
 			   (!skipExit(lt, np)) &&
@@ -489,8 +516,13 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 					dist = m;
 				}
 			}
-			np = n;
-			lp = l;
+			if (R_NodeHelper.isContinuityBreak(n)) {
+				np = null;
+				lp = null;
+			} else {
+				np = n;
+				lp = l;
+			}
 		}
 		if (l0 != null) {
 			GeoLoc loc = GeoLocHelper.snapSegment(l0, l1, smp);
@@ -525,14 +557,24 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 	}
 
 	/** Count the freeway exits between two milepoints */
-	public int countExits(float mp0, float mp1) {
+	public Integer countExits(float mp0, float mp1, float max_gap_mi) {
+		if (isCDRoad())
+			return 0;
+		float prev_mp = mp0;
 		Road prev_exit = null;
 		int n_exits = 0;
-		Iterator<T> it = n_points.subMap(mp0, true, mp1, true)
-			.values().iterator();
+		Iterator<Map.Entry<Float, T>> it = n_points
+			.subMap(mp0, true, mp1, true).entrySet().iterator();
 		while (it.hasNext()) {
-			T n = it.next();
-			if (n.getNodeType() == R_NodeType.EXIT.ordinal()) {
+			Map.Entry<Float, T> ent = it.next();
+			float mp = ent.getKey();
+			if (mp - prev_mp > max_gap_mi)
+				return null;
+			prev_mp = mp;
+			T n = ent.getValue();
+			if (n.getNodeType() == R_NodeType.EXIT.ordinal() ||
+			    n.getNodeType() == R_NodeType.INTERSECTION.ordinal())
+			{
 				GeoLoc loc = n.getGeoLoc();
 				// Only count one exit per interchange
 				if (prev_exit == null ||
@@ -551,6 +593,9 @@ public class CorridorBase<T extends R_Node> implements Iterable<T> {
 			.iterator();
 		while (it.hasNext()) {
 			T n = it.next();
+			// Don't include entrances before a COMMON transition
+			if (n.getTransition() == R_NodeTransition.COMMON.ordinal())
+				entrances.clear();
 			if (n.getNodeType() == R_NodeType.ENTRANCE.ordinal())
 				entrances.add(n.getGeoLoc());
 		}

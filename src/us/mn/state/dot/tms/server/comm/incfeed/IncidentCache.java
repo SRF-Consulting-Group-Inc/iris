@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2019  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@ import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.tms.CorridorBase;
 import us.mn.state.dot.tms.GeoLoc;
-import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.Incident;
-import us.mn.state.dot.tms.IncidentDetail;
 import us.mn.state.dot.tms.IncidentHelper;
 import us.mn.state.dot.tms.LaneImpact;
 import us.mn.state.dot.tms.LaneType;
@@ -107,7 +105,7 @@ public class IncidentCache {
 		SphericalMercatorPosition smp =
 			SphericalMercatorPosition.convert(pos);
 		GeoLoc loc = corridors.snapGeoLoc(smp, LaneType.MAINLINE,
-			MAX_DIST);
+			MAX_DIST, pi.dir);
 		if (loc != null)
 			updateIncident(pi, loc);
 		else if (inc_log.isOpen())
@@ -202,7 +200,8 @@ public class IncidentCache {
 	/** Set an incident to cleared status */
 	private void setCleared(String id) {
 		IncidentImpl inc = lookupIncident(id);
-		if (inc != null && !inc.getCleared()) {
+		// Don't automatically clear confirmed incidents
+		if (inc != null && !inc.getConfirmed() && !inc.getCleared()) {
 			inc.setClearedNotify(true);
 			inc_log.log("Incident cleared: " + id);
 		}

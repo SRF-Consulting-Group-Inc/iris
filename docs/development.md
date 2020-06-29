@@ -1,6 +1,6 @@
-## Development
+# Development
 
-### Building
+## Building
 
 Install [Fedora] onto the development system.  Some additional development
 packages must be installed.
@@ -12,14 +12,6 @@ In a suitable development directory, clone the iris git repository.
 ```
 git clone https://github.com/mnit-rtmc/iris.git
 ```
-
-Create lib/ directory in iris development repository.
-```
-mkdir iris/lib/
-```
-
-Download the [JavaMail jar] and copy the `javax.mail.jar` file to the lib/
-directory in the iris repository.
 
 Copy `iris-build.properties` from `etc/` to `lib/`.
 Edit `lib/iris-build.properties` file as necessary for your organization.
@@ -46,18 +38,18 @@ Now, the IRIS rpm file can be built with `ant rpm`.
 If there are no errors, the new rpm file should be in the
 `build/rpm/RPMS/noarch/` directory.
 
-### Contributing
+## Contributing
 
 [Bug reports] and feature requests are welcome and encouraged!  Please create an
 issue and discuss before making a [pull request].  All patches must be licensed
 under the GPL.
 
-### Future Plans
+## Future Plans
 
 Work is underway on a web-based user interface.  The java based interface will
 be fully supported until all features are implemented in the new UI.
 
-### Coding Style
+## Coding Style
 
 The IRIS coding style is focused on readability.  This is the most important
 factor for software maintenance, and also helps new developers who are
@@ -93,7 +85,7 @@ with no space.  Binary operators, such as `+` `-` `/` `*` `%` `&` `|` `&&` `||`
 `>` `=` `<` `>>` `==` `!=` `<<` `>>>` `>=` `<=` `^` should be separated from
 their operands by a space.
 
-### History
+## History
 
 **March 1999** — Started work on NTCIP DMS control
 

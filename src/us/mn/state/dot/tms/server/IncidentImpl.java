@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2019  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -254,7 +254,7 @@ public class IncidentImpl extends BaseObjectImpl implements Incident {
 	private String impact = "";
 
 	/** Get the current impact code.
-	 * @see us.mn.state.dot.tms.Incident.getImpact() */
+	 * @see us.mn.state.dot.tms.Incident#getImpact */
 	@Override
 	public String getImpact() {
 		return impact;
@@ -357,7 +357,7 @@ public class IncidentImpl extends BaseObjectImpl implements Incident {
 		w.write(createAttribute("road", road));
 		w.write(createAttribute("dir",
 			Direction.fromOrdinal(dir).abbrev));
-		if (loc != null)
+		if (loc != null && loc.length() > 0)
 			w.write(createAttribute("location", loc));
 		Position pos = getWgs84Position();
 		w.write(createAttribute("lon",
@@ -386,7 +386,7 @@ public class IncidentImpl extends BaseObjectImpl implements Incident {
 		R_Node rnd = cor.findNearest(getWgs84Position());
 		if (rnd == null)
 			return null;
-		return GeoLocHelper.getCrossDescription(rnd.getGeoLoc());
+		return GeoLocHelper.getCrossLandmark(rnd.getGeoLoc());
 	}
 
 	/** Get Position in WGS84 */

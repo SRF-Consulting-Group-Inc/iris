@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2019  Minnesota Department of Transportation
+ * Copyright (C) 2000-2020  Minnesota Department of Transportation
  * Copyright (C) 2010       AHMCT, University of California
  * Copyright (C) 2012       Iteris Inc.
  * Copyright (C) 2016-2017  SRF Consulting Group
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,7 +37,6 @@ import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.DevicePurpose;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.DmsAction;
-import us.mn.state.dot.tms.DmsSignGroupHelper;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.DMSHelper;
 import us.mn.state.dot.tms.DmsMsgPriority;
@@ -127,8 +127,8 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	static protected void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, DMSImpl.class);
 		store.query("SELECT name, geo_loc, controller, pin, notes, " +
-			"gps, static_graphic, purpose, beacon, preset, " +
-			"sign_config, sign_detail, override_font, " +
+			"gps, static_graphic, purpose, hidden, beacon, " +
+			"preset, sign_config, sign_detail, override_font, " +
 			"override_foreground, override_background, msg_sched, " +
 			"msg_current, expire_time FROM iris." + SONAR_TYPE + ";",
 			new ResultFactory()
@@ -163,6 +163,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		map.put("gps", gps);
 		map.put("static_graphic", static_graphic);
 		map.put("purpose", getPurpose());
+		map.put("hidden", hidden);
 		map.put("beacon", beacon);
 		map.put("preset", preset);
 		map.put("sign_config", sign_config);
@@ -213,28 +214,29 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		     row.getString(6),            // gps
 		     row.getString(7),            // static_graphic
 		     row.getInt(8),               // purpose
-		     row.getString(9),            // beacon
-		     row.getString(10),           // preset
-		     row.getString(11),           // sign_config
-		     row.getString(12),           // sign_detail
-		     row.getString(13),           // override_font
-		     (Integer) row.getObject(14), // override_foreground
-		     (Integer) row.getObject(15), // override_background
-		     row.getString(16),           // msg_sched
-		     row.getString(17),           // msg_current
-		     row.getTimestamp(18)         // expire_time
+		     row.getBoolean(9),           // hidden
+		     row.getString(10),           // beacon
+		     row.getString(11),           // preset
+		     row.getString(12),           // sign_config
+		     row.getString(13),           // sign_detail
+		     row.getString(14),           // override_font
+		     (Integer) row.getObject(15), // override_foreground
+		     (Integer) row.getObject(16), // override_background
+		     row.getString(17),           // msg_sched
+		     row.getString(18),           // msg_current
+		     row.getTimestamp(19)         // expire_time
 		);
 	}
 
 	/** Create a dynamic message sign */
 	private DMSImpl(String n, String loc, String c, int p, String nt,
-		String g, String sg, int dp, String b, String cp, String sc,
-		String sd, String of, Integer fg, Integer bg, String ms,
-		String mc, Date et)
+		String g, String sg, int dp, boolean h, String b, String cp,
+		String sc, String sd, String of, Integer fg, Integer bg,
+		String ms, String mc, Date et)
 	{
 		this(n, lookupGeoLoc(loc), lookupController(c), p, nt,
 		     lookupGps(g), lookupGraphic(sg),
-		     DevicePurpose.fromOrdinal(dp), lookupBeacon(b),
+		     DevicePurpose.fromOrdinal(dp), h, lookupBeacon(b),
 		     lookupPreset(cp), SignConfigHelper.lookup(sc),
 		     SignDetailHelper.lookup(sd), FontHelper.lookup(of), fg, bg,
 		     SignMessageHelper.lookup(ms), SignMessageHelper.lookup(mc),
@@ -244,14 +246,16 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Create a dynamic message sign */
 	private DMSImpl(String n, GeoLocImpl loc, ControllerImpl c,
 		int p, String nt, GpsImpl g, Graphic sg, DevicePurpose dp,
-		Beacon b, CameraPreset cp, SignConfig sc, SignDetail sd, Font of,
-		Integer fg, Integer bg, SignMessage ms, SignMessage mc, Date et)
+		boolean h, Beacon b, CameraPreset cp, SignConfig sc,
+		SignDetail sd, Font of, Integer fg, Integer bg, SignMessage ms,
+		SignMessage mc, Date et)
 	{
 		super(n, c, p, nt);
 		geo_loc = loc;
 		gps = g;
 		static_graphic = sg;
 		purpose = dp;
+		hidden = h;
 		beacon = b;
 		setPreset(cp);
 		sign_config = sc;
@@ -383,6 +387,30 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return (dp != null)
 		      ? dp.ordinal()
 		      : DevicePurpose.GENERAL.ordinal();
+	}
+
+	/** Flag indicating hidden sign */
+	private boolean hidden;
+
+	/** Set the hidden flag */
+	@Override
+	public void setHidden(boolean h) {
+		hidden = h;
+	}
+
+	/** Set the hidden flag */
+	public void doSetHidden(boolean h) throws TMSException {
+		if (h != hidden) {
+			store.update(this, "hidden", h);
+			setHidden(h);
+			updateStyles();
+		}
+	}
+
+	/** Get the hidden flag */
+	@Override
+	public boolean getHidden() {
+		return hidden;
 	}
 
 	/** External beacon */
@@ -772,7 +800,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 
 	/** Create a blank message for the sign */
 	public SignMessage createMsgBlank() {
-		return findOrCreateMsg("", false, false, BLANK,
+		return findOrCreateMsg(null, "", false, false, BLANK,
 			SignMsgSource.blank.bit(), null, null);
 	}
 
@@ -788,10 +816,11 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	public SignMessage createMsg(String m, boolean be, boolean pp,
 		DmsMsgPriority mp, int src, String o, Integer d)
 	{
-		return findOrCreateMsg(m, be, pp, mp, src, o, d);
+		return createMsg(null, m, be, pp, mp, src, o, d);
 	}
 
-	/** Find or create a sign message.
+	/** Create a message for the sign.
+	 * @param inc Associated incident (original name).
 	 * @param m MULTI string for message.
 	 * @param be Beacon enabled flag.
 	 * @param pp Prefix page flag.
@@ -800,18 +829,35 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	 * @param o Message owner.
 	 * @param d Duration in minutes; null means indefinite.
 	 * @return New sign message, or null on error. */
-	private SignMessage findOrCreateMsg(String m, boolean be, boolean pp,
-		DmsMsgPriority mp, int src, String o, Integer d)
+	private SignMessage createMsg(String inc, String m, boolean be,
+		boolean pp, DmsMsgPriority mp, int src, String o, Integer d)
 	{
-		SignMessage esm = SignMessageHelper.find(sign_config, null, m,
+		return findOrCreateMsg(inc, m, be, pp, mp, src, o, d);
+	}
+
+	/** Find or create a sign message.
+	 * @param inc Associated incident (original name).
+	 * @param m MULTI string for message.
+	 * @param be Beacon enabled flag.
+	 * @param pp Prefix page flag.
+	 * @param mp Message priority.
+	 * @param src Message source.
+	 * @param o Message owner.
+	 * @param d Duration in minutes; null means indefinite.
+	 * @return New sign message, or null on error. */
+	private SignMessage findOrCreateMsg(String inc, String m, boolean be,
+		boolean pp, DmsMsgPriority mp, int src, String o, Integer d)
+	{
+		SignMessage esm = SignMessageHelper.find(sign_config, inc, m,
 			be, mp, src, o, d);
 		if (esm != null)
 			return esm;
 		else
-			return createMsgNotify(m, be, pp, mp, src, o, d);
+			return createMsgNotify(inc, m, be, pp, mp, src, o, d);
 	}
 
 	/** Create a new sign message and notify clients.
+	 * @param inc Associated incident (original name).
 	 * @param m MULTI string for message.
 	 * @param be Beacon enabled flag.
 	 * @param pp Prefix page flag.
@@ -820,14 +866,14 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	 * @param o Message owner.
 	 * @param d Duration in minutes; null means indefinite.
 	 * @return New sign message, or null on error. */
-	private SignMessage createMsgNotify(String m, boolean be, boolean pp,
-		DmsMsgPriority mp, int src, String o, Integer d)
+	private SignMessage createMsgNotify(String inc, String m, boolean be,
+		boolean pp, DmsMsgPriority mp, int src, String o, Integer d)
 	{
 		SignConfig sc = sign_config;
 		if (null == sc)
 			return null;
-		SignMessageImpl sm = new SignMessageImpl(sc, m, be, pp, mp, src,
-			o, d);
+		SignMessageImpl sm = new SignMessageImpl(sc, inc, m, be, pp, mp,
+			src, o, d);
 		try {
 			sm.notifyCreate();
 			return sm;
@@ -958,7 +1004,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	}
 
 	/** Tolling prices */
-	private transient HashMap<String, Float> prices;
+	private transient ArrayList<PriceMessageEvent> prices;
 
 	/** Set tolling prices */
 	private void setPrices(DmsActionMsg amsg) {
@@ -968,13 +1014,10 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Log price (tolling) messages.
 	 * @param et Event type. */
 	private void logPriceMessages(EventType et) {
-		HashMap<String, Float> p = prices;
+		ArrayList<PriceMessageEvent> p = prices;
 		if (p != null) {
-			for (Map.Entry<String, Float> ent: p.entrySet()) {
-				String tz = ent.getKey();
-				Float price = ent.getValue();
-				logEvent(new PriceMessageEvent(et, name, tz,
-				                               price));
+			for (PriceMessageEvent ev : p) {
+				logEvent(ev.withEventType(et));
 			}
 		}
 	}
@@ -1044,7 +1087,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	 * after the operation completes.  This is necessary to prevent the
 	 * ReaperJob from destroying a SignMessage before it has been sent to
 	 * a sign.
-	 * @see DeviceImpl.acquire */
+	 * @see us.mn.state.dot.tms.server.DeviceImpl#acquire */
 	public void setMsgNext(SignMessage sm) {
 		msg_next = sm;
 	}
@@ -1092,10 +1135,11 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		boolean be = user.getBeaconEnabled();
 		DmsMsgPriority mp = DmsMsgPriority.fromOrdinal(
 			user.getMsgPriority());
+		String inc = user.getIncident();
 		int src = user.getSource() | sched.getSource();
 		String o = user.getOwner();
 		Integer dur = user.getDuration();
-		return createMsg(ms, be, false, mp, src, o, dur);
+		return createMsg(inc, ms, be, false, mp, src, o, dur);
 	}
 
 	/** Check if a sign message is valid */
@@ -1174,7 +1218,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Get current message expiration time.
 	 * @return Expiration time for the current message (ms since epoch), or
 	 *         null for no expiration.
-	 * @see java.lang.System.currentTimeMillis */
+	 * @see java.lang.System#currentTimeMillis */
 	@Override
 	public Long getExpireTime() {
 		return expire_time;
@@ -1280,15 +1324,15 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return isMsgSource(getMsgCurrent(), SignMsgSource.schedule);
 	}
 
+	/** Test if the current message source contains "external" */
+	private boolean isMsgExternal() {
+		return isMsgSource(getMsgCurrent(), SignMsgSource.external);
+	}
+
 	/** Test if the current message has beacon enabled */
 	private boolean isMsgBeacon() {
 		SignMessage sm = getMsgCurrent();
 		return (sm != null) && sm.getBeaconEnabled();
-	}
-
-	/** Test if the current message is AWS */
-	private boolean isMsgAws() {
-		return isMsgSource(getMsgCurrent(), SignMsgSource.aws);
 	}
 
 	/** Test if a DMS is active, not failed and deployed */
@@ -1298,7 +1342,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 
 	/** Test if a DMS has been deployed by a user */
 	public boolean isUserDeployed() {
-		return isMsgDeployed() && isMsgOperator() && !isMsgAws();
+		return isMsgDeployed() && isMsgOperator();
 	}
 
 	/** Test if a DMS has been deployed by schedule */
@@ -1306,9 +1350,9 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return isMsgDeployed() && isMsgScheduled();
 	}
 
-	/** Test if a DMS is active, not failed and deployed by AWS */
-	private boolean isAwsDeployed() {
-		return isMsgDeployed() && isMsgAws();
+	/** Test if a DMS has been deployed by an external system */
+	private boolean isExternalDeployed() {
+		return isMsgDeployed() && isMsgExternal();
 	}
 
 	/** Test if DMS needs maintenance */
@@ -1325,32 +1369,31 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Calculate the item styles */
 	@Override
 	protected long calculateStyles() {
-		boolean hidden = DmsSignGroupHelper.isHidden(this);
 		long s = ItemStyle.ALL.bit();
 		if (getController() == null)
 			s |= ItemStyle.NO_CONTROLLER.bit();
-		if (isActive()) {
+		if (isActive())
 			s |= ItemStyle.ACTIVE.bit();
-			if (purpose != DevicePurpose.GENERAL)
-				s |= ItemStyle.PURPOSE.bit();
-		} else
+		else
 			s |= ItemStyle.INACTIVE.bit();
 		if (hidden)
 			s |= ItemStyle.HIDDEN.bit();
 		else {
-			if (isOnline() && needsMaintenance())
-				s |= ItemStyle.MAINTENANCE.bit();
-			if (isActive() && isFailed())
-				s |= ItemStyle.FAILED.bit();
 			if (isAvailable())
 				s |= ItemStyle.AVAILABLE.bit();
 			if (isUserDeployed())
 				s |= ItemStyle.DEPLOYED.bit();
-			if (isScheduleDeployed())
-				s |= ItemStyle.SCHEDULED.bit();
-			if (isAwsDeployed())
-				s |= ItemStyle.AWS_DEPLOYED.bit();
 		}
+		if (isScheduleDeployed())
+			s |= ItemStyle.SCHEDULED.bit();
+		if (isExternalDeployed())
+			s |= ItemStyle.EXTERNAL.bit();
+		if (isOnline() && needsMaintenance())
+			s |= ItemStyle.MAINTENANCE.bit();
+		if (isActive() && isFailed())
+			s |= ItemStyle.FAILED.bit();
+		if (purpose != DevicePurpose.GENERAL)
+			s |= ItemStyle.PURPOSE.bit();
 		return s;
 	}
 
@@ -1359,7 +1402,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		w.write("<dms");
 		w.write(createAttribute("name", getName()));
 		w.write(createAttribute("description",
-			GeoLocHelper.getDescription(geo_loc)));
+			GeoLocHelper.getLocation(geo_loc)));
 		Position pos = GeoLocHelper.getWgs84Position(geo_loc);
 		if (pos != null) {
 			w.write(createAttribute("lon",
@@ -1433,10 +1476,14 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	}
 
 	/** Flag to indicate beacon object supported */
-	private transient boolean supports_beacon_object = false;
+	private transient boolean supports_beacon_object = true;
 
 	/** Set flag to indicate beacon object supported */
 	public void setSupportsBeaconObject(boolean b) {
+		if (!b) {
+			System.err.println("DMSImpl." +
+				"setSupportsBeaconObject(false): " + name);
+		}
 		supports_beacon_object = b;
 	}
 
@@ -1446,10 +1493,14 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	}
 
 	/** Flag to indicate pixel service object supported */
-	private transient boolean supports_pixel_service_object = false;
+	private transient boolean supports_pixel_service_object = true;
 
 	/** Set flag to indicate pixel service object supported */
 	public void setSupportsPixelServiceObject(boolean p) {
+		if (!p) {
+			System.err.println("DMSImpl." +
+				"setSupportsPixelServiceObject(false): "+ name);
+		}
 		supports_pixel_service_object = p;
 	}
 

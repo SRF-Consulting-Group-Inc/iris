@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2011-2018  Minnesota Department of Transportation
+ * Copyright (C) 2011-2020  Minnesota Department of Transportation
  * Copyright (C) 2015-2017  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,8 +40,8 @@ import us.mn.state.dot.tms.server.comm.pelcop.PelcoPPoller;
 import us.mn.state.dot.tms.server.comm.sierragx.SierraGxPoller;
 import us.mn.state.dot.tms.server.comm.ss105.SS105Poller;
 import us.mn.state.dot.tms.server.comm.ss125.SS125Poller;
-import us.mn.state.dot.tms.server.comm.ssi.SsiPoller;
 import us.mn.state.dot.tms.server.comm.stc.STCPoller;
+import us.mn.state.dot.tms.server.comm.streambed.StreambedPoller;
 import us.mn.state.dot.tms.server.comm.viconptz.ViconPTZPoller;
 
 /**
@@ -101,8 +101,6 @@ public class DevicePollerFactory {
 			return new SS105Poller(name);
 		case SS_125:
 			return new SS125Poller(name);
-		case SSI:
-			return new SsiPoller(name);
 		case TRANSCORE_E6:
 			return new E6Poller(name);
 		case VICON_PTZ:
@@ -113,6 +111,8 @@ public class DevicePollerFactory {
 			return new RedLionPoller(name);
 		case COHU_HELIOS_PTZ:
 			return new CohuPTZPoller(name, protocol);
+		case STREAMBED:
+			return new StreambedPoller(name);
 		default:
 			return null;
 		}

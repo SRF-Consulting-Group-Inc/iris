@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2019  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,10 +67,14 @@ public class LocMultiBuilder extends MultiBuilder {
 	/** Distance upstream of incident */
 	private final Distance up;
 
+	/** Flag to retain allowed road affixes */
+	private final boolean retain_affixes;
+
 	/** Create a new location MULTI builder */
-	public LocMultiBuilder(GeoLoc l, Distance u) {
+	public LocMultiBuilder(GeoLoc l, Distance u, boolean ra) {
 		loc = l;
 		up = u;
+		retain_affixes = ra;
 	}
 
 	/** Add an incident locator */
@@ -84,8 +88,6 @@ public class LocMultiBuilder extends MultiBuilder {
 			addModifier();
 		else if ("xn".equals(code))
 			addCrossStreet();
-		else if ("xa".equals(code))
-			addCrossAbbrev();
 		else if ("mi".equals(code))
 			addMiles();
 	}
@@ -93,7 +95,7 @@ public class LocMultiBuilder extends MultiBuilder {
 	/** Add roadway name */
 	private void addRoadway() {
 		String s = loc.getRoadway().getName().toUpperCase();
-		addSpan(RoadAffixHelper.replace(s, true));
+		addSpan(RoadAffixHelper.replace(s, retain_affixes));
 	}
 
 	/** Add roadway direction */
@@ -111,16 +113,11 @@ public class LocMultiBuilder extends MultiBuilder {
 		Road xstreet = loc.getCrossStreet();
 		if (xstreet != null) {
 			String s = xstreet.getName().toUpperCase();
-			addSpan(RoadAffixHelper.replace(s, true));
-		}
-	}
-
-	/** Add cross-street abbreviation */
-	private void addCrossAbbrev() {
-		Road xstreet = loc.getCrossStreet();
-		if (xstreet != null) {
-			String s = xstreet.getName().toUpperCase();
-			addSpan(RoadAffixHelper.replace(s, false));
+			addSpan(RoadAffixHelper.replace(s, retain_affixes));
+		} else {
+			String s = loc.getLandmark();
+			if (s != null)
+				addSpan(s.toUpperCase());
 		}
 	}
 

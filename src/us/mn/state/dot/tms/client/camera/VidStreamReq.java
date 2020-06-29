@@ -158,6 +158,19 @@ public class VidStreamReq {
 			return null;
 		}
 	}
+	
+	/** Get "addr[:port]" from an addr string and port integer value. If port
+	 *  is null and defPort is not null, appends ":<defPort>" to the addr
+	 *  string before returning it. */
+	static private String getAddrPort(String addr, Integer port, Integer defPort) {
+		if (isNothing(addr))
+			return null;
+		if (port == null && defPort != null)
+			port = defPort;
+		if (port != null)
+			addr += ":" + port;
+		return addr;
+	}
 
 	/** Get camera name modified for use with
 	  * a live555 videoProxy rtsp uri string */
@@ -222,19 +235,21 @@ public class VidStreamReq {
 			tok = m.group(1);
 			val = null;
 			if (tok.equalsIgnoreCase("addr"))
-				val = getAddr(cam.getEncoder());
-			else if (tok.equalsIgnoreCase("port"))
-				val = getPort(cam.getEncoder(), st.getDefaultPort());
-			else if (tok.equalsIgnoreCase("addrport"))
-				val = getAddrPort(cam.getEncoder(), st.getDefaultPort());
-			else if (tok.equalsIgnoreCase("maddr"))
-				val = getAddr(cam.getEncMulticast());
+				val = cam.getEncAddress();
+			else if (tok.equalsIgnoreCase("port")) {
+				val = Integer.toString(cam.getEncPort() != null
+					  ? cam.getEncPort() : st.getDefaultPort());
+			} else if (tok.equalsIgnoreCase("addrport")) {
+				val = getAddrPort(cam.getEncAddress(), cam.getEncPort(),
+						st.getDefaultPort());
+			} else if (tok.equalsIgnoreCase("maddr"))
+				val = getAddr(cam.getEncMcast());
 			else if (tok.equalsIgnoreCase("mport"))
-				val = getPort(cam.getEncMulticast(), st.getDefaultPort());
+				val = getPort(cam.getEncMcast(), st.getDefaultPort());
 			else if (tok.equalsIgnoreCase("maddrport"))
-				val = getAddrPort(cam.getEncMulticast(), st.getDefaultPort());
+				val = getAddrPort(cam.getEncMcast(), st.getDefaultPort());
 			else if (tok.equalsIgnoreCase("chan"))
-				val = Integer.toString(cam.getEncoderChannel());
+				val = Integer.toString(cam.getEncChannel());
 			else if (tok.equalsIgnoreCase("name"))
 				val = cam.getName();
 			else if (tok.equalsIgnoreCase("dist"))

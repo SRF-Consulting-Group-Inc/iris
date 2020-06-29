@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2018  Minnesota Department of Transportation
+ * Copyright (C) 2007-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ import us.mn.state.dot.tms.Direction;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.R_NodeHelper;
-import us.mn.state.dot.tms.units.Distance;
-import static us.mn.state.dot.tms.units.Distance.Units.MILES;
 
 /**
  * A corridor is a collection of all R_Node objects for one roadway corridor.
@@ -75,35 +73,15 @@ public class Corridor extends CorridorBase<R_NodeImpl> {
 		return null;
 	}
 
-	/** Calculate the distance to the nearest node */
-	public Distance distanceTo(GeoLoc loc) {
-		Float m = calculateMilePoint(loc);
-		if (m != null) {
-			Float mile = findDownstreamPoint(m);
-			if (mile != null)
-				return new Distance(mile - m, MILES);
-		}
-		return null;
-	}
-
-	/** Find the nearest milepoint downstream from the given milepoint */
-	private Float findDownstreamPoint(float m) {
-		for (Float mile: n_points.keySet()) {
-			if (mile > m)
-				return mile;
-		}
-		return null;
-	}
-
 	/** Get the IDs of all linked CD roads */
 	public Iterator<String> getLinkedCDRoads() {
 		HashSet<String> cds = new HashSet<String>();
 		for (R_NodeImpl r_node: n_points.values()) {
 			if (R_NodeHelper.isCD(r_node)) {
 				GeoLoc l = r_node.getGeoLoc();
-				String c = GeoLocHelper.getLinkedCorridor(l);
-				if (c != null)
-					cds.add(c);
+				String cid = GeoLocHelper.getLinkedName(l);
+				if (cid != null)
+					cds.add(cid);
 			}
 		}
 		return cds.iterator();

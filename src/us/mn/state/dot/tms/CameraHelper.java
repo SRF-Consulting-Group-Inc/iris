@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2018  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  * Copyright (C) 2014-2015  AHMCT, University of California
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,25 @@ import us.mn.state.dot.tms.units.Distance;
  */
 public class CameraHelper extends BaseHelper {
 
+	/** Get the blank URL */
+	static public String getBlankUrl() {
+		return SystemAttrEnum.CAMERA_BLANK_URL.getString();
+	}
+
+	/** Get the construction URL */
+	static private String getConstructionUrl() {
+		return SystemAttrEnum.CAMERA_CONSTRUCTION_URL.getString();
+	}
+
+	/** Get the out-of-service URL */
+	static private String getOutOfServiceUrl() {
+		return SystemAttrEnum.CAMERA_OUT_OF_SERVICE_URL.getString();
+	}
+
+	/** Invalid URI needed because URI.toURL throws
+	 * IllegalArgumentException when scheme is empty. */
+	static private final URI INVALID_URI = URIUtil.HTTP;
+
 	/** Don't allow instances to be created */
 	private CameraHelper() {
 		assert false;
@@ -39,7 +58,7 @@ public class CameraHelper extends BaseHelper {
 
 	/** Lookup the camera with the specified name */
 	static public Camera lookup(String name) {
-		return (Camera)namespace.lookupObject(Camera.SONAR_TYPE,
+		return (Camera) namespace.lookupObject(Camera.SONAR_TYPE,
 			name);
 	}
 
@@ -206,26 +225,73 @@ public class CameraHelper extends BaseHelper {
 		return (c != null) ? c : findFirst();
 	}
 
-	/** Create a camera encoder URI */
-	static public URI encoderUri(Camera c, String query) {
+	/** Get an encoder stream for a camera.
+	 * @param c Camera for stream.
+	 * @param eq Allowed encoding quality (null for any).
+	 * @param flow_stream Flow stream (null for any). */
+	static public EncoderStream getStream(Camera c, EncodingQuality eq,
+		Boolean flow_stream)
+	{
 		if (c != null) {
 			EncoderType et = c.getEncoderType();
-			if (et != null)
-				return encoderUri(c, et, query);
+			if (et != null) {
+				boolean mcast = (c.getEncMcast() != null);
+				return EncoderStreamHelper.find(et, eq, mcast,
+					flow_stream);
+			}
 		}
-		// URI.toURL throws IllegalArgumentException with empty scheme
-		return URIUtil.HTTP;
+		return null;
+	}
+
+	/** Get an encoder stream for a camera.
+	 * @param c Camera for stream.
+	 * @param eq Allowed encoding quality (null for any). */
+	static private EncoderStream getStream(Camera c, EncodingQuality eq) {
+		return getStream(c, eq, null);
+	}
+
+	/** Get an encoder stream for a camera.
+	 * @param c Camera for stream. */
+	static public EncoderStream getStream(Camera c) {
+		return getStream(c, null, null);
 	}
 
 	/** Create a camera encoder URI */
-	static private URI encoderUri(Camera c, EncoderType et, String query) {
-		assert c != null;
-		String enc = c.getEncoder();
-		int chan = c.getEncoderChannel();
-		URI scheme = URIUtil.createScheme(et.getUriScheme());
-		String auth = getAuth(c);
-		return URIUtil.create(scheme, auth + enc + buildPath(
-			et.getUriPath(), chan) + query);
+	static public URI encoderUri(Camera c, EncoderStream es) {
+		if (c != null && es != null) {
+			if (EncoderStreamHelper.isMcast(es))
+				return mcastUri(es, c);
+			else
+				return ucastUri(es, c);
+		} else
+			return INVALID_URI;
+	}
+
+	/** Create a multicast URI */
+	static private URI mcastUri(EncoderStream es, Camera c) {
+		Integer port = es.getMcastPort();
+		String madr = c.getEncMcast();
+		return (madr != null && port != null)
+		      ? URIUtil.create(URIUtil.UDP, madr + ":" + port)
+		      : INVALID_URI;
+	}
+
+	/** Create a unicast URI */
+	static private URI ucastUri(EncoderStream es, Camera c) {
+		String sch = es.getUriScheme();
+		String path = es.getUriPath();
+		String addr = c.getEncAddress();
+		if (sch != null && path != null && addr != null) {
+			URI scheme = URIUtil.createScheme(sch);
+			String auth = getAuth(c);
+			Integer port = c.getEncPort();
+			if (port != null)
+				addr = addr + ":" + port;
+			Integer chan = c.getEncChannel();
+			return URIUtil.create(scheme, auth + addr + buildPath(
+				path, chan));
+		} else
+			return INVALID_URI;
 	}
 
 	/** Get camera encoder auth string */
@@ -241,8 +307,10 @@ public class CameraHelper extends BaseHelper {
 	}
 
 	/** Build URI path */
-	static private String buildPath(String path, int chan) {
-		return path.replace("{chan}", Integer.toString(chan));
+	static private String buildPath(String path, Integer chan) {
+		return (chan != null)
+		      ? path.replace("{chan}", Integer.toString(chan))
+		      : path;
 	}
 
 	/** Check if camera is blank */
@@ -269,5 +337,70 @@ public class CameraHelper extends BaseHelper {
 			      : cam.getName();
 		} else
 			return "";
+	}
+
+	/** Get a camera URI.
+	 * @param cam The camera.
+	 * @param eq Allowed encoding quality (null for any).
+	 * @param flow_stream Flow stream (null for any). */
+	static public String getUri(Camera cam, EncodingQuality eq,
+		Boolean flow_stream)
+	{
+		if (isBlank(cam))
+			return getBlankUrl();
+		String cond = getConditionUri(cam);
+		if (cond != null)
+			return cond;
+		EncoderStream es = getStream(cam, eq, flow_stream);
+		return encoderUri(cam, es).toString();
+	}
+
+	/** Get a camera URI.
+	 * @param cam The camera. */
+	static public String getUri(Camera cam) {
+		return getUri(cam, null, null);
+	}
+
+	/** Get the condition URI */
+	static private String getConditionUri(Camera cam) {
+		switch (getCondition(cam)) {
+		case CONSTRUCTION:
+			return getConstructionUrl();
+		case PLANNED:
+		case REMOVED:
+			return getOutOfServiceUrl();
+		default:
+			return null;
+		}
+	}
+
+	/** Get the camera condition */
+	static private CtrlCondition getCondition(Camera cam) {
+		if (cam != null) {
+			Controller c = cam.getController();
+			return (c != null)
+			      ? CtrlCondition.fromOrdinal(c.getCondition())
+			      : CtrlCondition.ACTIVE;
+		}
+		return CtrlCondition.REMOVED;
+	}
+
+	/** Check if a camera is active */
+	static public boolean isActive(Camera cam) {
+		return CtrlCondition.ACTIVE == getCondition(cam);
+	}
+
+	/** Get encoding for a camera */
+	static public Encoding getEncoding(Camera cam, EncodingQuality eq,
+		Boolean flow_stream)
+	{
+		if (isBlank(cam))
+			return Encoding.UNKNOWN;
+		if (CtrlCondition.ACTIVE != getCondition(cam))
+			return Encoding.UNKNOWN;
+		EncoderStream es = getStream(cam, eq, flow_stream);
+		return (es != null)
+		      ? Encoding.fromOrdinal(es.getEncoding())
+		      : Encoding.UNKNOWN;
 	}
 }

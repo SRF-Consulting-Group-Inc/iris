@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2018  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,12 +50,13 @@ public class VideoMenu extends IMenu {
 		addItem(createVideoMonitorItem());
 		addItem(createCameraTemplateItem());
 		addItem(createVidSrcTemplateItem());
+		addItem(createFlowStreamItem());
 	}
 
 	/** Create an encoder type menu item action */
 	private IAction createEncoderTypeItem() {
 		return EncoderTypeForm.isPermitted(session) ?
-		    new IAction("camera.encoder.type.plural") {
+		    new IAction("encoder.type.plural") {
 			protected void doActionPerformed(ActionEvent e) {
 				desktop.show(new EncoderTypeForm(session));
 			}
@@ -99,7 +100,17 @@ public class VideoMenu extends IMenu {
 			protected void doActionPerformed(ActionEvent e) {
 				desktop.show(new VideoMonitorForm(session));
 			}
-		    } : null;
+		} : null;
+	}
+
+	/** Create a flow stream item action */
+	private IAction createFlowStreamItem() {
+		return FlowStreamForm.isPermitted(session) ?
+		    new IAction("flow.stream") {
+			protected void doActionPerformed(ActionEvent e) {
+				desktop.show(new FlowStreamForm(session));
+			}
+		} : null;
 	}
 	
 	/** Create a camera template menu item action */

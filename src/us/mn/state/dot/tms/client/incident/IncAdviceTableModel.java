@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2019  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 	@Override
 	protected ArrayList<ProxyColumn<IncAdvice>> createColumns() {
 		ArrayList<ProxyColumn<IncAdvice>> cols =
-			new ArrayList<ProxyColumn<IncAdvice>>(7);
+			new ArrayList<ProxyColumn<IncAdvice>>(6);
 		cols.add(new ProxyColumn<IncAdvice>("incident.impact", 160) {
 			public Object getValueAt(IncAdvice adv) {
 				return IncImpact.fromOrdinal(adv.getImpact());
@@ -109,21 +109,6 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 				return new DefaultCellEditor(cbx);
 			}
 		});
-		cols.add(new ProxyColumn<IncAdvice>("incident.impacted.lanes",
-			112, Integer.class)
-		{
-			public Object getValueAt(IncAdvice adv) {
-				return adv.getImpactedLanes();
-			}
-			public boolean isEditable(IncAdvice adv) {
-				return canWrite(adv);
-			}
-			public void setValueAt(IncAdvice adv, Object value) {
-				adv.setImpactedLanes((value instanceof Integer)
-					? (Integer) value
-					: null);
-			}
-		});
 		cols.add(new ProxyColumn<IncAdvice>("incident.open.lanes", 80,
 			Integer.class)
 		{
@@ -139,6 +124,21 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 					: null);
 			}
 		});
+		cols.add(new ProxyColumn<IncAdvice>("incident.impacted.lanes",
+			112, Integer.class)
+		{
+			public Object getValueAt(IncAdvice adv) {
+				return adv.getImpactedLanes();
+			}
+			public boolean isEditable(IncAdvice adv) {
+				return canWrite(adv);
+			}
+			public void setValueAt(IncAdvice adv, Object value) {
+				adv.setImpactedLanes((value instanceof Integer)
+					? (Integer) value
+					: null);
+			}
+		});
 		cols.add(new ProxyColumn<IncAdvice>("dms.multi.string", 300) {
 			public Object getValueAt(IncAdvice adv) {
 				return adv.getMulti();
@@ -146,22 +146,9 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 			public boolean isEditable(IncAdvice adv) {
 				return canWrite(adv);
 			}
-			public void setValueAt(IncAdvice adv, Object value){
-				adv.setMulti(new MultiString(value.toString())
-					.normalize());
-			}
-		});
-		cols.add(new ProxyColumn<IncAdvice>("dms.multi.abbrev", 150) {
-			public Object getValueAt(IncAdvice adv) {
-				return adv.getAbbrev();
-			}
-			public boolean isEditable(IncAdvice adv) {
-				return canWrite(adv);
-			}
 			public void setValueAt(IncAdvice adv, Object value) {
-				String a = new MultiString(value.toString())
-					.normalize();
-				adv.setAbbrev((a.length() > 0) ? a : null);
+				adv.setMulti(new MultiString(value.toString())
+					.normalizeLine().toString());
 			}
 		});
 		return cols;
@@ -190,16 +177,6 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 				int r1 = adv1.getRange();
 				if (r0 != r1)
 					return r0 - r1;
-				Integer il0 = adv0.getImpactedLanes();
-				Integer il1 = adv1.getImpactedLanes();
-				if (il0 != il1) {
-					if (il1 == null)
-						return -1;
-					else if (il0 == null)
-						return 1;
-					else
-						return il0.compareTo(il1);
-				}
 				Integer ol0 = adv0.getOpenLanes();
 				Integer ol1 = adv1.getOpenLanes();
 				if (ol0 != ol1) {
@@ -209,6 +186,16 @@ public class IncAdviceTableModel extends ProxyTableModel<IncAdvice> {
 						return 1;
 					else
 						return ol0.compareTo(ol1);
+				}
+				Integer il0 = adv0.getImpactedLanes();
+				Integer il1 = adv1.getImpactedLanes();
+				if (il0 != il1) {
+					if (il1 == null)
+						return -1;
+					else if (il0 == null)
+						return 1;
+					else
+						return il0.compareTo(il1);
 				}
 				return adv0.getName().compareTo(adv1.getName());
 			}

@@ -24,6 +24,8 @@
 %define _serverdir	%{_serverlink}-%{version}
 %define _clientlink	/var/www/html/iris-client
 %define _clientdir	%{_clientlink}-%{version}
+%define _source_payload w6.xzdio
+%define _binary_payload w6.xzdio
 
 Name:		%{name}
 Summary:	An advanced traffic management system (ATMS)
@@ -76,7 +78,7 @@ ln -sf /usr/lib/jvm/jre-openjdk/lib/amd64/jli/libjli.so /usr/lib64
 
 # post-uninstall
 %postun
-%systemd_postun
+%systemd_postun iris.service
 
 # All files included in RPM are listed here.
 %files

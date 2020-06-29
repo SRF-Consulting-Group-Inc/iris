@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2019  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  * Copyright (C) 2010 AHMCT, University of California, Davis
  * Copyright (C) 2018  SRF Consulting Group
  *
@@ -56,7 +56,8 @@ import us.mn.state.dot.tms.utils.MultiString;
  * A SingleSignTab is a GUI component for displaying the status of a single
  * selected DMS within the DMS dispatcher.  One instance of this class is
  * created on client startup by DMSDispatcher.
- * @see DMSDispatcher.
+ *
+ * @see us.mn.state.dot.tms.client.dms.DMSDispatcher
  *
  * @author Douglas Lau
  * @author Michael Darter
@@ -357,7 +358,7 @@ public class SingleSignTab extends IPanel {
 			setPresetAction(dms);
 		// FIXME: this won't update when geoLoc attributes change
 		if (a == null || a.equals("geoLoc")) {
-			location_lbl.setText(GeoLocHelper.getDescription(
+			location_lbl.setText(GeoLocHelper.getLocation(
 				dms.getGeoLoc()));
 		}
 		if (a == null || a.equals("operation"))
@@ -410,8 +411,7 @@ public class SingleSignTab extends IPanel {
 	/** Update the current message */
 	private void updateMessageCurrent(DMS dms) {
 		adjusting++;
-		dispatcher.setComposedMulti(DMSHelper.getOperatorMulti(dms),
-			false);
+		dispatcher.setSignMessage(dms);
 		adjusting--;
 		expiration_lbl.setText(getExpiration(dms));
 	}

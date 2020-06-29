@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- ant build file for IRIS project
-     Copyright (C) 2007-2019  Minnesota Department of Transportation
+     Copyright (C) 2007-2020  Minnesota Department of Transportation
 
      This program is free software; you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -88,11 +88,9 @@
 	</target>
 
 	<!-- Check for dependencies -->
-	<target name="check">
+	<target name="check-rpm">
 		<antcall target="check-dep">
 			<param name="file.dep" value="iris-build.properties"/>
-		</antcall>
-		<antcall target="check-dep">
 			<param name="file.dep" value="mail.jar"/>
 			<param name="file.dep" value="jna-5.5.0.jar"/>
 			<param name="file.dep" value="jna-platform-5.5.0.jar"/>
@@ -157,7 +155,7 @@
 
 	<!-- Compile the source code -->
 	<target name="compile"
-	        depends="check,prepare"
+	        depends="prepare"
 	        description="Compile all of the source files">
 		<javac srcdir="${build.src}"
 		       destdir="${build.classes}"
@@ -177,19 +175,19 @@
 		depends="compile">
 		<jar jarfile="${build.lib}/${common.jar}">
 			<fileset dir="${build.classes}"
-				 includes="us/mn/state/dot/sched/*.class"/>
+				 includes="us/mn/state/dot/sched/**/*"/>
 			<fileset dir="${build.classes}"
 				 includes="us/mn/state/dot/sonar/*.class"/>
 			<fileset dir="${build.classes}"
 				 includes="us/mn/state/dot/tms/*.class"/>
 			<fileset dir="${build.classes}"
-				 includes="us/mn/state/dot/tms/geo/*.class"/>
+				 includes="us/mn/state/dot/tms/geo/**/*"/>
 			<fileset dir="${build.classes}"
-				 includes="us/mn/state/dot/tms/reports/*.class"/>
+				 includes="us/mn/state/dot/tms/reports/**/*"/>
 			<fileset dir="${build.classes}"
-				 includes="us/mn/state/dot/tms/units/*.class"/>
+				 includes="us/mn/state/dot/tms/units/**/*"/>
 			<fileset dir="${build.classes}"
-				 includes="us/mn/state/dot/tms/utils/*.class"/>
+				 includes="us/mn/state/dot/tms/utils/**/*"/>
 			<fileset dir="${build.i18n}"/>
 		</jar>
 	</target>
@@ -350,7 +348,6 @@
 
 	<!-- Create source tarball -->
 	<target name="tarball"
-	        depends="check"
 	        description="Create source tarball">
 		<copy todir="${build.tar}">
 			<fileset dir="${basedir}" excludes="build/**" />
@@ -363,7 +360,7 @@
 
 	<!-- Create an RPM package -->
 	<target name="rpm"
-	        depends="prepare-etc,tarball"
+	        depends="check-rpm,prepare-etc,tarball"
 	        description="Create an RPM package">
 		<mkdir dir="${build.rpm}/BUILD"/>
 		<mkdir dir="${build.rpm}/BUILDROOT"/>
@@ -393,6 +390,7 @@
 		         classpathref="classpath"
 			 sourcepath="${src.dir}"
 		         destdir="${build.javadocs}"
+		         additionalparam="-Xdoclint:-missing"
 		         author="true"
 		         version="true"
 			 windowtitle="${name} version ${version} API"
@@ -407,13 +405,6 @@
 		<delete dir="${build.dir}"/>
 		<delete dir="${dist.server}"/>
 		<delete dir="${dist.client}"/>
-	</target>
-
-	<!-- Clean up everything -->
-	<target name="distclean"
-	        description="Clean to the base repository distribution"
-	        depends="clean">
-		<mkdir dir="${lib.dir}" />
 	</target>
 
 	<!-- init junit dirs-->
@@ -443,22 +434,22 @@
 	<!-- run junit test cases -->
 	<target name="test" depends="compile-junit"
 		description="Run junit test cases">
-		<junit printsummary="yes" 
-			fork="yes" 
-			haltonfailure="yes" 
-			errorProperty="test.failed" 
-			failureProperty="test.failed">
+		<junit printsummary="yes"
+		       fork="yes"
+		       haltonfailure="yes"
+		       errorProperty="test.failed"
+		       failureProperty="test.failed">
 			<assertions><enable/></assertions>
 			<classpath refid="junit.classpath"/>
 			<formatter type="plain" usefile="false"/>
 			<formatter type="xml" usefile="true"/>
 			<jvmarg value="-Ddebug=true"/>
 			<batchtest todir="${testreports.dir}">
-				<fileset dir="${testbuild.dir}" includes="**/*Test.class"/>
+				<fileset dir="${testbuild.dir}"
+				         includes="**/*Test.class"/>
 			</batchtest>
 		</junit>
 		<fail message="Junit tests failed. Check log and/or reports."
-		       if="test.failed"/>
+		      if="test.failed"/>
 	</target>
-
 </project>

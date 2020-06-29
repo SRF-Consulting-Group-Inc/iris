@@ -1,6 +1,6 @@
 // geo.rs
 //
-// Copyright (C) 2019  Minnesota Department of Transportation
+// Copyright (C) 2019-2020  Minnesota Department of Transportation
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@ fn limit_value(val: f64, limit: f64) -> f64 {
 }
 
 impl Wgs84Pos {
-
     /// Equatorial radius of Earth as defined by WGS-84
     const EQUATORIAL_RADIUS_M: f64 = 6378137.0;
 
@@ -48,21 +47,24 @@ impl Wgs84Pos {
     }
 
     /// Create a new WGS-84 position
-    fn new(lat_deg: f64, lon_deg: f64) -> Self {
+    pub fn new(lat_deg: f64, lon_deg: f64) -> Self {
         let lat_deg = limit_value(lat_deg, 90.0);
         let lon_deg = limit_value(lon_deg, 180.0);
         let lat = lat_deg.to_radians();
         let lon = lon_deg.to_radians();
         Wgs84Pos { lat, lon }
     }
+
     /// Get the latitude in degrees
     pub fn lat_deg(&self) -> f64 {
         self.lat.to_degrees()
     }
+
     /// Get the longitude in degrees
     pub fn lon_deg(&self) -> f64 {
         self.lon.to_degrees()
     }
+
     /// Calculate the distance to another position (meters).
     pub fn distance_haversine(&self, other: &Self) -> f64 {
         let dlat = other.lat - self.lat;
@@ -77,7 +79,6 @@ impl Wgs84Pos {
 }
 
 impl WebMercatorPos {
-
     /// Maximum latitude for web mercator
     const MAX_LATITUDE: f64 = 85.05112878;
 

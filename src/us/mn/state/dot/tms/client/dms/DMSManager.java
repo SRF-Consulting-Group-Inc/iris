@@ -17,6 +17,7 @@
 package us.mn.state.dot.tms.client.dms;
 
 import java.awt.Color;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.HashMap;
 import javax.swing.JLabel;
@@ -34,6 +35,8 @@ import us.mn.state.dot.tms.client.proxy.GeoLocManager;
 import us.mn.state.dot.tms.client.proxy.ProxyDescriptor;
 import us.mn.state.dot.tms.client.proxy.ProxyJList;
 import us.mn.state.dot.tms.client.proxy.ProxyTheme;
+import us.mn.state.dot.tms.client.widget.IAction;
+import us.mn.state.dot.tms.client.wysiwyg.selector.WMsgSelectorForm;
 import us.mn.state.dot.tms.utils.I18N;
 
 /**
@@ -138,10 +141,10 @@ public class DMSManager extends DeviceManager<DMS> {
 			updateRaster(dms);
 	}
 
-	/** Check if an attribute change is interesting */
+	/** Check if a given attribute affects a proxy style */
 	@Override
-	protected boolean checkAttributeChange(String a) {
-		return super.checkAttributeChange(a) || "msgCurrent".equals(a);
+	public boolean isStyleAttrib(String a) {
+		return "styles".equals(a) || "msgCurrent".equals(a);
 	}
 
 	/** Called when a proxy attribute has changed */
@@ -155,12 +158,18 @@ public class DMSManager extends DeviceManager<DMS> {
 	/** Check if a DMS style is visible */
 	@Override
 	protected boolean isStyleVisible(DMS dms) {
-		return isStyleAll(dms) || !DMSHelper.isHidden(dms);
+		return isStyleAlwaysVisible(dms) || !dms.getHidden();
 	}
 
-	/** Check if the selected style is ALL */
-	private boolean isStyleAll(DMS dms) {
-		return getSelectedStyle() == ItemStyle.ALL;
+	/** Check if the selected style is always visible */
+	private boolean isStyleAlwaysVisible(DMS dms) {
+		switch (getSelectedStyle()) {
+			case AVAILABLE:
+			case DEPLOYED:
+				return false;
+			default:
+				return true;
+		}
 	}
 
 	/** Create a proxy JList */
@@ -178,6 +187,9 @@ public class DMSManager extends DeviceManager<DMS> {
 		if (blankAction != null) {
 			p.add(blankAction);
 			p.addSeparator();
+			
+			p.add(launchWysiwygSelector(dms));
+			p.addSeparator();
 		}
 	}
 
@@ -190,9 +202,9 @@ public class DMSManager extends DeviceManager<DMS> {
 		p.addSeparator();
 		if (blankAction != null)
 			p.add(blankAction);
-		if(test_dms_action != null)
+		if (test_dms_action != null)
 			p.add(test_dms_action);
-		if(qstatus_dms_action != null)
+		if (qstatus_dms_action != null)
 			p.add(qstatus_dms_action);
 		return p;
 	}
@@ -201,5 +213,15 @@ public class DMSManager extends DeviceManager<DMS> {
 	@Override
 	protected GeoLoc getGeoLoc(DMS proxy) {
 		return proxy.getGeoLoc();
+	}
+
+	/** Create a WYSIWYG Selector menu item action */
+	private IAction launchWysiwygSelector(DMS dms) {
+		return WMsgSelectorForm.isPermitted(session) ?
+			new IAction("wysiwyg.menu") {
+			protected void doActionPerformed(ActionEvent e) {
+				session.getDesktop().show(new WMsgSelectorForm(session, dms));
+			}
+			} : null;
 	}
 }

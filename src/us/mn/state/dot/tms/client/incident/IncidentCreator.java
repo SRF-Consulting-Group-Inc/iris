@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2019  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,6 +48,8 @@ import us.mn.state.dot.tms.client.roads.R_NodeManager;
 import us.mn.state.dot.tms.client.widget.ILabel;
 import us.mn.state.dot.tms.geo.Position;
 import us.mn.state.dot.tms.geo.SphericalMercatorPosition;
+import us.mn.state.dot.tms.units.Distance;
+import static us.mn.state.dot.tms.units.Distance.Units.MILES;
 import us.mn.state.dot.tms.utils.I18N;
 
 /**
@@ -57,6 +59,9 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Douglas Lau
  */
 public class IncidentCreator extends JPanel {
+
+	/** Maximum distance to snap */
+	static private final Distance MAX_DIST = new Distance(1, MILES);
 
 	/** Create the lane type combo box */
 	static protected JComboBox<LaneType> createLaneTypeCombo() {
@@ -243,7 +248,7 @@ public class IncidentCreator extends JPanel {
 	private void createIncident(String replaces, EventType et,
 		IncidentDetail dtl, LaneType lt, SphericalMercatorPosition smp)
 	{
-		GeoLoc loc = r_node_manager.snapGeoLoc(smp, lt);
+		GeoLoc loc = r_node_manager.snapGeoLoc(smp, lt, MAX_DIST);
 		if (loc != null)
 			createIncident(replaces, et, dtl, lt, loc);
 	}
@@ -273,8 +278,7 @@ public class IncidentCreator extends JPanel {
 
 	/** Get the lane count at the incident location */
 	private int getLaneCount(LaneType lt, GeoLoc loc) {
-		String name = GeoLocHelper.getCorridorName(loc);
-		CorridorBase cb = r_node_manager.lookupCorridor(name);
+		CorridorBase cb = r_node_manager.lookupCorridor(loc);
 		return (cb != null) ? cb.getLaneCount(lt, loc) : 0;
 	}
 

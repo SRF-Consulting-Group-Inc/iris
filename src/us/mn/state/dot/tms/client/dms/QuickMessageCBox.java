@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2008-2017  Minnesota Department of Transportation
+ * Copyright (C) 2008-2020  Minnesota Department of Transportation
  * Copyright (C) 2010  AHMCT, University of California
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@ import us.mn.state.dot.tms.DmsSignGroupHelper;
 import us.mn.state.dot.tms.QuickMessage;
 import us.mn.state.dot.tms.QuickMessageHelper;
 import us.mn.state.dot.tms.SignGroup;
+import us.mn.state.dot.tms.utils.MultiString;
 import us.mn.state.dot.tms.utils.NumericAlphaComparator;
 
 /**
@@ -38,13 +39,21 @@ import us.mn.state.dot.tms.utils.NumericAlphaComparator;
  * selection via this combobox, the dispatcher is flagged that it should update
  * its widgets with the newly selected message.
  *
- * @see DMSDispatcher, QuickMessage
+ * @see us.mn.state.dot.tms.QuickMessage
+ * @see us.mn.state.dot.tms.client.dms.DMSDispatcher
+ *
  * @author Michael Darter
  * @author Douglas Lau
  */
 public class QuickMessageCBox extends JComboBox<QuickMessage> {
 
-	/** Given a QuickMessage or String, return the cooresponding quick 
+	/** Check if a quick message should be included in combo box */
+	static private boolean isValidMulti(QuickMessage qm) {
+		MultiString ms = new MultiString(qm.getMulti());
+		return ms.isValid() && !ms.isSpecial();
+	}
+
+	/** Given a QuickMessage or String, return the cooresponding quick
 	 * message name or an empty string if none exists. */
 	static private String getQuickLibMsgName(Object obj) {
 		if (obj instanceof String)
@@ -134,7 +143,8 @@ public class QuickMessageCBox extends JComboBox<QuickMessage> {
 	private void updateDispatcher(QuickMessage qm) {
 		String ms = qm.getMulti();
 		if (adjusting == 0 && !ms.isEmpty()) {
-			dispatcher.setComposedMulti(ms, true);
+			dispatcher.setComposedMulti(ms);
+			dispatcher.unlinkIncident();
 			dispatcher.selectPreview(true);
 		}
 	}
@@ -149,7 +159,7 @@ public class QuickMessageCBox extends JComboBox<QuickMessage> {
 		adjusting--;
 	}
 
-	/** Set selected item, but only if it is different from the 
+	/** Set selected item, but only if it is different from the
 	 * currently selected item. Triggers a call to actionPerformed().
 	 * @param obj May be a String, or QuickMessage. */
 	public void setSelectedItem(Object obj) {
@@ -194,8 +204,10 @@ public class QuickMessageCBox extends JComboBox<QuickMessage> {
 					QuickMessageHelper.iterator();
 				while (qit.hasNext()) {
 					QuickMessage qm = qit.next();
-					if (qm.getSignGroup() == sg)
-						msgs.add(qm);
+					if (qm.getSignGroup() == sg) {
+						if (isValidMulti(qm))
+							msgs.add(qm);
+					}
 				}
 			}
 		}

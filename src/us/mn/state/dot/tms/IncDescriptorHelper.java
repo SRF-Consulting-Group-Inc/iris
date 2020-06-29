@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2019  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms;
 
 import java.util.Iterator;
+import us.mn.state.dot.tms.utils.MultiString;
 
 /**
  * Helper class for Incident Descriptors.
@@ -36,14 +37,24 @@ public class IncDescriptorHelper extends BaseHelper {
 
 	/** Find a matching incident descriptor */
 	static public IncDescriptor match(Incident inc) {
+		IncDescriptor fallback = null;
 		Iterator<IncDescriptor> it = iterator();
 		while (it.hasNext()) {
 			IncDescriptor dsc = it.next();
 			if (dsc.getEventType() == inc.getEventType() &&
-			    dsc.getDetail() == inc.getDetail() &&
 			    dsc.getLaneType() == inc.getLaneType())
-				return dsc;
+			{
+				if (dsc.getDetail() == inc.getDetail())
+					return dsc;
+				else if (dsc.getDetail() == null)
+					fallback = dsc;
+			}
 		}
-		return null;
+		return fallback;
+	}
+
+	/** Validate a MULTI string */
+	static public boolean isMultiValid(String m) {
+		return m.equals(new MultiString(m).normalizeLine().toString());
 	}
 }

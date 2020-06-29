@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2019  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  * Copyright (C) 2012-2018  Iteris Inc.
  * Copyright (C) 2014       AHMCT, University of California
  * Copyright (C) 2015-2017  SRF Consulting Group
@@ -35,6 +35,7 @@ public enum SystemAttrEnum {
 	ALARM_EVENT_PURGE_DAYS(0, 0),
 	BEACON_EVENT_PURGE_DAYS(0, 0),
 	CAMERA_AUTOPLAY(true, Change.RESTART_CLIENT),
+	CAMERA_BLANK_URL(String.class),
 	CAMERA_CONSTRUCTION_URL(String.class),
 	CAMERA_IMAGE_BASE_URL(String.class),
 	CAMERA_KBD_PANASONIC_ENABLE(false),
@@ -57,6 +58,7 @@ public enum SystemAttrEnum {
 	DATABASE_VERSION(String.class),
 	DETECTOR_AUTO_FAIL_ENABLE(true),
 	DETECTOR_EVENT_PURGE_DAYS(90, 0),
+	DETECTOR_OCC_SPIKE_ENABLE(true),
 	DICT_ALLOWED_SCHEME(0, 0, 2),
 	DICT_BANNED_SCHEME(0, 0, 2),
 	DMS_BRIGHTNESS_ENABLE(true, Change.RESTART_CLIENT),
@@ -104,7 +106,6 @@ public enum SystemAttrEnum {
 	HELP_TROUBLE_TICKET_ENABLE(false),
 	HELP_TROUBLE_TICKET_URL(String.class),
 	INCIDENT_CLEAR_ADVICE_MULTI(String.class),
-	INCIDENT_CLEAR_ADVICE_ABBREV(String.class),
 	INCIDENT_CLEAR_SECS(600, 0, 3600),
 	MAP_EXTENT_NAME_INITIAL("Home"),
 	MAP_ICON_SIZE_SCALE_MAX(30f, 0f, 9000f),

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2010-2019  Minnesota Department of Transportation
+ * Copyright (C) 2010-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,13 +40,13 @@ import static us.mn.state.dot.tms.units.Distance.Units.MILES;
 public class LcsIndicationBuilder {
 
 	/** Short distance upstream of incident to deploy devices */
-	static private final Distance DIST_SHORT = new Distance(0.5f, MILES);
+	static private final Distance DIST_SHORT = new Distance(0.6f, MILES);
 
 	/** Medium distance upstream of incident to deploy devices */
-	static private final Distance DIST_MEDIUM = new Distance(1.0f, MILES);
+	static private final Distance DIST_MEDIUM = new Distance(0.9f, MILES);
 
 	/** Long distance upstream of incident to deploy devices */
-	static private final Distance DIST_LONG = new Distance(1.5f, MILES);
+	static private final Distance DIST_LONG = new Distance(1.2f, MILES);
 
 	/** Assign a requested indication to an available indication.
 	 * @param lui Requested lane use indication.
@@ -67,7 +67,7 @@ public class LcsIndicationBuilder {
 		return LaneUseIndication.DARK;
 	}
 
-	/** Get alternate indication for "dumb" LCS devices. */
+	/** Get alternate indication for "changeable" LCS devices. */
 	static private LaneUseIndication altIndication(LaneUseIndication lui) {
 		switch (lui) {
 		case LOW_VISIBILITY:
@@ -110,8 +110,7 @@ public class LcsIndicationBuilder {
 
 	/** Create a new LCS indication builder.
 	 * @param cf Corridor finder.
-	 * @param inc Incident for deployment.
-	 * @param conf Lane configuration at incident location. */
+	 * @param inc Incident for deployment. */
 	public LcsIndicationBuilder(CorridorFinder cf, Incident inc) {
 		finder = cf;
 		incident = inc;
@@ -120,8 +119,7 @@ public class LcsIndicationBuilder {
 
 	/** Get lane configuration at a location */
 	private LaneConfiguration laneConfiguration(GeoLoc loc) {
-		String name = GeoLocHelper.getCorridorName(loc);
-		CorridorBase cb = finder.lookupCorridor(name);
+		CorridorBase cb = finder.lookupCorridor(loc);
 		return (cb != null)
 		      ? cb.laneConfiguration(new Position(loc.getLat(),
 				loc.getLon()))

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2013-2016  Minnesota Department of Transportation
+ * Copyright (C) 2013-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ public class GateArmImpl extends DeviceImpl implements GateArm {
 	/** Create a new gate arm with a string name */
 	public GateArmImpl(String n) throws TMSException, SonarException {
 		super(n);
-		GateArmSystem.disable(n, "create");
+		GateArmSystem.disable(n, "create gate arm");
 	}
 
 	/** Create a gate arm */
@@ -128,13 +128,17 @@ public class GateArmImpl extends DeviceImpl implements GateArm {
 	@Override
 	public void initTransients() {
 		setArrayIndex(this);
-		super.initTransients();
+		// calling updateControllerPin would disable GateArmSystem
+		ControllerImpl c = controller;
+		if (c != null)
+			c.setIO(pin, this);
+		updateStyles();
 	}
 
 	/** Destroy an object */
 	@Override
 	public void doDestroy() throws TMSException {
-		GateArmSystem.disable(name, "destroy");
+		GateArmSystem.disable(name, "destroy gate arm");
 		super.doDestroy();
 		setArrayIndex(null);
 	}
@@ -166,7 +170,7 @@ public class GateArmImpl extends DeviceImpl implements GateArm {
 	protected void updateControllerPin(ControllerImpl oc, int op,
 		ControllerImpl nc, int np)
 	{
-		GateArmSystem.disable(name, "controller/pin");
+		GateArmSystem.disable(name, "update controller/pin");
 		super.updateControllerPin(oc, op, nc, np);
 	}
 

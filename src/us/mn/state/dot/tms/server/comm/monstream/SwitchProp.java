@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2018  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,12 @@ import java.nio.ByteBuffer;
 import us.mn.state.dot.tms.CameraHelper;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.CtrlCondition;
-import us.mn.state.dot.tms.EncoderType;
+import us.mn.state.dot.tms.EncoderStream;
 import us.mn.state.dot.tms.Encoding;
 import us.mn.state.dot.tms.GeoLocHelper;
-import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.server.CameraImpl;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.Operation;
-import us.mn.state.dot.tms.utils.URIUtil;
 
 /**
  * A property to switch a camera.
@@ -34,16 +32,6 @@ import us.mn.state.dot.tms.utils.URIUtil;
  * @author Douglas Lau
  */
 public class SwitchProp extends MonProp {
-
-	/** Get the construction URL */
-	static private String getConstructionUrl() {
-		return SystemAttrEnum.CAMERA_CONSTRUCTION_URL.getString();
-	}
-
-	/** Get the out-of-service URL */
-	static private String getOutOfServiceUrl() {
-		return SystemAttrEnum.CAMERA_OUT_OF_SERVICE_URL.getString();
-	}
 
 	/** Controller pin */
 	private final int pin;
@@ -67,6 +55,7 @@ public class SwitchProp extends MonProp {
 
 	/** Format a switch request */
 	private String formatReq() {
+		EncoderStream es = getEncoderStream();
 		StringBuilder sb = new StringBuilder();
 		sb.append("play");
 		sb.append(UNIT_SEP);
@@ -76,15 +65,26 @@ public class SwitchProp extends MonProp {
 		sb.append(UNIT_SEP);
 		sb.append(getUri());
 		sb.append(UNIT_SEP);
-		sb.append(getEncoding());
+		sb.append(getEncoding(es));
 		sb.append(UNIT_SEP);
 		sb.append(getDescription());
 		sb.append(UNIT_SEP);
-		sb.append(getLatency());
+		sb.append(getLatency(es));
 		sb.append(RECORD_SEP);
 		String req = sb.toString();
 		System.out.println(req.replace(String.valueOf(UNIT_SEP), " | "));
 		return req;
+	}
+
+	/** Get the best encoder stream */
+	private EncoderStream getEncoderStream() {
+		return isStreaming() ? CameraHelper.getStream(camera) : null;
+	}
+
+	/** Check if camera is streaming */
+	private boolean isStreaming() {
+		return CameraHelper.isActive(camera)
+		   && !CameraHelper.isBlank(camera);
 	}
 
 	/** Get camera number */
@@ -100,66 +100,15 @@ public class SwitchProp extends MonProp {
 
 	/** Get the stream URI */
 	private String getUri() {
-		if (CameraHelper.isBlank(camera))
-			return "";
-		else {
-			assert camera != null;
-			String cond = getConditionUri();
-			if (cond != null)
-				return cond;
-			String mcast = getMulticastUri();
-			if (mcast != null)
-				return mcast;
-			return CameraHelper.encoderUri(camera, "").toString();
-		}
-	}
-
-	/** Get the condition URI */
-	private String getConditionUri() {
-		switch (getCondition()) {
-		case CONSTRUCTION:
-			return getConstructionUrl();
-		case PLANNED:
-		case REMOVED:
-			return getOutOfServiceUrl();
-		default:
-			return null;
-		}
-	}
-
-	/** Get the camera condition */
-	private CtrlCondition getCondition() {
-		if (camera != null) {
-			Controller c = camera.getController();
-			if (c instanceof ControllerImpl) {
-				return CtrlCondition.fromOrdinal(
-					c.getCondition());
-			}
-		}
-		return CtrlCondition.REMOVED;
-	}
-
-	/** Get camera multicast URI */
-	private String getMulticastUri() {
-		assert camera != null;
-		String mcast = camera.getEncMulticast();
-		if (mcast != null && mcast.length() > 0)
-			return URIUtil.create(URIUtil.UDP, mcast).toString();
-		else
-			return null;
+		return CameraHelper.getUri(camera);
 	}
 
 	/** Get the encoding */
-	private String getEncoding() {
-		if (CtrlCondition.ACTIVE == getCondition()) {
-			assert camera != null;
-			EncoderType et = camera.getEncoderType();
-			if (et != null) {
-				Encoding enc = Encoding.fromOrdinal(
-					et.getEncoding());
-				if (enc != Encoding.UNKNOWN)
-					return enc.toString();
-			}
+	private String getEncoding(EncoderStream es) {
+		if (es != null) {
+			Encoding enc = Encoding.fromOrdinal(es.getEncoding());
+			if (enc != Encoding.UNKNOWN)
+				return enc.toString();
 		}
 		return "PNG";
 	}
@@ -168,17 +117,14 @@ public class SwitchProp extends MonProp {
 	private String getDescription() {
 		return CameraHelper.isBlank(camera)
 		      ? ""
-		      : GeoLocHelper.getDescription(camera.getGeoLoc());
+		      : GeoLocHelper.getLocation(camera.getGeoLoc());
 	}
 
 	/** Get the stream latency (ms) */
-	private int getLatency() {
-		if (camera != null) {
-			EncoderType et = camera.getEncoderType();
-			if (et != null)
-				return et.getLatency();
-		}
-		return EncoderType.DEFAULT_LATENCY_MS;
+	private int getLatency(EncoderStream es) {
+		return (es != null)
+		      ? es.getLatency()
+		      : EncoderStream.DEFAULT_LATENCY_MS;
 	}
 
 	/** Get a string representation of the property */
