@@ -14,12 +14,17 @@
  */
 package us.mn.state.dot.tms.client.ipaws;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+
+import javax.swing.JOptionPane;
 
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.IpawsAlertNotifier;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.incident.IncidentMarker;
 import us.mn.state.dot.tms.client.proxy.GeoLocManager;
 import us.mn.state.dot.tms.client.proxy.ProxyDescriptor;
 import us.mn.state.dot.tms.client.proxy.ProxyManager;
@@ -36,28 +41,90 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 	/** IpawsAlertNotifier cache */
 	private final TypeCache<IpawsAlertNotifier> cache;
 	
-	/** Proxy listener for SONAR updates */
+	/** Proxy listener for SONAR updates. TODO this will change a lot. */
 	private final SwingProxyAdapter<IpawsAlertNotifier> listener =
-			new SwingProxyAdapter<IpawsAlertNotifier>() {
+			new SwingProxyAdapter<IpawsAlertNotifier>(true) {
+		
+		private boolean enumComplete = false;
+		
+		// we use these for state for capturing attribute changes
+		private StringBuilder sb;
+		private boolean newAlert = false;
+		private boolean haveDms;
+		private boolean haveMulti;
+		
+		@Override
+		protected void enumerationCompleteSwing(
+				Collection<IpawsAlertNotifier> ians) {
+			enumComplete = true;
+		}
+		
+		String[] options = new String[] {"Deploy", "Cancel"};
+		
 		@Override
 		protected void proxyAddedSwing(IpawsAlertNotifier ian) {
-			if (ian != null) {
-				System.out.println("Got new alert: " + ian.getAlertId());
-				System.out.println("    Has DMS: " + ian.getDms());
-				System.out.println("    Has MULTI: " + ian.getMulti());
+			if (enumComplete && ian != null) {
+				newAlert = true;
+				sb = new StringBuilder();
+				sb.append("<html><body><p style='width: 400px;'>");
+				sb.append("New alert: " + ian.getAlertId());
+				boolean content = false;
+				if (ian.getDms() != null && ian.getDms().length > 0
+						&& ian.getDms()[0] != null) {
+					sb.append("<br>    ");
+					sb.append("Selected DMS: " + Arrays.toString(ian.getDms()));
+					haveDms = true;
+				}
+				if (ian.getMulti() != null) {
+					sb.append("<br>    ");
+					sb.append("MULTI: " + ian.getMulti());
+					haveMulti = true;
+				}
+				if (haveDms && haveMulti) {
+					sb.append("</p></body></html>");
+					String msg = sb.toString();
+					JOptionPane.showOptionDialog(session.getDesktop(), 
+			        		msg, "New Alert", JOptionPane.DEFAULT_OPTION,
+			        		JOptionPane.PLAIN_MESSAGE, null,
+			        		options, options[0]);
+				}
 			}
 		}
 		
 		@Override
 		protected void proxyChangedSwing(IpawsAlertNotifier ian, String attr) {
 			if (ian != null) {
-				System.out.println("Got update to alert: " + ian.getAlertId() +
-						" attribute: " + attr);
+				if (sb == null) {
+					sb = new StringBuilder();
+					sb.append("<html><body><p style='width: 400px;'>");
+					sb.append("Update to alert: " + ian.getAlertId());
+					newAlert = false;
+				}
 				
-				if (attr == "dms")
-					System.out.println("    Has DMS: " + ian.getDms());
-				else if (attr == "multi")
-					System.out.println("    Has MULTI: " + ian.getMulti());
+				sb.append("<br>    ");
+				if (attr.equals("dms") && ian.getDms() != null
+						&& ian.getDms().length > 0 && ian.getDms()[0] != null) {
+					System.out.println(ian.getDms());
+					sb.append("Selected DMS: "
+							+ Arrays.toString(ian.getDms()));
+					haveDms = true;
+				} else if (attr.equals("multi") && ian.getMulti() != null) {
+					sb.append("MULTI: " + ian.getMulti());
+					haveMulti = true;
+				}
+				
+				if (!newAlert || (haveDms && haveMulti)) {
+					newAlert = false;
+					haveDms = false;
+					haveMulti = false;
+					String msg = sb.toString();
+					sb = null;
+					String t = newAlert ? "New Alert" : "Updated Alert";
+					JOptionPane.showOptionDialog(session.getDesktop(), 
+			        		msg, t, JOptionPane.DEFAULT_OPTION,
+			        		JOptionPane.PLAIN_MESSAGE, null,
+			        		options, options[0]);
+				}
 			}
 		}
 	};
@@ -88,8 +155,8 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 
 	@Override
 	protected ProxyTheme<IpawsAlertNotifier> createTheme() {
-		// TODO Auto-generated method stub
-		return new ProxyTheme<IpawsAlertNotifier>(this, null);
+		// TODO for now we're stealing the incident marker
+		return new ProxyTheme<IpawsAlertNotifier>(this, new IncidentMarker());
 	}
 
 	@Override
