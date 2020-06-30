@@ -189,7 +189,7 @@ public class Session {
 		managers.add(new ParkingAreaManager(this, loc_manager));
 		managers.add(inc_manager);
 		managers.add(new PlanManager(this, loc_manager));
-//		managers.add(new IpawsManager(this, loc_manager));
+		managers.add(new IpawsManager(this, loc_manager));
 		tile_layer = createTileLayer(props.getProperty("map.tile.url"));
 	}
 
