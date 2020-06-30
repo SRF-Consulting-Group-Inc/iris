@@ -122,13 +122,17 @@ public class IpawsProcJob extends Job {
 	/** Process IPAWS alerts in the database. */
 	@Override
 	public void perform() throws Exception {
-		System.out.println("Starting IPAWS alert processing...");
-		
+		// go through all alerts
 		Iterator<IpawsAlertImpl> it = IpawsAlertImpl.iterator();
 		while (it.hasNext()) {
 			// TODO add top-level filtering (iris.ipaws_events or similar)
 			
 			IpawsAlertImpl ia = it.next();
+			
+			// TODO add check to avoid re-processing every time (?)
+			
+			System.out.println("Processing IPAWS alert: " + ia.getName());
+			
 			String area = ia.getArea();
 			System.out.println(area);
 			
@@ -150,21 +154,8 @@ public class IpawsProcJob extends Job {
 						IpawsAlertNotifierImpl.lookupFromAlert(ia.getName());
 				String alertMulti = generateMulti(ia);
 				System.out.println("Got MULTI: " + alertMulti);
-				ian.doSetMulti(alertMulti);
+				ian.setMultiNotify(alertMulti);
 			}
-			
-			// find DMS in the polygon using a query like this or similar (the
-			// ST_Covers is the important part)
-			/* SELECT d.name
-			 *   FROM iris.dms d
-			 *   JOIN iris.geo_loc g
-			 *     ON d.geo_loc=g.name
-			 *   WHERE ST_Covers(
-			 *     (SELECT geo_poly
-			 *        FROM event.ipaws
-			 *        WHERE name='SRF-TEST-ALERT-00001'),
-			 *     ST_Point(g.lon, g.lat)::geography);
-			 *  */
 		}
 	}
 	
@@ -208,9 +199,22 @@ public class IpawsProcJob extends Job {
 					// and urgency fields
 					rtMulti = "";
 					urgMulti = "";
+					System.out.println("Alert event: " + event +
+							" all clear");
+					String m = qmMulti.replace("[capevent]", evMulti)
+								  .replace("[captime]", timeMulti)
+								  .replace("[capresponse]", rtMulti)
+								  .replace("[capurgency]", urgMulti);
+					if (m.endsWith("[nl]"))
+						m = m.substring(0, m.length()-4);
+					if (m.endsWith("[np]"))
+						m = m.substring(0, m.length()-4);
+					return m;
 				}
 				
 				// replace the fields in the QuickMessage and return
+				System.out.println("Alert event: " + event + " response type: "
+						+ rt + " urgency: " + urg);
 				return qmMulti.replace("[capevent]", evMulti)
 							  .replace("[captime]", timeMulti)
 							  .replace("[capresponse]", rtMulti)
@@ -311,13 +315,20 @@ public class IpawsProcJob extends Job {
 					System.out.println("Got DMS: " + Arrays.toString(dms));
 					
 					if (dms.length > 0) {
-						// if we did, generate a new name for the alert and
-						// construct a new object
-						String name = IpawsAlertNotifierImpl.getUniqueName();
+						// if we did, try to look up an alert
 						IpawsAlertNotifierImpl ian =
-								new IpawsAlertNotifierImpl(
-								name, ia.getName(), dms);
-						IpawsAlertNotifierImpl.namespace.addObject(ian);
+						  IpawsAlertNotifierImpl.lookupFromAlert(ia.getName());
+						
+						if (ian == null) {
+							// if we didn't find one, generate a new name for
+							// the alert notifier and construct a new object
+							String name = IpawsAlertNotifierImpl
+									.getUniqueName();
+							ian = new IpawsAlertNotifierImpl(
+									name, ia.getName()); //, dms);
+							ian.notifyCreate();
+						}
+						ian.setDmsNotify(dms);
 					} else
 						// if we didn't, mark the alert as purgeable
 						ia.doSetPurgeable(true);
@@ -355,7 +366,6 @@ public class IpawsProcJob extends Job {
 		// reformat the string so PostGIS will accept it
 		try {
 			String pgps = formatMultiPolyStr(ps);
-			System.out.println(pgps);
 			return new MultiPolygon(pgps);
 		} catch (NoSuchFieldException e) {
 			e.printStackTrace();
@@ -406,7 +416,6 @@ public class IpawsProcJob extends Job {
 		}
 		
 		// remove the trailing comma
-		System.out.println(sb.substring(sb.length()-2));
 		if (sb.substring(sb.length()-2).equals(", "))
 			sb.setLength(sb.length()-2);
 		
