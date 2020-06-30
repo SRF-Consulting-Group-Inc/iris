@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * Helper class for CameraStreamLink objects
+ * Helper class for CameraVidSourceOrder objects
  * 
  * @author John L. Stanley - SRF Consulting
  *
@@ -103,8 +103,6 @@ public class CameraVidSourceOrderHelper extends BaseHelper {
 		}
 		return null;
 	}
-
-	
 	
 	/** Get a camera video source order object iterator */
 	static public Iterator<CameraVidSourceOrder> iterator() {
