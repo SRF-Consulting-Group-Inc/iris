@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,7 @@ public class IpawsAlertNotifierImpl extends BaseObjectImpl
 	static private final int MAX_RECORDS = (int) Math.pow(10, 9);
 	
 	/** Get the first available unique name for a new alert notifier. */
+	// TODO change to use UniqueNameCreator once merged with video changes
 	static public String getUniqueName() {
 		for (int i = 0; i <= MAX_RECORDS; ++i) {
 			String n = NAME_PREFIX + String.valueOf(i);
@@ -118,6 +120,11 @@ public class IpawsAlertNotifierImpl extends BaseObjectImpl
 		super(n);
 	}
 	
+	public IpawsAlertNotifierImpl(String n, String aid)  {
+		super(n);
+		alert_id = aid;
+	}
+	
 	public IpawsAlertNotifierImpl(String n, String aid, String[] dms) {
 		super(n);
 		alert_id = aid;
@@ -168,13 +175,24 @@ public class IpawsAlertNotifierImpl extends BaseObjectImpl
 	}
 	
 	/** Set the list of DMS (represented as a string array) to be used for
-	 *  deploying alert messages.
+	 *  deploying alert messages. Returns true if the value changed and false
+	 *  otherwise.
 	 */
-	public void doSetDms(String[] dms) throws TMSException {
-		if (dms != this.dms) {
-			store.update(this, "alert_id", dms);
+	public boolean doSetDms(String[] dms) throws TMSException {
+		if (!Arrays.deepEquals(dms, this.dms)) {
+			store.update(this, "dms", Arrays.toString(dms));
 			setDms(dms);
+			return true;
 		}
+		return false;
+	}
+	
+	/** Set the list of DMS (represented as a string array) to be used for
+	 *  deploying alert messages, notifying clients if it has changed.
+	 */
+	public void setDmsNotify(String[] dms) throws TMSException {
+		if (doSetDms(dms))
+			notifyAttribute("dms");
 	}
 	
 	/** Get the list of DMS (represented as a string array) to be used for
@@ -194,12 +212,24 @@ public class IpawsAlertNotifierImpl extends BaseObjectImpl
 		multi = m;
 	}
 	
-	/** Set the MULTI to be deployed to DMS. */
-	public void doSetMulti(String m) throws TMSException {
-		if (m != multi) {
+	/** Set the MULTI to be deployed to DMS. Returns true if the value changed
+	 *  and false otherwise.
+	 */
+	public boolean doSetMulti(String m) throws TMSException {
+		if (m == null || !m.equals(multi)) {
 			store.update(this, "multi", m);
 			setMulti(m);
+			return true;
 		}
+		return false;
+	}
+
+	/** Set the MULTI to be deployed to DMS, notifying clients if it has
+	 *  changed.
+	 */
+	public void setMultiNotify(String m) throws TMSException {
+		if (doSetMulti(m))
+			notifyAttribute("multi");
 	}
 	
 	/** Get the MULTI to be deployed to DMS. */
