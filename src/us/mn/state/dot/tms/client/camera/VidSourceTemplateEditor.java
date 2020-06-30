@@ -260,6 +260,7 @@ public class VidSourceTemplateEditor extends AbstractForm {
 		vsEncoderModel = new IComboBoxModel<EncoderType>(
 				cc.getEncoderTypeModel());
 		vsEncoderField = new JComboBox<EncoderType>(vsEncoderModel);
+		vsEncoderField.setRenderer(new EncoderTypeRenderer());
 		
 		vsSchemeLbl = new JLabel(I18N.get(
 				"camera.video_source.template.scheme") + ":");
