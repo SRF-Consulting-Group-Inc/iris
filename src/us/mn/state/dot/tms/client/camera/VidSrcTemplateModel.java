@@ -21,6 +21,8 @@ import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.table.TableRowSorter;
 
+import us.mn.state.dot.tms.EncoderType;
+import us.mn.state.dot.tms.EncoderTypeHelper;
 import us.mn.state.dot.tms.VidSourceTemplate;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyColumn;
@@ -87,7 +89,11 @@ public class VidSrcTemplateModel extends ProxyTableModel<VidSourceTemplate> {
 		cols.add(new ProxyColumn<VidSourceTemplate>(
 				"camera.video_source.template.encoder", 100) {
 			public Object getValueAt(VidSourceTemplate vst) {
-				return vst.getEncoder();
+				EncoderType et = EncoderTypeHelper.lookup(vst.getEncoder());
+				if (et != null) {
+					return (et.getMake() + " " + et.getModel() + " " +
+					        et.getConfig()).trim();
+				} return null;
 			}
 		});
 		cols.add(new ProxyColumn<VidSourceTemplate>(
