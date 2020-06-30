@@ -112,28 +112,7 @@ public class PropSetup extends IPanel {
 		}
 		@Override
 		protected void doUpdateSelected() {
-			// TODO we SHOULD just be able to use setSelectedItem, but the
-			// object references aren't the same for some reason...
-			// for now this works almost as well
-			
-			CameraTemplate ct = camera.getCameraTemplate();
-			
-			if (ct != null) {
-				Integer indx = null;
-				for (int i = 0; i < cam_tmplt_cbx.getModel().getSize(); ++i) {
-					Object o = cam_tmplt_cbx.getItemAt(i);
-					if (o != null && o instanceof CameraTemplate) {
-						CameraTemplate oct = (CameraTemplate) o;
-						if (oct.getName().equals(ct.getName())) {
-							indx = i;
-							break;
-						}
-					}
-				}
-				if (indx != null)
-					cam_tmplt_cbx.setSelectedIndex(indx);
-			}
-//			cam_tmplt_cbx.setSelectedItem(ct);
+			cam_tmplt_cbx.setSelectedItem(camera.getCameraTemplate());
 		}
 	};
 	
@@ -175,6 +154,7 @@ public class PropSetup extends IPanel {
 		enc_type_cbx.setRenderer(new EncoderTypeRenderer());
 		cam_tmplt_cbx.setModel(new IComboBoxModel<CameraTemplate>(
 				cc.getCameraTemplateModel()));
+		cam_tmplt_cbx.setRenderer(new CameraTemplateRenderer());
 		cam_tmplt_cbx.setAction(cam_tmplt_act);
 		add("camera.num");
 		add(cam_num_txt, Stretch.LAST);
