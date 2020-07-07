@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.client.camera;
 
 import us.mn.state.dot.tms.CameraPreset;
+import us.mn.state.dot.tms.Direction;
 import us.mn.state.dot.tms.client.widget.IListCellRenderer;
 
 /**
@@ -27,6 +28,10 @@ public class PresetComboRenderer extends IListCellRenderer<CameraPreset> {
 	/** Convert camera preset to a string */
 	@Override
 	protected String valueToString(CameraPreset cp) {
-		return cp.getCamera().getName() + ":" + cp.getPresetNum();
+		Direction dir = Direction.fromOrdinal(cp.getDirection());
+		if (dir != Direction.UNKNOWN)
+			return cp.getCamera().getName() + ":" + dir.det_dir;
+		else
+			return cp.getCamera().getName() + ":" + cp.getPresetNum();
 	}
 }

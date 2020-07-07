@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2017  Minnesota Department of Transportation
+ * Copyright (C) 2007-2018  Minnesota Department of Transportation
  * Copyright (C) 2015       Iteris Inc.
  * Copyright (C) 2016-2017  SRF Consulting Group
  *
@@ -47,9 +47,11 @@ import us.mn.state.dot.tms.LaneAction;
 import us.mn.state.dot.tms.LaneMarking;
 import us.mn.state.dot.tms.MapExtent;
 import us.mn.state.dot.tms.MeterAction;
+import us.mn.state.dot.tms.ParkingArea;
 import us.mn.state.dot.tms.PlanPhase;
 import us.mn.state.dot.tms.RampMeter;
 import us.mn.state.dot.tms.Road;
+import us.mn.state.dot.tms.RptConduit;
 import us.mn.state.dot.tms.SystemAttribute;
 import us.mn.state.dot.tms.TagReader;
 import us.mn.state.dot.tms.TimeAction;
@@ -70,9 +72,6 @@ import us.mn.state.dot.tms.client.proxy.ProxyListModel;
  * @author Douglas Lau
  */
 public class SonarState extends Client {
-
-	/** Exception handler */
-	private final ExceptionHandler handler;
 
 	/** Cache of capability proxies */
 	private final TypeCache<Capability> capabilities =
@@ -325,6 +324,15 @@ public class SonarState extends Client {
 		return gate_arms;
 	}
 
+	/** Cache of parking areas */
+	private final TypeCache<ParkingArea> parking_areas =
+		new TypeCache<ParkingArea>(ParkingArea.class, this);
+
+	/** Get the parking area cache */
+	public TypeCache<ParkingArea> getParkingAreas() {
+		return parking_areas;
+	}
+
 	/** Cache of day matcher proxies */
 	private final TypeCache<DayMatcher> day_matchers =
 		new TypeCache<DayMatcher>(DayMatcher.class, this);
@@ -440,13 +448,21 @@ public class SonarState extends Client {
 		return gpses;
 	}
 
+	/** Cache of report conduits */
+	private final TypeCache<RptConduit> rpt_conduits =
+		new TypeCache<RptConduit>(RptConduit.class, this);
+
+	/** Get the user type cache */
+	public TypeCache<RptConduit> getRptConduits() {
+		return rpt_conduits;
+	}
+	
 	/** Create a new Sonar state */
 	public SonarState(Properties props, ExceptionHandler h)
 		throws IOException, ConfigurationError, NoSuchFieldException,
 		IllegalAccessException
 	{
 		super(props, h);
-		handler = h;
 		road_model = new ProxyListModel<Road>(roads);
 		road_model.initialize();
 		toll_zone_model = new ProxyListModel<TollZone>(toll_zones);
@@ -523,6 +539,7 @@ public class SonarState extends Client {
 		populate(map_extents, true);
 		populate(roads);
 		populate(geo_locs);
+		populateReadable(rpt_conduits);
 		populateReadable(words);
 		con_cache.populate(this);
 		det_cache.populate(this);
@@ -559,6 +576,7 @@ public class SonarState extends Client {
 		populateReadable(gate_arms);
 		if (canRead(GateArm.SONAR_TYPE))
 			gate_arms.ignoreAttribute("operation");
+		populateReadable(parking_areas);
 		populateReadable(day_matchers);
 		populateReadable(day_plans);
 		populateReadable(plan_phases);

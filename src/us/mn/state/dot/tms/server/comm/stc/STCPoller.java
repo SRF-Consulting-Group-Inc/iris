@@ -18,6 +18,7 @@ import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sonar.User;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.GateArmState;
+import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.GateArmImpl;
 import us.mn.state.dot.tms.server.comm.GateArmPoller;
@@ -38,6 +39,7 @@ public class STCPoller extends ThreadedPoller<STCProperty>
 	/** Create a new STC poller */
 	public STCPoller(String n) {
 		super(n, TCP, STC_LOG);
+		attrCommIdleDisconnect = SystemAttrEnum.COMM_IDLE_DISCONNECT_GATE_SEC;
 	}
 
 	/** Send a device request */

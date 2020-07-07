@@ -139,6 +139,7 @@ ln -sf /usr/lib/jvm/jre-openjdk/lib/amd64/jli/libjli.so /usr/lib64
 %{_clientdir}/images/iris.png
 %{_clientdir}/images/iris_icon.png
 %{_clientdir}/lib/mail.jar
+%{_clientdir}/lib/edtftpj.jar
 %{_clientdir}/lib/iris-client-%{version}.jar
 %{_clientdir}/lib/iris-common-%{version}.jar
 %{_clientdir}/lib/scheduler-@@SCHEDULER.VERSION@@.jar

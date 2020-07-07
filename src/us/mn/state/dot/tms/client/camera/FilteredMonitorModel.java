@@ -14,6 +14,7 @@
  */
 package us.mn.state.dot.tms.client.camera;
 
+import java.util.Comparator;
 import us.mn.state.dot.tms.VideoMonitor;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyListModel;
@@ -27,14 +28,39 @@ import us.mn.state.dot.tms.client.proxy.ProxyListModel;
  */
 public class FilteredMonitorModel extends ProxyListModel<VideoMonitor> {
 
+	/** Create a new filtered monitor model */
+	static public FilteredMonitorModel create(Session s) {
+		FilteredMonitorModel mdl = new FilteredMonitorModel(s);
+		mdl.initialize();
+		return mdl;
+	}
+
 	/** User Session */
 	private final Session session;
 
 	/** Create a new filtered monitor model */
-	public FilteredMonitorModel(Session s) {
+	private FilteredMonitorModel(Session s) {
 		super(s.getSonarState().getCamCache().getVideoMonitors());
 		session = s;
-		initialize();
+	}
+
+	/** Get a video monitor comparator */
+	@Override
+	protected Comparator<VideoMonitor> comparator() {
+		return new Comparator<VideoMonitor>() {
+			public int compare(VideoMonitor vm0, VideoMonitor vm1) {
+				Integer n0 = vm0.getMonNum();
+				Integer n1 = vm1.getMonNum();
+				int c = n0.compareTo(n1);
+				if (c != 0)
+					return c;
+				else {
+					boolean p0 = check(vm0);
+					boolean p1 = check(vm1);
+					return Boolean.compare(p0, p1);
+				}
+			}
+		};
 	}
 
 	/** Check if a proxy is included in the list */

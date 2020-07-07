@@ -129,17 +129,19 @@ abstract public class OpQueryGpsLocation extends OpGps {
 	//----------------------------------------------
 
 	/** Create the second phase of the operation */
-	protected Phase<GpsProperty> phaseTwo() {
+	protected Phase phaseTwo() {
 		return (prop == null)
 				? null
 				: (new DoPhaseTwo());
 	}
 
 	/** Phase to send GPS location-query command */
-	protected class DoPhaseTwo extends Phase<GpsProperty> {
+	@SuppressWarnings("rawtypes")
+	protected class DoPhaseTwo extends Phase {
 
 		/** Add the GpsProperty cmd to the outbound message */
-		protected Phase<GpsProperty> poll(CommMessage<GpsProperty> mess)
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess)
 			throws IOException
 		{
 			mess.add(prop);
@@ -148,8 +150,11 @@ abstract public class OpQueryGpsLocation extends OpGps {
 				return null;  // error exit
 
 			if (!prop.gotGpsLock()) {
-				if (gps != null)
+				if (gps != null) {
+					// Done this way, because this is not a "comm error"
+					gps.doSetCommStatus("");
 					gps.doSetErrorStatus("No GPS Lock");
+				}
 				return null;
 			}
 			
@@ -177,6 +182,7 @@ abstract public class OpQueryGpsLocation extends OpGps {
 			gps.doSetErrorStatus(s);
 		}
 		super.setErrorStatus(s);
+		setFailed();
 	}
 
 	/** Handle a communication error */

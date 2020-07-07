@@ -1,7 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2017  Minnesota Department of Transportation
- * Copyright (C) 2012       Iteris Inc.
+ * Copyright (C) 2009-2018  Minnesota Department of Transportation
+ * Copyright (C) 2012-2018  Iteris Inc.
  * Copyright (C) 2014       AHMCT, University of California
  * Copyright (C) 2015-2017  SRF Consulting Group
  *
@@ -30,18 +30,23 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author John L. Stanley
  */
 public enum SystemAttrEnum {
+	ACTION_PLAN_ALERT_LIST(""),
+	ACTION_PLAN_EVENT_PURGE_DAYS(90, 0, 1000),
 	CAMERA_AUTOPLAY(true, Change.RESTART_CLIENT),
-	CAMERA_BLANK_URL(String.class),
 	CAMERA_CONSTRUCTION_URL(String.class),
+	CAMERA_KBD_PANASONIC_ENABLE(false),
 	CAMERA_NUM_BLANK(999, 0, 9999),
 	CAMERA_OUT_OF_SERVICE_URL(String.class),
+	CAMERA_PLAYLIST_DWELL_SEC(5, 1, 300),
 	CAMERA_PRESET_STORE_ENABLE(false, Change.RESTART_CLIENT),
 	CAMERA_PTZ_BLIND(true),
 	CAMERA_STREAM_CONTROLS_ENABLE(false, Change.RESTART_CLIENT),
+	CAMERA_SWITCH_EVENT_PURGE_DAYS(30, 0, 1000),
 	CAMERA_WIPER_PRECIP_MM_HR(8, 1, 100),
 	CLIENT_UNITS_SI(true),
 	COMM_EVENT_PURGE_DAYS(14, 0, 1000),
 	COMM_IDLE_DISCONNECT_DMS_SEC(-1, -1, 32767), // -1 = Infinite
+	COMM_IDLE_DISCONNECT_GATE_SEC(-1, -1, 32767),
 	COMM_IDLE_DISCONNECT_GPS_SEC(5, 1, 32767),
 	COMM_IDLE_DISCONNECT_MODEM_SEC(20, 5, 32767),
 	DATABASE_VERSION(String.class),
@@ -82,10 +87,13 @@ public enum SystemAttrEnum {
 	DMSXML_REINIT_DETECT(false),
 	EMAIL_SENDER_SERVER(String.class),
 	EMAIL_SMTP_HOST(String.class),
+	EMAIL_RECIPIENT_ACTION_PLAN(String.class),
 	EMAIL_RECIPIENT_AWS(String.class),
 	EMAIL_RECIPIENT_DMSXML_REINIT(String.class),
 	EMAIL_RECIPIENT_GATE_ARM(String.class),
 	GATE_ARM_ALERT_TIMEOUT_SECS(90, 10),
+	GPS_NTCIP_ENABLE(false),
+	GPS_NTCIP_JITTER_M(100, 0, 1610),
 	HELP_TROUBLE_TICKET_ENABLE(false),
 	HELP_TROUBLE_TICKET_URL(String.class),
 	INCIDENT_CLEAR_SECS(600, 0, 3600),

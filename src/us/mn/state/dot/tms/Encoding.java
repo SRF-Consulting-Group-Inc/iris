@@ -26,7 +26,8 @@ public enum Encoding {
 	MPEG2,		/* 2 */
 	MPEG4,		/* 3 */
 	H264,		/* 4 */
-	H265;		/* 5 */
+	H265,		/* 5 */
+	FTP;		/* 6 */
 
 	/** Cached values array */
 	static private final Encoding[] VALUES = values();

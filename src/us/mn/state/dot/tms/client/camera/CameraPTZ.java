@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.client.camera;
 
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.DeviceRequest;
+import us.mn.state.dot.tms.Encoding;
 import us.mn.state.dot.tms.client.Session;
 
 /**
@@ -208,6 +209,16 @@ public class CameraPTZ {
 			camera.setRecallPreset(p);
 			clearState();
 		}
+		/** If FTP still image camera, retrieve new image/view and reselect camera to refresh */
+		if (camera != null && camera.getEncoderType() != null && Encoding.fromOrdinal(camera.getEncoderType().getEncoding()) == Encoding.FTP){
+			String fileName = camera.getFtpFilename().substring(0, camera.getFtpFilename().length()-5) + p + camera.getFtpFilename().substring(camera.getFtpFilename().length()-4, camera.getFtpFilename().length());
+			camera.setFtpFilename(fileName);
+			
+			while(!fileName.equals(camera.getFtpFilename())){
+				// Wait for filename change to finish
+			}
+			session.getCameraManager().getSelectionModel().setSelected(camera);
+		}	
 	}
 
 	/**

@@ -183,6 +183,14 @@ public class StreamPanel extends JPanel {
 		setMaximumSize(UI.dimension(vsz.width, pnlHeight));
 		updateButtonState();
 	}
+	
+	/**
+	 * Create a new stream panel with autoplay, mouse PTZ, and
+	 * no stream controls
+	 */
+	public StreamPanel(VideoRequest req, CameraPTZ cam_ptz) {
+		this(req, cam_ptz, null, false, true);
+	}
 
 	/**
 	 * Create a new stream panel with autoplay, no stream controls, and
@@ -334,7 +342,8 @@ public class StreamPanel extends JPanel {
 				updateButtonState();
 				setStatusText(null);
 				boolean mjpeg = video_req.hasMJPEG(c);
-				if (mjpeg && autoplay)
+				boolean ftp = video_req.isFTP(c);
+				if ((mjpeg || ftp) && autoplay)
 					playStream();
 			}
 		});
@@ -359,6 +368,8 @@ public class StreamPanel extends JPanel {
 	private VideoStream createStream(Camera c) throws IOException {
 		if (video_req.hasMJPEG(c))
 			return new MJPEGStream(STREAMER, video_req, c);
+		else if (video_req.isFTP(c))
+			return new FTPStream(STREAMER, video_req, c);	
 		else
 			throw new IOException("Unable to stream");
 	}
@@ -424,8 +435,9 @@ public class StreamPanel extends JPanel {
 		}
 		boolean streaming = isStreaming();
 		boolean mjpeg = video_req.hasMJPEG(camera);
-		stop_button.setEnabled(mjpeg && streaming);
-		play_button.setEnabled(mjpeg && !streaming);
+		boolean ftp = video_req.isFTP(camera);		
+		stop_button.setEnabled((mjpeg || ftp) && streaming);
+		play_button.setEnabled((mjpeg || ftp) && !streaming);
 		playext_button.setEnabled(true);
 	}
 

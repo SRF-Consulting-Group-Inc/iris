@@ -35,11 +35,6 @@ import us.mn.state.dot.tms.utils.URIUtil;
  */
 public class SwitchProp extends MonProp {
 
-	/** Get the blank URL */
-	static private String getBlankUrl() {
-		return SystemAttrEnum.CAMERA_BLANK_URL.getString();
-	}
-
 	/** Get the construction URL */
 	static private String getConstructionUrl() {
 		return SystemAttrEnum.CAMERA_CONSTRUCTION_URL.getString();
@@ -53,6 +48,11 @@ public class SwitchProp extends MonProp {
 	/** Get the "blank" camera number */
 	static private int cameraNumBlank() {
 		return SystemAttrEnum.CAMERA_NUM_BLANK.getInt();
+	}
+
+	/** Check if a camera number is "blank" */
+	static private boolean isCameraNumBlank(Integer cn) {
+		return (cn != null) && (cameraNumBlank() == cn);
 	}
 
 	/** Camera to display */
@@ -94,28 +94,24 @@ public class SwitchProp extends MonProp {
 
 	/** Get camera number */
 	private String getCamNum() {
-		if (camera != null) {
-			Integer cam_num = camera.getCamNum();
-			return (cam_num != null)
-			      ? cam_num.toString()
-			      : camera.getName();
+		if (isCameraBlank())
+			return "";
+		else {
+			assert camera != null;
+			Integer cn = camera.getCamNum();
+			return (cn != null) ? cn.toString() : camera.getName();
 		}
-		return "";
 	}
 
 	/** Check if the camera is blank */
 	private boolean isCameraBlank() {
-		if (camera != null) {
-			Integer cn = camera.getCamNum();
-			return (cn != null) && (cn == cameraNumBlank());
-		} else
-			return true;
+		return (camera == null) || isCameraNumBlank(camera.getCamNum());
 	}
 
 	/** Get the stream URI */
 	private String getUri() {
 		if (isCameraBlank())
-			return getBlankUrl();
+			return "";
 		else {
 			assert camera != null;
 			String cond = getConditionUri();

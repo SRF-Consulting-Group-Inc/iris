@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2011-2017  Minnesota Department of Transportation
+ * Copyright (C) 2011-2018  Minnesota Department of Transportation
  * Copyright (C) 2015-2017  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,18 +24,20 @@ import us.mn.state.dot.tms.server.comm.cohuptz.CohuPTZPoller;
 import us.mn.state.dot.tms.server.comm.dinrelay.DinRelayPoller;
 import us.mn.state.dot.tms.server.comm.dmsxml.DmsXmlPoller;
 import us.mn.state.dot.tms.server.comm.dr500.DR500Poller;
+import us.mn.state.dot.tms.server.comm.dxm.DXMPoller;
 import us.mn.state.dot.tms.server.comm.e6.E6Poller;
 import us.mn.state.dot.tms.server.comm.g4.G4Poller;
 import us.mn.state.dot.tms.server.comm.gps.redlion.GpsRedLionPoller;
+import us.mn.state.dot.tms.server.comm.gps.sierragx.GpsSierraGxPoller;
 import us.mn.state.dot.tms.server.comm.incfeed.IncFeedPoller;
 import us.mn.state.dot.tms.server.comm.infinova.InfinovaPoller;
 import us.mn.state.dot.tms.server.comm.manchester.ManchesterPoller;
 import us.mn.state.dot.tms.server.comm.mndot.MndotPoller;
 import us.mn.state.dot.tms.server.comm.monstream.MonStreamPoller;
 import us.mn.state.dot.tms.server.comm.msgfeed.MsgFeedPoller;
+import us.mn.state.dot.tms.server.comm.ndorv5.GateNdorV5Poller;
 import us.mn.state.dot.tms.server.comm.ntcip.NtcipPoller;
 import us.mn.state.dot.tms.server.comm.org815.Org815Poller;
-import us.mn.state.dot.tms.server.comm.pelco.PelcoPoller;
 import us.mn.state.dot.tms.server.comm.pelcod.PelcoDPoller;
 import us.mn.state.dot.tms.server.comm.pelcop.PelcoPPoller;
 import us.mn.state.dot.tms.server.comm.ss105.SS105Poller;
@@ -58,6 +60,8 @@ public class DevicePollerFactory {
 			return new AddcoPoller(name);
 		case AXIS_PTZ:
 			return new AxisPTZPoller(name);
+		case BANNER_DXM:
+			return new DXMPoller(name);
 		case CANOGA:
 			return new CanogaPoller(name);
 		case CBW:
@@ -95,8 +99,6 @@ public class DevicePollerFactory {
 			return new PelcoDPoller(name);
 		case PELCO_P:
 			return new PelcoPPoller(name);
-		case PELCO_SWITCHER:
-			return new PelcoPoller(name);
 		case RTMS_G4:
 			return new G4Poller(name);
 		case SS_105:
@@ -109,8 +111,12 @@ public class DevicePollerFactory {
 			return new E6Poller(name);
 		case VICON_PTZ:
 			return new ViconPTZPoller(name);
+		case GATE_NDOR5:
+			return new GateNdorV5Poller(name);
 		case GPS_REDLION:
 			return new GpsRedLionPoller(name);
+		case GPS_SIERRA_GX:
+			return new GpsSierraGxPoller(name);
 		default:
 			return null;
 		}

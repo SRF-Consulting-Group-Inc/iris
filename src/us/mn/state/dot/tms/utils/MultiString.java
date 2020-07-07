@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2006-2017  Minnesota Department of Transportation
+ * Copyright (C) 2006-2018  Minnesota Department of Transportation
  * Copyright (C) 2014-2015  AHMCT, University of California
  *
  * This program is free software; you can redistribute it and/or modify
@@ -111,6 +111,8 @@ public class MultiString {
 			cb.addFeed(tag.substring(4));
 		else if (ltag.startsWith("tz"))
 			parseTolling(tag.substring(2), cb);
+		else if (ltag.startsWith("pa"))
+			parseParking(tag, cb);
 		else if (ltag.startsWith("loc"))
 			parseLocator(tag.substring(3), cb);
 		else
@@ -302,6 +304,17 @@ public class MultiString {
 			    mode.equals("c"))
 				cb.addTolling(mode, zones);
 		}
+	}
+
+	/** Parse parking tag [pax,l_txt,c_txt].
+	 * @param tag Parking area tag.
+	 * @param cb Callback to set tag. */
+	static private void parseParking(String tag, Multi cb) {
+		String[] args = tag.split(",", 3);
+		String pid = (args.length > 0) ? args[0] : "pa";
+		String l_txt = (args.length > 1) ? args[1] : "LOW";
+		String c_txt = (args.length > 2) ? args[2] : "CLOSED";
+		cb.addParking(pid, l_txt, c_txt);
 	}
 
 	/** Parse locator tag [loc{rn,rd,md,xn,xa,mi}].
@@ -715,31 +728,5 @@ public class MultiString {
 		for (int i = 0; i < words.length; ++i)
 			words[i] = words[i].trim();
 		return Arrays.asList(words);
-	}
-
-	/** Does the MULTI string have a travel time [tt] tag? */
-	public boolean isTravelTime() {
-		final boolean[] travel = new boolean[] { false };
-		parse(new MultiAdapter() {
-			@Override
-			public void addTravelTime(String sid,
-				OverLimitMode mode, String o_txt)
-			{
-				travel[0] = true;
-			}
-		});
-		return travel[0];
-	}
-
-	/** Does the MULTI string have a tolling [tz] tag? */
-	public boolean isTolling() {
-		final boolean[] tolling = new boolean[] { false };
-		parse(new MultiAdapter() {
-			@Override
-			public void addTolling(String mode, String[] zones) {
-				tolling[0] = true;
-			}
-		});
-		return tolling[0];
 	}
 }

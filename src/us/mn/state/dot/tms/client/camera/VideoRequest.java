@@ -2,7 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2003-2017  Minnesota Department of Transportation
  * Copyright (C) 2014-2015  AHMCT, University of California
- * Copyright (C) 2015  SRF Consulting Group
+ * Copyright (C) 2015-2018  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
  */
 package us.mn.state.dot.tms.client.camera;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Properties;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraHelper;
@@ -27,6 +24,7 @@ import us.mn.state.dot.tms.EncoderType;
 import us.mn.state.dot.tms.Encoding;
 import static us.mn.state.dot.tms.utils.URIUtil.create;
 import static us.mn.state.dot.tms.utils.URIUtil.HTTP;
+import static us.mn.state.dot.tms.utils.URIUtil.RTSP;
 
 /**
  * The video stream request parameter wrapper.
@@ -34,10 +32,11 @@ import static us.mn.state.dot.tms.utils.URIUtil.HTTP;
  * @author Timothy Johnson
  * @author Douglas Lau
  * @author Travis Swanston
+ * @author John L. Stanley - SRF Consulting
  */
 public class VideoRequest {
 
-	/** Servlet type enum */
+	/** MnDOT Servlet type enum */
 	static public enum ServletType {
 		STREAM("stream"), STILL("image");
 
@@ -47,7 +46,7 @@ public class VideoRequest {
 		}
 	}
 
-	/** Video stream size enum */
+	/** Video stream image-size enum */
 	static public enum Size {
 		THUMBNAIL(132, 90, 's'),	// Thumbnail
 		SMALL(176, 120, 's'),		// Quarter SIF
@@ -74,10 +73,13 @@ public class VideoRequest {
 		}
 	}
 
-	/** Video host property name */
+	/** Client property name: software used for the video proxy */
+	static private final String VIDEO_PROXY = "video.proxy";
+
+	/** Client property name: video host (dns name or IP address) */
 	static private final String VIDEO_HOST = "video.host";
 
-	/** Video port property name */
+	/** Client property name: video port */
 	static private final String VIDEO_PORT = "video.port";
 
 	/** Create a url for connecting to the video server.
@@ -114,7 +116,12 @@ public class VideoRequest {
 		return size;
 	}
 
-	/** The base URL of the video server */
+	/** Name of the software used for the video proxy */
+	private final String video_proxy;
+	private static final String SERVLET = "Servlet";
+	private static final String LIVE555 = "Live555";
+
+	/** The base URL of the video proxy */
 	private final String base_url;
 
 	/** District ID */
@@ -127,27 +134,79 @@ public class VideoRequest {
 	public VideoRequest(Properties p, Size sz) {
 		base_url = createBaseUrl(p);
 		district = p.getProperty("district", "tms");
+		video_proxy = p.getProperty(VIDEO_PROXY, SERVLET);
 		size = sz;
 	}
 
 	/** Create a URI for a stream */
 	public URI getUri(Camera c) {
-		return useServlet() ? getServletUri(c) : getCameraUri(c);
+		return useProxy() ? getProxyUri(c) : getCameraUri(c);
 	}
 
-	/** Test if servlet should be used */
-	private boolean useServlet() {
+	/** Test if a proxy is being used */
+	private boolean useProxy() {
 		return base_url != null;
 	}
 
-	/** Create a video servlet URI */
-	private URI getServletUri(Camera cam) {
+	/** Are we using a MnDOT Servlet proxy? */
+	private boolean usingServletProxy() {
+		// If video.host is configured and video.proxy
+		// isn't "Live555", we are using the MnDOT servlet.
+		return useProxy()
+		    && !video_proxy.equalsIgnoreCase(LIVE555);
+	}
+
+	/** Are we using an SRF Live555 proxy? */
+	private boolean usingLive555Proxy() {
+		return useProxy()
+		    && video_proxy.equalsIgnoreCase(LIVE555);
+	}
+
+	/** Get camera name modified for use in
+	  * a live555 videoProxy rtsp uri string */
+	private String getLive555CamName(Camera cam) {
+		String camName = cam.getName();
+		int len = camName.length();
+		StringBuilder newCamName = new StringBuilder(len);
+		char ch;
+		for (int i = 0; (i < len); ++i) {
+			ch = camName.charAt(i);
+			if (ch >= 127) // replace any non-ASCII character
+				newCamName.append('_');
+			else if (Character.isLetterOrDigit(ch)
+			      || (ch == '.')
+			      || (ch == '-')
+			      || (ch == '_')
+			      || (ch == '~'))
+				newCamName.append(ch);
+			else
+				newCamName.append('_');
+		}
+		return newCamName.toString();
+	}
+	
+	/** Create a video proxy URI */
+	private URI getProxyUri(Camera cam) {
+		// Are we using an SRF Live555 video proxy?
+		if (usingLive555Proxy()) {
+			return getLive555URI(cam);
+		}
+		// No, we're using a MnDOT Servlet video proxy.
 		return create(HTTP, base_url +
 		                    "/video/" + servlet_type.servlet +
 		                    "/" + district +
 		                    "/" + cam.getName() +
 		                    "?size=" + size.code +
 		                    "&ssid=" + sonarSessionId);
+	}
+	
+	private URI getLive555URI(Camera cam) {
+		if (cam.getEncoderType().getUriScheme().toLowerCase().contains("http")) {
+			return getCameraUri(cam);
+		}else {
+			return create(RTSP, base_url +
+                    "/" + getLive555CamName(cam));
+		}
 	}
 
 	/** Create a camera encoder URI */
@@ -182,11 +241,18 @@ public class VideoRequest {
 	public boolean hasMJPEG(Camera c) {
 		return (c != null) && (getEncoding(c) == Encoding.MJPEG);
 	}
+	
+	/** Check if stream type is FTP Image.
+	 * @param c Camera.
+	 * @return true if stream type is FTP Image. */
+	public boolean isFTP(Camera c) {
+		return (c != null) && (getEncoding(c) == Encoding.FTP);
+	}
 
 	/** Get the encoding for a camera */
 	private Encoding getEncoding(Camera c) {
 		Encoding enc = getEncoding(c.getEncoderType());
-		if (enc != Encoding.UNKNOWN && useServlet())
+		if (usingServletProxy() && (enc != Encoding.UNKNOWN))
 			return Encoding.MJPEG;
 		else
 			return enc;

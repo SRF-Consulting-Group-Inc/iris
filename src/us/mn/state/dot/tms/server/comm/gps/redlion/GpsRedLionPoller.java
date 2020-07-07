@@ -30,8 +30,9 @@ import us.mn.state.dot.tms.utils.URIUtil;
  *
  * @author John L. Stanley
  */
+@SuppressWarnings({ "rawtypes","unchecked" })
 public class GpsRedLionPoller
-		extends ThreadedPoller<GpsProperty>
+		extends ThreadedPoller
 		implements GpsPoller {
 
 	/** Create a new RedLion GPS poller */

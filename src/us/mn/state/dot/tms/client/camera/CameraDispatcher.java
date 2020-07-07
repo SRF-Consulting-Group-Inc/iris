@@ -30,7 +30,9 @@ import us.mn.state.dot.sonar.client.ProxyListener;
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraHelper;
+import us.mn.state.dot.tms.Encoding;
 import us.mn.state.dot.tms.GeoLocHelper;
+import us.mn.state.dot.tms.PlayList;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.VideoMonitor;
 import us.mn.state.dot.tms.VideoMonitorHelper;
@@ -123,9 +125,10 @@ public class CameraDispatcher extends JPanel {
 	private final ProxyView<VideoMonitor> vm_view =
 		new ProxyView<VideoMonitor>()
 	{
+		public void enumerationComplete() { }
 		public void update(VideoMonitor vm, String a) {
-			video_monitor = getSelectedMonitor();
-			selectMonitorCamera(selected);
+			video_monitor = vm;
+			selectCamera(vm.getCamera());
 		}
 		public void clear() {
 			video_monitor = null;
@@ -153,11 +156,16 @@ public class CameraDispatcher extends JPanel {
 	/** Joystick PTZ handler */
 	private final JoystickPTZ joy_ptz;
 
+	/** Is an external stream viewer defined? */
+	private final Boolean extViewerDefined;
+
 	/** Create a new camera dispatcher */
 	public CameraDispatcher(Session s, CameraManager man) {
 		session = s;
 		manager = man;
 		props = session.getProperties();
+		String viewer = props.getProperty(UserProperty.VIDEO_EXTVIEWER.name, "");
+		extViewerDefined = !viewer.isEmpty();
 		video_req = new VideoRequest(props, SIZE);
 		video_req.setSonarSessionId(session.getSessionId());
 		setLayout(new BorderLayout());
@@ -195,6 +203,7 @@ public class CameraDispatcher extends JPanel {
 	private StreamPanel createStreamPanel() {
 		boolean controls = SystemAttrEnum.CAMERA_STREAM_CONTROLS_ENABLE
 			.getBoolean();
+		controls |= extViewerDefined;
 		boolean autoplay = SystemAttrEnum.CAMERA_AUTOPLAY
 			.getBoolean();
 		return new StreamPanel(video_req, cam_ptz, session, controls,
@@ -247,8 +256,9 @@ public class CameraDispatcher extends JPanel {
 		boolean streaming = stream_pnl.isStreaming();
 		boolean extOnly = !video_req.hasMJPEG(selected);
 		boolean blindOk = SystemAttrEnum.CAMERA_PTZ_BLIND.getBoolean();
+		boolean isFTP = video_req.isFTP(selected);
 		boolean enable = (hasCtrl && hasPerms &&
-			(streaming || extOnly || blindOk));
+				(streaming || extOnly || blindOk)) || isFTP;
 		enablePTZ(enable);
 	}
 
@@ -267,7 +277,7 @@ public class CameraDispatcher extends JPanel {
 	/** Create the video output selection combo box */
 	private JComboBox<VideoMonitor> createOutputCombo() {
 		JComboBox<VideoMonitor> box = new JComboBox<VideoMonitor>();
-		FilteredMonitorModel m = new FilteredMonitorModel(session);
+		FilteredMonitorModel m = FilteredMonitorModel.create(session);
 		box.setModel(new IComboBoxModel<VideoMonitor>(m));
 		if (m.getSize() > 1)
 			box.setSelectedIndex(1);
@@ -365,7 +375,7 @@ public class CameraDispatcher extends JPanel {
 
 	/** Set the selected camera */
 	private void selectCamera(final Camera camera) {
-		if (camera == selected)
+		if (camera == selected && camera != null && Encoding.fromOrdinal(camera.getEncoderType().getEncoding()) != Encoding.FTP)
 			return;
 		if (selected != null)
 			cache.ignoreObject(selected);
@@ -387,7 +397,13 @@ public class CameraDispatcher extends JPanel {
 
 	/** Called when a video monitor is selected */
 	private void monitorSelected() {
-		watcher.setProxy(getSelectedMonitor());
+		watcher.setProxy(getSelectedOutput());
+	}
+
+	/** Get the selected video monitor from UI */
+	private VideoMonitor getSelectedOutput() {
+		Object o = output_cbx.getSelectedItem();
+		return (o instanceof VideoMonitor) ? (VideoMonitor) o : null;
 	}
 
 	/** Select a video monitor */
@@ -397,8 +413,7 @@ public class CameraDispatcher extends JPanel {
 
 	/** Get the selected video monitor */
 	public VideoMonitor getSelectedMonitor() {
-		Object o = output_cbx.getSelectedItem();
-		return (o instanceof VideoMonitor) ? (VideoMonitor) o : null;
+		return video_monitor;
 	}
 
 	/** Select a camera on the selected video monitor */
@@ -408,6 +423,13 @@ public class CameraDispatcher extends JPanel {
 			if (vm != null)
 				vm.setCamera(c);
 		}
+	}
+
+	/** Select a play list on the selected video monitor */
+	public void selectMonitorPlayList(PlayList pl) {
+		VideoMonitor vm = video_monitor;
+		if (vm != null)
+			vm.setPlayList(pl);
 	}
 
 	/** Clear all of the fields */

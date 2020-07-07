@@ -2,6 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2000-2017  Minnesota Department of Transportation
  * Copyright (C) 2010 AHMCT, University of California, Davis
+ * Copyright (C) 2017-2018  Iteris Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,9 +122,6 @@ public class DMSDispatcher extends JPanel {
 	/** Raster graphic builder */
 	private RasterBuilder builder;
 
-	/** Selected message MULTI string */
-	private String multi = "";
-
 	/** Create a new DMS dispatcher */
 	public DMSDispatcher(Session s, DMSManager manager) {
 		super(new BorderLayout());
@@ -159,9 +157,25 @@ public class DMSDispatcher extends JPanel {
 		composer.dispose();
 	}
 
+	/** Composed MULTI string */
+	private String multi = "";
+
+	/** Set the composed MULTI string.  This will update all the widgets
+	 * on the dispatcher with the specified message. */
+	public void setComposedMulti(String ms, boolean raw) {
+		composer.setComposedMulti(ms);
+		multi = raw ? ms : composer.getComposedMulti();
+		singleTab.setMessage();
+	}
+
+	/** Get the composed MULTI string */
+	public String getComposedMulti() {
+		return multi;
+	}
+
 	/** Get the preview MULTI string */
-	public String getMulti() {
-		String ms = getMessage();
+	private String getPreviewMulti() {
+		String ms = getComposedMulti();
 		String prefix = getPagePrefix();
 		if (prefix.isEmpty())
 			return ms;
@@ -317,6 +331,28 @@ public class DMSDispatcher extends JPanel {
 		}
 	}
 
+	/** Pixel test the selected DMS */
+	public void pixelTestDms() {
+		Set<DMS> sel = sel_mdl.getSelected();
+		if (sel.size() > 0) {
+			for(DMS dms: sel) {
+				dms.setDeviceRequest(DeviceRequest.
+					TEST_PIXELS.ordinal());
+			}
+		}
+	}
+
+	/** Query status the selected DMS */
+	public void queryStatusDms() {
+		Set<DMS> sel = sel_mdl.getSelected();
+		if (sel.size() > 0) {
+			for(DMS dms: sel) {
+				dms.setDeviceRequest(DeviceRequest.
+					QUERY_STATUS.ordinal());
+			}
+		}
+	}
+
 	/** Create a new blank message */
 	private SignMessage createBlankMessage() {
 		String bitmaps = createBitmaps("");
@@ -415,20 +451,14 @@ public class DMSDispatcher extends JPanel {
 	private void clearSelected() {
 		setEnabled(false);
 		composer.setSign(null, null);
-		setMessage("");
+		setComposedMulti("", true);
 		singleTab.setSelected(null);
 		selectSingleTab();
 	}
 
 	/** Set a single selected DMS */
 	private void setSelected(DMS dms) {
-		if (DMSHelper.isActive(dms)) {
-			setEnabled(true);
-			SignMessage sm = dms.getMsgCurrent();
-			if (sm != null)
-				setMessage(sm.getMulti());
-		} else
-			setEnabled(false);
+		setEnabled(DMSHelper.isActive(dms));
 		singleTab.setSelected(dms);
 		selectSingleTab();
 	}
@@ -454,32 +484,17 @@ public class DMSDispatcher extends JPanel {
 			selectPreview(false);
 	}
 
-	/** Set the fully composed message.  This will update all the widgets
-	 * on the dispatcher with the specified message. */
-	public void setMessage(String ms) {
-		if (ms != null) {
-			multi = ms;
-			singleTab.setMessage();
-			composer.setMessage(ms);
-		}
-	}
-
-	/** Get the selected message */
-	public String getMessage() {
-		return multi;
-	}
-
 	/** Select the preview mode */
 	public void selectPreview(boolean p) {
 		singleTab.selectPreview(p);
 	}
 
-	/** Get raster graphic array for the selected message */
-	public RasterGraphic[] getPixmaps() {
+	/** Get pixmaps for the preview message */
+	public RasterGraphic[] getPreviewPixmaps() {
 		RasterBuilder b = builder;
 		if (b != null) {
 			try {
-				String ms = getMulti();
+				String ms = getPreviewMulti();
 				return b.createPixmaps(new MultiString(ms));
 			}
 			catch (IndexOutOfBoundsException e) {

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2017  Minnesota Department of Transportation
+ * Copyright (C) 2007-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,6 +71,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		EncoderTypeImpl.loadAll();
 		CameraImpl.loadAll();
 		CameraPresetImpl.loadAll();
+		PlayListImpl.loadAll();
 		MonitorStyleImpl.loadAll();
 		VideoMonitorImpl.loadAll();
 		BeaconImpl.loadAll();
@@ -90,6 +91,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		LCSImpl.loadAll();
 		LCSIndicationImpl.loadAll();
 		LaneUseMultiImpl.loadAll();
+		ParkingAreaImpl.loadAll();
 		IncidentImpl.loadAll();
 		IncDescriptorImpl.loadAll();
 		IncLocatorImpl.loadAll();
@@ -105,6 +107,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		MeterActionImpl.loadAll();
 		WordImpl.loadAll();
 		DMSImpl.updateAllStyles();
+		RptConduitImpl.loadAll();
 	}
 
 	/** Get the time as a time stamp */
@@ -223,6 +226,16 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 			return null;
 	}
 
+	/** Assign a camera preset */
+	static protected void assignPreset(CameraPresetImpl op,
+		CameraPresetImpl np)
+	{
+		if (op != null)
+			op.setAssignedNotify(false);
+		if (np != null)
+			np.setAssignedNotify(true);
+	}
+
 	/** Lookup a DMS */
 	static protected DMSImpl lookupDMS(String name) {
 		SonarObject so = lookupObject(DMSImpl.SONAR_TYPE, name);
@@ -283,13 +296,6 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	/** Check group membership */
-	@Override
-	public boolean isInGroup(String g) {
-		// Always treat object name as "local" group
-		return g.equals(name);
 	}
 
 	/** Create a new base object */

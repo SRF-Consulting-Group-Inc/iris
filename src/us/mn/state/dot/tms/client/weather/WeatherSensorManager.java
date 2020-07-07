@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2010-2017  Minnesota Department of Transportation
+ * Copyright (C) 2010-2018  Minnesota Department of Transportation
  * Copyright (C) 2017       Iteris Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,22 +15,16 @@
  */
 package us.mn.state.dot.tms.client.weather;
 
-import java.util.Collection;
-import java.util.Iterator;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.WeatherSensor;
-import us.mn.state.dot.tms.WeatherSensorHelper;
 import us.mn.state.dot.tms.client.Session;
-import us.mn.state.dot.tms.client.map.MapObject;
-import us.mn.state.dot.tms.client.map.MapSearcher;
 import us.mn.state.dot.tms.client.proxy.DeviceManager;
 import us.mn.state.dot.tms.client.proxy.GeoLocManager;
 import us.mn.state.dot.tms.client.proxy.MapGeoLoc;
 import us.mn.state.dot.tms.client.proxy.ProxyDescriptor;
 import us.mn.state.dot.tms.client.proxy.ProxyTheme;
 import us.mn.state.dot.tms.units.Angle;
-import static us.mn.state.dot.tms.client.widget.SwingRunner.runQueued;
 
 /**
  * A weather sensor manager is a container for SONAR weather sensor objects.
@@ -85,26 +79,17 @@ public class WeatherSensorManager extends DeviceManager<WeatherSensor> {
 	/** Get the tangent angle for the given location */
 	@Override
 	public Double getTangentAngle(MapGeoLoc loc) {
-		Iterator<WeatherSensor> i = WeatherSensorHelper.iterator();
-		WeatherSensor ws = null;
-		while (i.hasNext()) {
-			WeatherSensor wsi = i.next();
-			if (findGeoLoc(wsi) == loc) {
-				ws = wsi;
-				break;
-			}
-		}
-		Double ret = null;
+		WeatherSensor ws = findProxy(loc);
 		if (ws != null) {
 			Integer wd = ws.getWindDir();
 			if (wd != null) {
 				// Convert from NTCIP wind direction to 
 				// Java angle transform + 90 degs for 
 				// marker alignment
-				ret = Angle.create(180 - wd).toRads();
+				return Angle.create(180 - wd).toRads();
 			}
 		}
-		return ret;
+		return null;
 	}
 
 	/** Check if an attribute change is interesting */

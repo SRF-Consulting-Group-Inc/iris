@@ -59,8 +59,9 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		namespace.registerType(SONAR_TYPE, CameraImpl.class);
 		store.query("SELECT name, geo_loc, controller, pin, notes, " +
 			"cam_num, encoder_type, encoder, enc_mcast, " +
-			"encoder_channel, publish, video_loss FROM iris." +
-			SONAR_TYPE + ";", new ResultFactory()
+			"encoder_channel, publish, video_loss, ftp_username, " + 
+			"ftp_password, ref_interval, ftp_path, same_filename, " + 
+			"ftp_filename FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				namespace.addObject(new CameraImpl(row));
@@ -84,6 +85,12 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		map.put("encoder_channel", encoder_channel);
 		map.put("publish", publish);
 		map.put("video_loss", video_loss);
+		map.put("ftp_username", ftp_username);
+		map.put("ftp_password", ftp_password);
+		map.put("ref_interval", ref_interval );
+		map.put("enc_mcast", ftp_path);
+		map.put("same_filename", same_filename);
+		map.put("ftp_filename", ftp_filename);		
 		return map;
 	}
 
@@ -121,23 +128,32 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		     row.getString(9),		// enc_mcast
 		     row.getInt(10),		// encoder_channel
 		     row.getBoolean(11),	// publish
-		     row.getBoolean(12)		// video_loss
+		     row.getBoolean(12),	// video_loss
+		     row.getString(13),  // ftp_username
+		     row.getString(14),  //ftp_password
+		     row.getInt(15),  // ftp refresh interval
+		     row.getString(16),  // ftp base directory
+		     row.getBoolean(17), // is filename constant
+		     row.getString(18)  // image filename
 		);
 	}
 
 	/** Create a camera */
 	private CameraImpl(String n, String l, String c, int p, String nt,
 		Integer cn, String et, String e, String em, int ec, boolean pb,
-		boolean vl)
+		boolean vl, String un, String pwd, int ref, String path, 
+		boolean sname, String fname)
 	{
 		this(n, lookupGeoLoc(l), lookupController(c), p, nt, cn,
-		     lookupEncoderType(et), e, em, ec, pb, vl);
+		     lookupEncoderType(et), e, em, ec, pb, vl, un, pwd, ref, 
+		     path, sname, fname);
 	}
 
 	/** Create a camera */
 	private CameraImpl(String n, GeoLocImpl l, ControllerImpl c, int p,
 		String nt, Integer cn, EncoderType et, String e, String em,
-		int ec, boolean pb, boolean vl)
+		int ec, boolean pb, boolean vl, String un, String pwd, int ref, 
+		String path, boolean sname, String fname)
 	{
 		super(n, c, p, nt);
 		geo_loc = l;
@@ -148,6 +164,12 @@ public class CameraImpl extends DeviceImpl implements Camera {
 		encoder_channel = ec;
 		publish = pb;
 		video_loss = vl;
+		ftp_username = un;
+		ftp_password = pwd;
+		ref_interval = ref;
+		ftp_path = path;
+		same_filename = sname;
+		ftp_filename = fname;
 		initTransients();
 	}
 
@@ -308,6 +330,132 @@ public class CameraImpl extends DeviceImpl implements Camera {
 	@Override
 	public boolean getPublish() {
 		return publish;
+	}
+	
+	/** FTP username */
+	protected String ftp_username;
+
+	/** Get the ftp username */
+	public String getFtpUsername(){
+		return ftp_username;
+	}
+
+	/** Set ftp username */
+	public void setFtpUsername(String username){
+		ftp_username = username;
+	}
+
+	/** Set the ftp username */
+	public void doSetFtpUsername(String un) throws TMSException {
+		if(un.equals(ftp_username))
+			return;
+		store.update(this, "ftp_username", un);
+		setFtpUsername(un);
+	}
+
+	protected String ftp_password;
+
+	/** Get the ftp username */
+	public String getFtpPassword(){
+		return ftp_password;
+	}
+
+	/** Set ftp password */
+	public void setFtpPassword(String password){
+		ftp_password = password;
+	}
+
+	/** Set the ftp username */
+	public void doSetFtpPassword(String pwd) throws TMSException {
+		if(pwd.equals(ftp_password))
+			return;
+		store.update(this, "ftp_password", pwd);
+		setFtpPassword(pwd);
+	}
+
+	/** Refresh interval for ftp still image stream */
+	protected int ref_interval;
+
+	/** Set the ftp refresh interval */
+	public void setRefInterval(int ref) {
+		ref_interval = ref;
+	}
+
+	/** Set the ftp refresh interval */
+	public void doSetRefInterval(int ref) throws TMSException {
+		if(ref == ref_interval)
+			return;
+		store.update(this, "ref_interval", ref);
+		setRefInterval(ref);
+	}
+
+	/** Get the ftp refresh interval */
+	public int getRefInterval() {
+		return ref_interval;
+	}
+
+	/** Ftp base directory */
+	protected String ftp_path = "";
+
+	/** Set the ftp base directory */
+	public void setFtpPath(String path) {
+		ftp_path = path;
+	}
+
+	/** Set the ftp base directory */
+	public void doSetFtpPath(String path) throws TMSException {
+		if(path.equals(ftp_path))
+			return;
+		store.update(this, "ftp_path", path);
+		setFtpPath(path);
+	}
+
+	/** Get the ftp base directory */
+	public String getFtpPath() {
+		return ftp_path;
+	}
+
+	/** Flag for constant image filename */
+	protected boolean same_filename;
+
+	/** Set flag for constant image filename */
+	public void setSameFilename(boolean sname) {
+		same_filename = sname;
+	}
+
+	/** Set flag for constant image filename */
+	public void doSetSameFilename(boolean sname) throws TMSException {
+		if(sname == same_filename)
+			return;
+		store.update(this, "same_filename", sname);
+		setSameFilename(sname);
+	}
+
+
+	/** Is ftp directory/file incrementing */
+	public boolean getSameFilename() {
+		return same_filename;
+	}
+
+	/** Ftp filename */
+	protected String ftp_filename = "";
+
+	/** Set filename */
+	public void setFtpFilename(String fname) {
+		ftp_filename = fname;
+	}
+
+	/** Set filename */
+	public void doSetFtpFilename(String fname) throws TMSException {
+		if(fname.equals(ftp_filename))
+			return;
+		store.update(this, "ftp_filename", fname);
+		setFtpFilename(fname);
+	}
+
+	/** Get the ftp base directory */
+	public String getFtpFilename() {
+		return ftp_filename;
 	}
 
 	/** Flag to indicate video loss */

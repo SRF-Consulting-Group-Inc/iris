@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2013-2017  Minnesota Department of Transportation
+ * Copyright (C) 2015-2017  SRF Consulting
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +15,7 @@
  */
 package us.mn.state.dot.tms.client.gate;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -21,11 +23,18 @@ import java.awt.event.MouseEvent;
 import java.util.Iterator;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.MutableComboBoxModel;
+
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.Camera;
+import us.mn.state.dot.tms.CameraPreset;
+import us.mn.state.dot.tms.CameraPresetHelper;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.ControllerHelper;
 import us.mn.state.dot.tms.DMS;
@@ -39,19 +48,28 @@ import us.mn.state.dot.tms.GateArmState;
 import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.RasterGraphic;
+import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.camera.CamControlPanel;
+import us.mn.state.dot.tms.client.camera.CameraPTZ;
+import us.mn.state.dot.tms.client.camera.PresetComboRenderer;
+import us.mn.state.dot.tms.client.camera.PresetPanel;
 import us.mn.state.dot.tms.client.camera.StreamPanel;
 import us.mn.state.dot.tms.client.camera.VideoRequest;
 import static us.mn.state.dot.tms.client.camera.VideoRequest.Size.MEDIUM;
 import static us.mn.state.dot.tms.client.camera.VideoRequest.Size.THUMBNAIL;
 import us.mn.state.dot.tms.client.dms.DMSPanelPager;
 import us.mn.state.dot.tms.client.dms.SignPixelPanel;
+import us.mn.state.dot.tms.client.proxy.ProxyListModel;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionListener;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionModel;
 import us.mn.state.dot.tms.client.proxy.ProxyView;
 import us.mn.state.dot.tms.client.proxy.ProxyWatcher;
 import us.mn.state.dot.tms.client.widget.IAction;
+import us.mn.state.dot.tms.client.widget.IComboBoxModel;
 import us.mn.state.dot.tms.client.widget.IPanel;
+import us.mn.state.dot.tms.client.widget.IPanel.Stretch;
+
 import static us.mn.state.dot.tms.client.widget.Widgets.UI;
 import us.mn.state.dot.tms.utils.I18N;
 
@@ -59,6 +77,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * GateArmDispatcher is a GUI component for deploying gate arms.
  *
  * @author Douglas Lau
+ * @author John L. Stanley
  */
 public class GateArmDispatcher extends IPanel
 	implements ProxyView<GateArmArray>
@@ -76,10 +95,11 @@ public class GateArmDispatcher extends IPanel
 
 	/** DMS Proxy view */
 	private final ProxyView<DMS> dms_view = new ProxyView<DMS>() {
+		public void enumerationComplete() { }
 		public void update(DMS d, String a) {
-			if (null == a ||
-			    "styles".equals(a) ||
-			    "msgCurrent".equals(a))
+			if ((null == a)
+			 || "styles".equals(a)
+			 || "msgCurrent".equals(a))
 				updateDms(d);
 		}
 		public void clear() {
@@ -185,6 +205,24 @@ public class GateArmDispatcher extends IPanel
 
 	/** Currently selected DMS */
 	private DMS dms;
+	
+	/** Camera PTZ control */
+	private final CameraPTZ cam_ptz;
+
+	/** Camera preset action */
+	private final IAction preset_act = new IAction("camera.preset") {
+		protected void doActionPerformed(ActionEvent e) {
+			CameraPreset cp = (CameraPreset) preset_cbx.getSelectedItem();
+			cam_ptz.recallPreset(cp.getPresetNum());
+		}
+	};
+
+	/** Camera preset combo box */
+	private final JComboBox<CameraPreset> preset_cbx =
+		new JComboBox<CameraPreset>();
+
+	/** Camera preset combo box model */
+	private final MutableComboBoxModel<CameraPreset> preset_mdl;
 
 	/** Create a new gate arm dispatcher */
 	public GateArmDispatcher(Session s, GateArmArrayManager manager) {
@@ -196,6 +234,8 @@ public class GateArmDispatcher extends IPanel
 			s.getSonarState().getDmsCache().getDMSs();
 		dms_watcher = new ProxyWatcher<DMS>(dms_cache, dms_view, false);
 		sel_mdl = manager.getSelectionModel();
+		cam_ptz = new CameraPTZ(s);
+
 		stream_pnl = createStreamPanel(MEDIUM);
 		thumb_pnl = createStreamPanel(THUMBNAIL);
 		for (int i = 0; i < MAX_ARMS; i++) {
@@ -205,7 +245,10 @@ public class GateArmDispatcher extends IPanel
 			state_lbl[i].setOpaque(true);
 		}
 		arm_state_lbl.setOpaque(true);
-		interlock_lbl.setOpaque(true);
+		interlock_lbl.setOpaque(true);	
+		enablePTZ(true);
+		preset_mdl = new DefaultComboBoxModel<CameraPreset>();
+
 	}
 
 	/** Initialize the widgets on the panel */
@@ -216,6 +259,11 @@ public class GateArmDispatcher extends IPanel
 			BorderFactory.createLineBorder(Color.BLACK),
 			UI.panelBorder()));
 		setTitle(I18N.get("gate.arm.selected"));
+		
+		preset_cbx.setModel(preset_mdl);
+		preset_cbx.setAction(preset_act);
+		preset_cbx.setRenderer(new PresetComboRenderer());
+		
 		add("device.name");
 		add(name_lbl);
 		add("location");
@@ -242,12 +290,11 @@ public class GateArmDispatcher extends IPanel
 		add(state_lbl[3]);
 		add(gate_lbl[7], Stretch.NONE);
 		add(state_lbl[7], Stretch.LAST);
-		stream_pnl.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				selectStream(swap_streams);
-			}
-		});
+		add(new JLabel("Camera Presets"), Stretch.NONE);
+		add(preset_cbx, Stretch.FULL);
+
+
+		
 		thumb_pnl.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -264,6 +311,9 @@ public class GateArmDispatcher extends IPanel
 		dms_watcher.initialize();
 		clear();
 		sel_mdl.addProxySelectionListener(sel_listener);
+		
+
+
 	}
 
 	/** Select a camera stream */
@@ -312,7 +362,7 @@ public class GateArmDispatcher extends IPanel
 	private StreamPanel createStreamPanel(VideoRequest.Size sz) {
 		VideoRequest vr = new VideoRequest(session.getProperties(), sz);
 		vr.setSonarSessionId(session.getSessionId());
-		return new StreamPanel(vr);
+		return new StreamPanel(vr, cam_ptz);
 	}
 
 	/** Build the button box */
@@ -342,7 +392,35 @@ public class GateArmDispatcher extends IPanel
 	/** Set the selected gate arm array */
 	public void setSelected(GateArmArray ga) {
 		watcher.setProxy(ga);
+		if (ga != null) {
+			Camera c = ga.getCamera();
+			MutableComboBoxModel<CameraPreset> cam_preset_mdl = new DefaultComboBoxModel<CameraPreset>();
+			cam_preset_mdl.addElement(null);
+			if (c != null) {
+				cam_ptz.setCamera(c);
+				for (int i = 1; i <= CameraPreset.MAX_PRESET; ++i) {
+					CameraPreset cp = CameraPresetHelper.lookup(c, i);
+					if (cp != null)
+						cam_preset_mdl.addElement(cp);
+				}
+
+//				System.out.println(CameraPresetHelper.lookup(c,1));
+//				Iterator<CameraPreset> it = CameraPresetHelper.iterator();		
+//				while (it.hasNext()) {
+//					CameraPreset cp = it.next();
+//					if (cp.getCamera().getName() == c.getName()) {
+//						cam_preset_mdl.addElement(cp);
+//						System.out.println(cp.getName());
+//					}
+//				}
+			}
+			preset_cbx.setModel(cam_preset_mdl);
+		}
 	}
+
+	/** Called when all proxies have been enumerated (from ProxyView). */
+	@Override
+	public void enumerationComplete() { }
 
 	/** Update one (or all) attribute(s) on the form.
 	 * @param ga The newly selected gate arm.  May not be null.
@@ -478,12 +556,16 @@ public class GateArmDispatcher extends IPanel
 	private void updateButtons(GateArmArray ga) {
 		boolean e = session.isWritePermitted(ga, "armStateNext");
 		GateArmState gas = GateArmState.fromOrdinal(ga.getArmState());
-		open_arm.setEnabled(e && gas == GateArmState.CLOSED &&
-			isOpenAllowed(ga));
-		warn_close_arm.setEnabled(e && gas == GateArmState.OPEN &&
-			isCloseAllowed(ga));
-		close_arm.setEnabled(e && isClosePossible(gas) &&
-			isCloseAllowed(ga));
+		open_arm.setEnabled(e
+                         && (gas == GateArmState.CLOSED)
+		                 && isOpenAllowed(ga));
+		warn_close_arm.setEnabled(e
+		                       && (gas == GateArmState.OPEN)
+		                       && isCloseAllowed(ga)
+		                       && (dms != null));
+		close_arm.setEnabled(e
+		                  && isClosePossible(gas)
+		                  && isCloseAllowed(ga));
 	}
 
 	/** Check if gate arm open is allowed */
@@ -516,6 +598,8 @@ public class GateArmDispatcher extends IPanel
 		case FAULT:
 		case WARN_CLOSE:
 			return true;
+		case OPEN:
+			return (dms == null);
 		default:
 			return false;
 		}
@@ -569,7 +653,7 @@ public class GateArmDispatcher extends IPanel
 	 * @param ga The gate arm.  May not be null. */
 	private void updateArmState(GateArm ga) {
 		int i = ga.getIdx() - 1;
-		if (i >= 0 && i < MAX_ARMS) {
+		if ((i >= 0) && (i < MAX_ARMS)) {
 			gate_lbl[i].setText(ga.getName());
 			state_lbl[i].setText(trim(getArmState(ga), 12));
 			updateStateColor(ga, i);
@@ -609,5 +693,17 @@ public class GateArmDispatcher extends IPanel
 			state_lbl[i].setForeground(DARK_BLUE);
 			state_lbl[i].setBackground(null);
 		}
+	}
+	
+	
+	/**
+	 * Enable or disable PTZ controls.
+	 * Enables/disables control via CameraPTZ (applies to buttons, mouse,
+	 * and joystick), and enables/disables the CamControlPanel.
+	 *
+	 * @param enable true to enable, false to disable
+	 */
+	private void enablePTZ(boolean enable) {
+		cam_ptz.enableControl(enable);
 	}
 }

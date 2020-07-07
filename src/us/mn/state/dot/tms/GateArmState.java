@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2013-2016  Minnesota Department of Transportation
+ * Copyright (C) 2015-2017  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,24 +21,26 @@ package us.mn.state.dot.tms;
  * arm arrays.
  *
  * @author Douglas Lau
+ * @author John L. Stanley
  */
 public enum GateArmState {
 
 	/** Gate Arm states */
-	UNKNOWN,	/* initial unknown	no change allowed */
-	FAULT,		/* open / close fault	user: CLOSING */
-	OPENING,	/* open in progress	system: OPEN or FAULT */
-	OPEN,		/* gate open		user: WARN_CLOSE */
-	WARN_CLOSE,	/* gate open, DMS warn	user: CLOSING or OPENING */
-	CLOSING,	/* close in progress	system: CLOSED or FAULT */
-	CLOSED,		/* gate closed		user: OPENING */
-	TIMEOUT;	/* comm. timeout	no change allowed */
+	UNKNOWN,    /* initial unknown	no change allowed */
+	FAULT,      /* open / close fault	user: CLOSING */
+	OPENING,    /* open in progress	system: OPEN or FAULT */
+	OPEN,       /* gate open		user: WARN_CLOSE */
+	WARN_CLOSE, /* gate open, DMS warn	user: CLOSING or OPENING */
+	BEACON_ON,  /* pre-close, beacon & gate-arm lights on */
+	CLOSING,    /* close in progress	system: CLOSED or FAULT */
+	CLOSED,     /* gate closed		user: OPENING */
+	TIMEOUT;    /* comm. timeout	no change allowed */
+
+	/** Static array of GateArmState values */
+	private static final GateArmState[] VALUES = values();
 
 	/** Get gate arm state from an ordinal value */
 	static public GateArmState fromOrdinal(int o) {
-		if (o >= 0 && o < values().length)
-			return values()[o];
-		else
-			return UNKNOWN;
+		return ((o >= 0) && (o < VALUES.length)) ? VALUES[o] : UNKNOWN;
 	}
 }

@@ -57,8 +57,11 @@ public class CamSelectProp extends MonStatusProp {
 
 	/** Select camera on a video monitor */
 	private void selectCamera(Operation op, int cam) {
-		CameraImpl c = findCamera(cam);
+		int cn = (cam > 0) ? cam : cameraNumBlank();
+		CameraImpl c = findCamera(cn);
 		if (c != null)
 			selectCamera(c, "SEL " + op.getId());
+		else
+			setErrMsg(ErrorMsg.CamNotPresent);
 	}
 }

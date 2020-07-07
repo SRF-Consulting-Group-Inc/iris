@@ -27,7 +27,6 @@ import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.Gps;
 import us.mn.state.dot.tms.GpsHelper;
-import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.geo.Position;
 import us.mn.state.dot.tms.server.comm.DevicePoller;
@@ -564,6 +563,30 @@ public class GpsImpl extends DeviceImpl implements Gps {
 	@Override
 	public int getJitterToleranceMeters() {
 		return jitter_tolerance_meters;
+	}
+
+	/** Get username parsed from "un:pw"-style
+	 *  controller password field */
+	public String getUn() {
+		if (controller == null)
+			return null;
+		String unpw = controller.getPassword();
+		if ((unpw == null) || (unpw.length() == 0))
+			return null;
+		String[] items = unpw.split(":");
+		return (items.length > 0) ? items[0] : "";
+	}
+	
+	/** Get password parsed from "un:pw"-style
+	 *  controller password field */
+	public String getPw() {
+		if (controller == null)
+			return null;
+		String unpw = controller.getPassword();
+		if ((unpw == null) || (unpw.length() == 0))
+			return null;
+		String[] items = unpw.split(":");
+		return (items.length > 1) ? items[1] : "";
 	}
 
 	/** Update one field in a storable database table

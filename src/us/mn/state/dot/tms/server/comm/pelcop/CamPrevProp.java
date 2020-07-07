@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2017  Minnesota Department of Transportation
+ * Copyright (C) 2016-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 package us.mn.state.dot.tms.server.comm.pelcop;
 
 import java.nio.ByteBuffer;
-import us.mn.state.dot.tms.Camera;
-import us.mn.state.dot.tms.CameraHelper;
-import us.mn.state.dot.tms.server.CameraImpl;
+import us.mn.state.dot.tms.server.VideoMonitorImpl;
 import us.mn.state.dot.tms.server.comm.Operation;
 import us.mn.state.dot.tms.server.comm.ParsingException;
 
@@ -31,18 +29,6 @@ public class CamPrevProp extends MonStatusProp {
 
 	/** Camera previous request code */
 	static public final int REQ_CODE = 0xB7;
-
-	/** Find previous camera */
-	static private CameraImpl findPrev(int uid) {
-		Camera c = CameraHelper.findPrev(uid);
-		if (c instanceof CameraImpl)
-			return (CameraImpl) c;
-		c = CameraHelper.findLast();
-		if (c instanceof CameraImpl)
-			return (CameraImpl) c;
-		else
-			return null;
-	}
 
 	/** Create a new camera previous property */
 	public CamPrevProp(boolean l, int mn) {
@@ -62,11 +48,11 @@ public class CamPrevProp extends MonStatusProp {
 
 	/** Select previous camera on a video monitor */
 	private void selectPrevCamera(Operation op) {
-		int uid = getCamNumber();
-		if (uid > 0) {
-			CameraImpl c = findPrev(uid);
-			if (c != null)
-				selectCamera(c, "PREV " + op.getId());
-		}
+		VideoMonitorImpl vm = findVideoMonitor();
+		if (vm != null) {
+			stopCamControl();
+			vm.selectPrevCam(op.getId());
+		} else
+			setErrMsg(ErrorMsg.CamNotPresent);
 	}
 }

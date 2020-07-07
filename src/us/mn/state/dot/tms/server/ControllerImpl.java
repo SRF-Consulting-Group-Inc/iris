@@ -44,7 +44,6 @@ import static us.mn.state.dot.tms.server.XmlWriter.createAttribute;
 import us.mn.state.dot.tms.server.comm.CamKeyboardPoller;
 import us.mn.state.dot.tms.server.comm.DevicePoller;
 import us.mn.state.dot.tms.server.comm.SamplePoller;
-import us.mn.state.dot.tms.server.comm.WeatherPoller;
 import us.mn.state.dot.tms.server.comm.incfeed.IncFeedPoller;
 import us.mn.state.dot.tms.server.comm.msgfeed.MsgFeedPoller;
 import us.mn.state.dot.tms.server.event.CommEvent;
@@ -444,6 +443,28 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 			return (DetectorImpl) io;
 		else
 			return null;
+	}
+
+	/** Get first detector pin */
+	public synchronized int getDetectorPinFirst() {
+		int p = Integer.MAX_VALUE;
+		for (Integer pin: io_pins.keySet()) {
+			ControllerIO io = io_pins.get(pin);
+			if (io instanceof DetectorImpl)
+				p = Integer.min(p, pin);
+		}
+		return (p < Integer.MAX_VALUE) ? p : -1;
+	}
+
+	/** Get last detector pin */
+	public synchronized int getDetectorPinLast() {
+		int p = Integer.MIN_VALUE;
+		for (Integer pin: io_pins.keySet()) {
+			ControllerIO io = io_pins.get(pin);
+			if (io instanceof DetectorImpl)
+				p = Integer.max(p, pin);
+		}
+		return (p > Integer.MIN_VALUE) ? p : -1;
 	}
 
 	/** Check whether this controller has any active detectors */
@@ -979,25 +1000,20 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 			else
 				sp.sendSettings(this);
 		}
-		WeatherPoller wp = getWeatherPoller();
-		if (wp != null) {
-			WeatherSensorImpl ws = getWeatherSensor();
-			if (ws != null)
-				wp.sendSettings(ws);
+		// We only want one settings operation per controller,
+		// no matter how many video monitors are connected
+		VideoMonitorImpl vm = getVideoMonitor();
+		if (vm != null) {
+			int dr = DeviceRequest.SEND_SETTINGS.ordinal();
+			vm.setDeviceRequest(dr);
 		}
 	}
 
-	/** Get a weather sensor poller */
-	private WeatherPoller getWeatherPoller() {
-		DevicePoller dp = getPoller();
-		return (dp instanceof WeatherPoller) ? (WeatherPoller) dp :null;
-	}
-
-	/** Get a weather sensor for the controller */
-	private synchronized WeatherSensorImpl getWeatherSensor() {
+	/** Get a video monitor for the controller */
+	private synchronized VideoMonitorImpl getVideoMonitor() {
 		for (ControllerIO io: io_pins.values()) {
-			if (io instanceof WeatherSensorImpl)
-				return (WeatherSensorImpl) io;
+			if (io instanceof VideoMonitorImpl)
+				return (VideoMonitorImpl) io;
 		}
 		return null;
 	}

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2016  Minnesota Department of Transportation
+ * Copyright (C) 2007-2018  Minnesota Department of Transportation
  * Copyright (C) 2015  Iteris Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,12 +28,14 @@ import us.mn.state.dot.tms.ChangeVetoException;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.GeoLocHelper;
 import static us.mn.state.dot.tms.GeoLocHelper.isSameCorridor;
+import us.mn.state.dot.tms.LaneType;
 import us.mn.state.dot.tms.R_Node;
 import us.mn.state.dot.tms.R_NodeTransition;
 import us.mn.state.dot.tms.R_NodeType;
 import us.mn.state.dot.tms.SystemAttrEnum; 
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.geo.Position;
+import static us.mn.state.dot.tms.server.Constants.MISSING_DATA;
 import static us.mn.state.dot.tms.server.XmlWriter.createAttribute;
 
 /**
@@ -44,6 +46,10 @@ import static us.mn.state.dot.tms.server.XmlWriter.createAttribute;
  * @author Michael Darter
  */
 public class R_NodeImpl extends BaseObjectImpl implements R_Node {
+
+	/** Threshold for parking space availability.
+	 * FIXME: 150 is sensitivity for Banner DXM magnetometer. */
+	static private final float PARK_AVAIL_OCC = 150f * 100f / 1800f;
 
 	/** Get the minimum roadway speed limit */
 	static public int getMinSpeedLimit() {
@@ -250,6 +256,21 @@ public class R_NodeImpl extends BaseObjectImpl implements R_Node {
 		default:
 			return false;
 		}
+	}
+
+	/** Check if the r_node is an available parking space.
+	 * @return true If parking space and available.
+	 *         false If parking space and occupied.
+	 *         null If not a parking space or not sampling. */
+	public Boolean getParkingAvailable() {
+		SamplerSet ss = new SamplerSet(getSamplerSet().filter(
+			LaneType.PARKING));
+		if (ss.isPerfect()) {
+			float mo = ss.getMaxOccupancy(MISSING_DATA);
+			if (mo >= 0)
+				return mo < PARK_AVAIL_OCC;
+		}
+		return null;
 	}
 
 	/** Pickable flag */
@@ -584,22 +605,30 @@ public class R_NodeImpl extends BaseObjectImpl implements R_Node {
 
 	/** Add a detector to the r_node */
 	public void addDetector(DetectorImpl det) {
-		detectors.addDetector(det);
+		synchronized (detectors) {
+			detectors.addDetector(det);
+		}
 	}
 
 	/** Remove a detector from the r_node */
 	public void removeDetector(DetectorImpl det) {
-		detectors.removeDetector(det);
+		synchronized (detectors) {
+			detectors.removeDetector(det);
+		}
 	}
 
 	/** Get an array of all node detectors */
 	public DetectorImpl[] getDetectors() {
-		return detectors.toArray();
+		synchronized (detectors) {
+			return detectors.toArray();
+		}
 	}
 
 	/** Get the sampler set */
 	public SamplerSet getSamplerSet() {
-		return detectors.getSamplerSet();
+		synchronized (detectors) {
+			return detectors.getSamplerSet();
+		}
 	}
 
 	/** Downstream roadway nodes */
@@ -723,7 +752,7 @@ public class R_NodeImpl extends BaseObjectImpl implements R_Node {
 				b.append(f.getName() + " ");
 			w.write(b.toString().trim() + "'");
 		}
-		DetectorImpl[] dets = detectors.toArray();
+		DetectorImpl[] dets = getDetectors();
 		if (dets.length > 0 || m_nodes.containsKey(name)) {
 			w.write(">\n");
 			for (DetectorImpl det: dets) {

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2008-2016  Minnesota Department of Transportation
+ * Copyright (C) 2008-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ package us.mn.state.dot.tms;
 import us.mn.state.dot.tms.units.Interval;
 import static us.mn.state.dot.tms.units.Interval.Units.MINUTES;
 import static us.mn.state.dot.tms.units.Interval.Units.HOURS;
+import static us.mn.state.dot.tms.units.Interval.Units.WEEKS;
 
 /**
  * Road lane type enumeration.   The ordinal values correspond to the records
@@ -30,14 +31,14 @@ public enum LaneType {
 	NONE(" ", "", new Interval(0), new Interval(0)),
 
 	/** Mainline lane type (1) */
-	MAINLINE("Mainline", "", new Interval(4,HOURS),new Interval(3,MINUTES)),
+	MAINLINE("Mainline", "", new Interval(12,HOURS),new Interval(3,MINUTES)),
 
 	/** Auxiliary lane type (2) */
 	AUXILIARY("Auxiliary", "A", new Interval(24, HOURS), new Interval(3,
 		MINUTES)),
 
 	/** Collector/Distributor lane type (3) */
-	CD_LANE("CD Lane", "CD", new Interval(4, HOURS), new Interval(3,
+	CD_LANE("CD Lane", "CD", new Interval(12, HOURS), new Interval(3,
 		MINUTES)),
 
 	/** Reversible lane type (4) */
@@ -51,7 +52,7 @@ public enum LaneType {
 	QUEUE("Queue", "Q", new Interval(12, HOURS), new Interval(30, MINUTES)),
 
 	/** Exit lane type (7) */
-	EXIT("Exit", "X", new Interval(8, HOURS), new Interval(20, MINUTES)),
+	EXIT("Exit", "X", new Interval(12, HOURS), new Interval(20, MINUTES)),
 
 	/** Meter bypass (HOV) lane type (8) */
 	BYPASS("Bypass", "B", new Interval(72,HOURS), new Interval(20,MINUTES)),
@@ -61,7 +62,7 @@ public enum LaneType {
 		MINUTES)),
 
 	/** Velocity (mainline) lane type (10) */
-	VELOCITY("Velocity", "V", new Interval(4, HOURS), new Interval(3,
+	VELOCITY("Velocity", "V", new Interval(12, HOURS), new Interval(3,
 		MINUTES)),
 
 	/** Omnibus (ok, bus) lane type (11) */
@@ -72,18 +73,22 @@ public enum LaneType {
 	GREEN("Green", "G", new Interval(72, HOURS), new Interval(20, MINUTES)),
 
 	/** Wrong way (exit) lane type (13) */
-	WRONG_WAY("Wrong Way", "Y", new Interval(8, HOURS), new Interval(20,
+	WRONG_WAY("Wrong Way", "Y", new Interval(12, HOURS), new Interval(20,
 		MINUTES)),
 
 	/** High-Occupancy-Vehicle (HOV) lane type (14) */
-	HOV("HOV", "H", new Interval(8, HOURS), new Interval(3, MINUTES)),
+	HOV("HOV", "H", new Interval(12, HOURS), new Interval(3, MINUTES)),
 
 	/** High Occupancy / Toll (HOT) lane type (15) */
 	HOT("HOT", "HT", new Interval(72, HOURS), new Interval(3, MINUTES)),
 
 	/** Dynamic shoulder lane type (16) */
 	SHOULDER("Shoulder", "D", new Interval(72, HOURS), new Interval(3,
-		MINUTES));
+		MINUTES)),
+
+	/** Parking lane type (17) */
+	PARKING("Parking", "PK", new Interval(2, WEEKS), new Interval(2,
+		WEEKS));
 
 	/** Create a new lane type */
 	private LaneType(String d, String s, Interval nht, Interval lot) {

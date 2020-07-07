@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2017  Minnesota Department of Transportation
+ * Copyright (C) 2000-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@ package us.mn.state.dot.tms.client;
 
 import java.awt.event.ActionEvent;
 import us.mn.state.dot.tms.GateArmArray;
+import us.mn.state.dot.tms.ParkingArea;
 import us.mn.state.dot.tms.RampMeter;
 import us.mn.state.dot.tms.WeatherSensor;
 import us.mn.state.dot.tms.client.camera.VideoMenu;
@@ -25,6 +26,7 @@ import us.mn.state.dot.tms.client.detector.StationForm;
 import us.mn.state.dot.tms.client.dms.SignMenu;
 import us.mn.state.dot.tms.client.incident.IncidentMenu;
 import us.mn.state.dot.tms.client.lcs.LaneUseMenu;
+import us.mn.state.dot.tms.client.reports.RptSetupForm;
 import us.mn.state.dot.tms.client.schedule.ScheduleForm;
 import us.mn.state.dot.tms.client.system.SystemMenu;
 import us.mn.state.dot.tms.client.weather.WeatherSensorForm;
@@ -62,6 +64,8 @@ public class ViewMenu extends IMenu {
 		addItem(createScheduleItem());
 		addItem(session.createTableAction(WeatherSensor.SONAR_TYPE));
 		addItem(session.createTableAction(GateArmArray.SONAR_TYPE));
+		addItem(session.createTableAction(ParkingArea.SONAR_TYPE));
+		addItem(createReportItem());
 	}
 
 	/** Create a detector menu item action */
@@ -93,4 +97,15 @@ public class ViewMenu extends IMenu {
 			}
 		    } : null;
 	}
+
+	/** Create the report menu item */
+	private IAction createReportItem() {
+		return RptSetupForm.isPermitted(session) ?
+		    new IAction("report.menu") {
+			protected void doActionPerformed(ActionEvent e) {
+				desktop.show(new RptSetupForm(session));
+			}
+		    } : null;
+	}
+
 }

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2017  Minnesota Department of Transportation
+ * Copyright (C) 2000-2018  Minnesota Department of Transportation
  * Copyright (C) 2010       AHMCT, University of California
  * Copyright (C) 2012       Iteris Inc.
  * Copyright (C) 2016-2017  SRF Consulting Group
@@ -61,7 +61,6 @@ import us.mn.state.dot.tms.SignConfigHelper;
 import us.mn.state.dot.tms.SignMessage;
 import us.mn.state.dot.tms.SignMessageHelper;
 import us.mn.state.dot.tms.SignMsgSource;
-import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.geo.Position;
 import static us.mn.state.dot.tms.server.MainServer.FLUSH;
@@ -165,20 +164,12 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return name.compareTo(o.name);
 	}
 
-	/** Tolling formatter */
-	private final TollingFormatter toll_formatter;
-
-	/** MULTI message formatter */
-	private final MultiFormatter formatter;
-
 	/** Create a new DMS with a string name */
 	public DMSImpl(String n) throws TMSException, SonarException {
 		super(n);
 		GeoLocImpl g = new GeoLocImpl(name);
 		g.notifyCreate();
 		geo_loc = g;
-		toll_formatter = new TollingFormatter(n, g);
-		formatter = new MultiFormatter(this, toll_formatter);
 	}
 
 	/** Create a dynamic message sign */
@@ -220,8 +211,6 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		awsControlled = ac;
 		sign_config = sc;
 		default_font = df;
-		toll_formatter = new TollingFormatter(n, loc);
-		formatter = new MultiFormatter(this, toll_formatter);
 		initTransients();
 	}
 
@@ -815,25 +804,18 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	}
 
 	/** Create a scheduled message.
-	 * @param da DMS action
-	 * @return New sign message, or null on error */
-	private SignMessage createMsgSched(DmsAction da) {
-		String m = formatter.createMulti(da);
-		if (m != null) {
-			boolean be = da.getBeaconEnabled();
-			DmsMsgPriority ap = DmsMsgPriority.fromOrdinal(
-				da.getActivationPriority());
-			DmsMsgPriority rp = DmsMsgPriority.fromOrdinal(
-				da.getRunTimePriority());
-			int src = SignMsgSource.schedule.bit();
-			if (formatter.isTravelTime(da))
-				src |= SignMsgSource.travel_time.bit();
-			if (formatter.isTolling(da))
-				src |= SignMsgSource.tolling.bit();
-			Integer d = getDuration(da);
-			return createMsg(m, be, ap, rp, src, null, d);
-		} else
-			return null;
+	 * @param amsg DMS action message.
+	 * @return New sign message, or null on error. */
+	private SignMessage createMsgSched(DmsActionMsg amsg) {
+		assert (amsg != null);
+		DmsAction da = amsg.action;
+		boolean be = da.getBeaconEnabled();
+		DmsMsgPriority ap = DmsMsgPriority.fromOrdinal(
+			da.getActivationPriority());
+		DmsMsgPriority rp = DmsMsgPriority.fromOrdinal(
+			da.getRunTimePriority());
+		Integer d = getDuration(da);
+		return createMsg(amsg.multi, be, ap, rp, amsg.getSrc(), null,d);
 	}
 
 	/** Get the duration of a DMS action.
@@ -881,19 +863,11 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return msg_sched;
 	}
 
-	/** Check a DMS action.
-	 * @param da DMS action.
-	 * @return true if action is valid. */
-	public boolean checkAction(DmsAction da) {
-		assert (da != null);
-		return formatter.createMulti(da) != null;
-	}
-
-	/** Set the scheduled DMS action */
-	public void setScheduledAction(DmsAction da) {
-		SignMessage sm = (da != null) ? createMsgSched(da) : null;
+	/** Set the scheduled DMS action message */
+	public void setActionMsg(DmsActionMsg amsg) {
+		SignMessage sm = (amsg != null) ? createMsgSched(amsg) : null;
 		setMsgSchedNotify(sm);
-		setPrices(da);
+		setPrices(amsg);
 		try {
 			SignMessage usm = getMsgValidated();
 			if (isMsgScheduled(usm))
@@ -917,17 +891,8 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	private transient HashMap<String, Float> prices;
 
 	/** Set tolling prices */
-	private void setPrices(DmsAction da) {
-		prices = (da != null) ? calculatePrices(da) : null;
-	}
-
-	/** Calculate prices for a tolling message */
-	private HashMap<String, Float> calculatePrices(DmsAction da) {
-		QuickMessage qm = da.getQuickMessage();
-		if (qm != null)
-			return toll_formatter.calculatePrices(qm.getMulti());
-		else
-			return null;
+	private void setPrices(DmsActionMsg amsg) {
+		prices = (amsg != null) ? amsg.getPrices() : null;
 	}
 
 	/** Log price (tolling) messages.
@@ -1411,5 +1376,18 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Message was queried since startup */
 	public void msgQueried() {
 		msg_queried = true;
+	}
+
+	//-------------------------
+	// memory-flag set when we discover automatic GPS polling can't work
+
+	protected boolean bBlockAutoGps = false;
+	
+	public boolean getBlockAutoGps() {
+		return bBlockAutoGps;
+	}
+	
+	public void setBlockAutoGps(boolean b) {
+		bBlockAutoGps = b;
 	}
 }

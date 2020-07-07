@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2017  Minnesota Department of Transportation
+ * Copyright (C) 2016-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.CameraHelper;
+import us.mn.state.dot.tms.PlayList;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.VideoMonitor;
 import us.mn.state.dot.tms.VideoMonitorHelper;
@@ -42,7 +43,7 @@ public class MonStatusProp extends PelcoPProp {
 	static public final int RESP_CODE = 0xB1;
 
 	/** Get the "blank" camera number */
-	static private int cameraNumBlank() {
+	static protected int cameraNumBlank() {
 		return SystemAttrEnum.CAMERA_NUM_BLANK.getInt();
 	}
 
@@ -59,39 +60,38 @@ public class MonStatusProp extends PelcoPProp {
 		return cameraNumBlank();
 	}
 
-	/** Find a camera by number */
-	static private Camera findCam(int cam_num) {
-		// First, lookup a guessed name for camera
-		Camera c = CameraHelper.lookup(buildCamName(cam_num));
-		if (c != null)
-			return c;
-		else {
-			// Guess not correct, do linear search
-			return CameraHelper.findUID(cam_num);
+	/** Get playlist number */
+	static private int getPlayListNum(VideoMonitorImpl vm) {
+		if (vm != null) {
+			PlayList pl = vm.getPlayList();
+			if (pl != null) {
+				Integer n = pl.getNum();
+				if (n != null && n > 0)
+					return n;
+			}
 		}
+		return 0;
+	}
+
+	/** Check if a play list is running */
+	static protected boolean isPlayListRunning(VideoMonitorImpl vm) {
+		return (vm != null) && vm.isPlayListRunning();
 	}
 
 	/** Find a camera by UID */
 	static protected CameraImpl findCamera(int cam_num) {
-		Camera c = findCam(cam_num);
+		Camera c = CameraHelper.findNum(cam_num);
 		return (c instanceof CameraImpl) ? (CameraImpl) c : null;
 	}
 
-	/** Build a camera name guess */
-	static private String buildCamName(int cam_num) {
-		StringBuilder sb = new StringBuilder();
-		sb.append('C');
-		sb.append(cam_num);
-		while (sb.length() < 4)
-			sb.insert(1, '0');
-		return sb.toString();
-	}
-
-	/** Flag for monitor online status */
-	static private final int BIT_ONLINE = 0x40;
+	/** Flag for monitor macro running status */
+	static protected final int BIT_MACRO = 0x02;
 
 	/** Flag for monitor locked status */
-	static private final int BIT_LOCKED = 0x10;
+	static protected final int BIT_LOCKED = 0x10;
+
+	/** Flag for monitor online status */
+	static protected final int BIT_ONLINE = 0x40;
 
 	/** Logged in flag */
 	private final boolean logged_in;
@@ -122,20 +122,30 @@ public class MonStatusProp extends PelcoPProp {
 	public void encodeQuery(Operation op, ByteBuffer tx_buf)
 		throws IOException
 	{
+		if (hasError()) {
+			encodeError(op, tx_buf);
+			return;
+		}
 		format8(tx_buf, RESP_CODE);
 		int mon = getMonNumber();
 		if (logged_in && mon > 0) {
-			int cam = getCamNumber();
+			VideoMonitorImpl vm = findVideoMonitor();
+			int cam = getCamNum(vm);
+			int pln = getPlayListNum(vm);
 			int chi = cam / 100;
 			int clo = cam % 100;
 			int mhi = mon / 100;
 			int mlo = mon % 100;
+			int phi = pln / 100;
+			int plo = pln % 100;
 			formatBCD2(tx_buf, mlo);
-			format8(tx_buf, BIT_ONLINE);
+			format8(tx_buf, getModeBits(vm));
 			format8(tx_buf, 0);
 			formatBCD2(tx_buf, chi);
 			formatBCD2(tx_buf, clo);
-			format32(tx_buf, 0);
+			formatBCD2(tx_buf, phi);
+			formatBCD2(tx_buf, plo);
+			format16(tx_buf, 0);
 			format8(tx_buf, 0);
 			formatBCD2(tx_buf, chi);
 			formatBCD2(tx_buf, clo);
@@ -148,14 +158,31 @@ public class MonStatusProp extends PelcoPProp {
 		}
 	}
 
+	/** Get the mode bits */
+	protected int getModeBits(VideoMonitorImpl vm) {
+		return isPlayListRunning(vm)
+			? (BIT_ONLINE | BIT_MACRO)
+			: BIT_ONLINE;
+	}
+
 	/** Get current camera number on the selected video monitor */
 	protected int getCamNumber() {
-		return getCamNum(VideoMonitorHelper.findUID(mon_num));
+		return getCamNum(findVideoMonitor());
+	}
+
+	/** Find a video monitor by number */
+	protected VideoMonitorImpl findVideoMonitor() {
+		VideoMonitor vm = VideoMonitorHelper.findUID(mon_num);
+		return (vm instanceof VideoMonitorImpl)
+		     ? (VideoMonitorImpl) vm
+		     : null;
 	}
 
 	/** Set the video monitor number */
 	protected void setMonNumber(int m) {
 		mon_num = m;
+		if ((m > 0) && findVideoMonitor() == null)
+			setErrMsg(ErrorMsg.MonNotPresent);
 	}
 
 	/** Get the video monitor number */
@@ -167,12 +194,12 @@ public class MonStatusProp extends PelcoPProp {
 	protected void selectCamera(CameraImpl c, String src) {
 		assert(c != null);
 		stopCamControl();
-		VideoMonitorImpl.setCameraNotify(getMonNumber(), c, src);
+		VideoMonitorImpl.setCamMirrored(getMonNumber(), c, src);
 	}
 
 	/** Stop camera control on selected camera */
-	private void stopCamControl() {
-		VideoMonitor vm = VideoMonitorHelper.findUID(mon_num);
+	protected void stopCamControl() {
+		VideoMonitorImpl vm = findVideoMonitor();
 		if (vm != null) {
 			Camera c = vm.getCamera();
 			if (c instanceof CameraImpl)

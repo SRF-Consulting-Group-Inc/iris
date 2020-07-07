@@ -1,6 +1,11 @@
 /*
  * IRIS -- Intelligent Roadway Information System
+<<<<<<< working copy
  * Copyright (C) 2000-2016  Minnesota Department of Transportation
+ * Copyright (C) 2015-2017  SRF Consulting Group
+=======
+ * Copyright (C) 2000-2018  Minnesota Department of Transportation
+>>>>>>> destination
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +22,8 @@ package us.mn.state.dot.tms.server;
 import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.tms.ChangeVetoException;
+import us.mn.state.dot.tms.CommLink;
+import us.mn.state.dot.tms.CommProtocol;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.ControllerHelper;
 import us.mn.state.dot.tms.ControllerIO;
@@ -66,6 +73,7 @@ abstract public class DeviceImpl extends BaseObjectImpl implements Device,
 		if (c != null)
 			c.setIO(pin, this);
 		updateStyles();
+		updateIsNtcip();
 	}
 
 	/** Get the device poller */
@@ -356,11 +364,48 @@ abstract public class DeviceImpl extends BaseObjectImpl implements Device,
 		sendDeviceRequest(DeviceRequest.fromOrdinal(r));
 	}
 
+	/** Request a device operation */
+	public final void setDeviceReq(DeviceRequest dr) {
+		sendDeviceRequest(dr);
+	}
+
 	/** Send a device request operation */
 	abstract protected void sendDeviceRequest(DeviceRequest dr);
 
 	/** Perform a periodic poll */
 	public void periodicPoll() {
 		sendDeviceRequest(DeviceRequest.QUERY_STATUS);
+	}
+
+	//------------------------------
+	
+	/** Set true for NTCIP devices */
+	private transient boolean bNtcip = false;
+
+	/** Get the isNtcip status */
+	@Override
+	public boolean getIsNtcip() {
+		return bNtcip;
+	}
+
+	/** Set the isNtcip status */
+	public void setIsNtcipNotify(boolean b) {
+		if (bNtcip == b)
+			return;
+		bNtcip = b;
+		notifyAttribute("isNtcip");
+	}
+
+	/** Update the isNtcip status */
+	public void updateIsNtcip() {
+		ControllerImpl c = controller;
+		if (c != null) {
+			CommLink cl = c.getCommLink();
+			if (cl != null) {
+				setIsNtcipNotify(CommProtocol.isNtcip(cl.getProtocol()));
+				return;
+			}
+		}
+		setIsNtcipNotify(false);
 	}
 }

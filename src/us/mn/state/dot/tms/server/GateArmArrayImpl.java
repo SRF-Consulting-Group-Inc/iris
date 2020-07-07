@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2013-2016  Minnesota Department of Transportation
+ * Copyright (C) 2015-2017  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@ import static us.mn.state.dot.tms.server.GateArmSystem.sendEmailAlert;
  * All gate arms in an array are always controlled as a group.
  *
  * @author Douglas Lau
+ * @author John L. Stanley
  */
 public class GateArmArrayImpl extends DeviceImpl implements GateArmArray {
 
@@ -410,11 +412,12 @@ public class GateArmArrayImpl extends DeviceImpl implements GateArmArray {
 		if (rs == GateArmState.OPENING) {
 			if (lock_state.isOpenDenied())
 				throw INTERLOCK_CONFLICT;
-			if (cs == GateArmState.CLOSED ||
-			   cs == GateArmState.WARN_CLOSE)
+			if ((cs == GateArmState.CLOSED)
+			 || (cs == GateArmState.WARN_CLOSE))
 				return rs;
 		}
-		if (rs == GateArmState.WARN_CLOSE) {
+		if ((rs == GateArmState.WARN_CLOSE)
+		 || (rs == GateArmState.BEACON_ON)) {
 			if (lock_state.isCloseDenied())
 				throw INTERLOCK_CONFLICT;
 			if (cs == GateArmState.OPEN)
@@ -423,8 +426,10 @@ public class GateArmArrayImpl extends DeviceImpl implements GateArmArray {
 		if (rs == GateArmState.CLOSING) {
 			if (lock_state.isCloseDenied())
 				throw INTERLOCK_CONFLICT;
-			if (cs == GateArmState.WARN_CLOSE ||
-			   cs == GateArmState.FAULT)
+			if ((cs == GateArmState.WARN_CLOSE)
+			 || (cs == GateArmState.FAULT)
+			 || (cs == GateArmState.BEACON_ON)
+			 || ((cs == GateArmState.OPEN) && (dms == null)))
 				return rs;
 		}
 		throw new ChangeVetoException("INVALID STATE CHANGE: " + cs +
@@ -543,6 +548,8 @@ public class GateArmArrayImpl extends DeviceImpl implements GateArmArray {
 					open = true;
 					break;
 				case CLOSING:
+				case WARN_CLOSE: // <-- needed for NDOR Gates
+				case BEACON_ON:  // <-- needed for NDOR Gates
 					closing = true;
 					break;
 				case CLOSED:

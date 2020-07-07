@@ -1,7 +1,8 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2000-2017  Minnesota Department of Transportation
- * Copyright (C) 2010 AHMCT, University of California
+ * Copyright (C) 2010       AHMCT, University of California
+ * Copyright (C) 2018       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,12 +27,14 @@ import javax.swing.JInternalFrame;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import us.mn.state.dot.tms.client.IrisClient;
+import us.mn.state.dot.tms.client.widget.Screen;
 
 /**
  * SmartDesktop is a JDesktopPane which manages JInternalFrames automatically.
  *
  * @author Douglas Lau
  * @author Michael Darter
+ * @author John L. Stanley - SRF Consulting
  */
 public class SmartDesktop extends JDesktopPane {
 
@@ -120,6 +123,7 @@ public class SmartDesktop extends JDesktopPane {
 	private JInternalFrame createFrame(final AbstractForm form) {
 		final JInternalFrame frame = new JInternalFrame();
 		frame.setTitle(form.getTitle());
+		frame.setResizable(form.isResizable());
 		frame.setClosable(true);
 		frame.setIconifiable(true);
 		frame.setDefaultCloseOperation(JInternalFrame.DISPOSE_ON_CLOSE);

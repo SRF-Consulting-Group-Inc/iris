@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2017  Minnesota Department of Transportation
+ * Copyright (C) 2016-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,14 +46,8 @@ public class MonStreamPoller extends BasePoller implements VideoMonitorPoller {
 
 	/** Set the camera to display on the specified monitor */
 	@Override
-	public void switchCamera(ControllerImpl c, VideoMonitorImpl vm,
-		CameraImpl cam)
-	{
-		// Make sure the controller is not a video switcher
-		if (c == vm.getController()) {
-			createOp("video.monitor.op.switch", vm,
-				new OpSwitchCamera(cam));
-		}
+	public void switchCamera(VideoMonitorImpl vm, CameraImpl cam) {
+		createOp("video.monitor.op.switch", vm,new OpSwitchCamera(cam));
 	}
 
 	/** Send a device request
@@ -69,7 +63,7 @@ public class MonStreamPoller extends BasePoller implements VideoMonitorPoller {
 		case QUERY_STATUS:
 			addOp(new Operation("video.monitor.op.query",
 				(ControllerImpl) vm.getController(),
-				new OpStatus()));
+				new OpStatus(vm)));
 			break;
 		default:
 			// Ignore other requests

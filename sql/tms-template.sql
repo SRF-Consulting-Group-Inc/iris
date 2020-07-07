@@ -58,6 +58,7 @@ CREATE TABLE iris.role_capability (
 	role VARCHAR(15) NOT NULL REFERENCES iris.role,
 	capability VARCHAR(16) NOT NULL REFERENCES iris.capability
 );
+ALTER TABLE iris.role_capability ADD PRIMARY KEY (role, capability);
 
 CREATE TABLE iris.direction (
 	id smallint PRIMARY KEY,
@@ -250,6 +251,7 @@ CREATE TABLE iris.day_plan_day_matcher (
 	day_plan VARCHAR(10) NOT NULL REFERENCES iris.day_plan,
 	day_matcher VARCHAR(32) NOT NULL REFERENCES iris.day_matcher
 );
+ALTER TABLE iris.day_plan_day_matcher ADD PRIMARY KEY (day_plan, day_matcher);
 
 CREATE TABLE iris.geo_loc (
 	name VARCHAR(20) PRIMARY KEY,
@@ -717,10 +719,26 @@ CREATE TABLE iris._camera (
 ALTER TABLE iris._camera ADD CONSTRAINT _camera_fkey
 	FOREIGN KEY (name) REFERENCES iris._device_io(name) ON DELETE CASCADE;
 
-CREATE VIEW iris.camera AS SELECT
-	c.name, geo_loc, controller, pin, notes, cam_num, encoder_type, encoder,
-		enc_mcast, encoder_channel, publish, video_loss
-	FROM iris._camera c JOIN iris._device_io d ON c.name = d.name;
+CREATE TABLE iris.camera_ftp_svr (
+	name character varying(20) NOT NULL,
+	ftp_username character varying(20),
+	ftp_password character varying(64),
+	ref_interval integer,
+	ftp_path character varying(50),
+	same_filename boolean,
+	ftp_filename character varying(30)
+);
+
+ALTER TABLE ONLY iris.camera_ftp_svr
+    ADD CONSTRAINT camera_ftp_svr_name_fkey FOREIGN KEY (name) REFERENCES iris._camera(name);
+    
+CREATE VIEW iris.camera AS
+ SELECT c.name, c.geo_loc, d.controller, d.pin, c.notes, c.cam_num,
+    c.encoder_type, c.encoder, c.enc_mcast,c.encoder_channel,
+    c.publish, c.video_loss, e.ftp_username, e.ftp_password,
+    e.ref_interval,e.ftp_path, e.same_filename, e.ftp_filename
+   FROM iris._camera c JOIN iris._device_io d ON c.name = d.name
+     JOIN iris.camera_ftp_svr e ON c.name = e.name;
 
 CREATE FUNCTION iris.camera_insert() RETURNS TRIGGER AS
 	$camera_insert$
@@ -732,6 +750,10 @@ BEGIN
 	     VALUES (NEW.name, NEW.geo_loc, NEW.notes, NEW.cam_num,
 	             NEW.encoder_type, NEW.encoder, NEW.enc_mcast,
 	             NEW.encoder_channel, NEW.publish, NEW.video_loss);
+	INSERT INTO iris.camera_ftp_svr (name, ftp_username, ftp_password,
+		     ref_interval, ftp_path, same_filename, ftp_filename)
+	     VALUES (NEW.name, NEW.ftp_username, NEW.ftp_password,
+		     NEW.ref_interval, NEW.ftp_path, NEW.same_filename, NEW.ftp_filename);
 	RETURN NEW;
 END;
 $camera_insert$ LANGUAGE plpgsql;
@@ -769,6 +791,7 @@ CREATE TRIGGER camera_update_trig
 CREATE FUNCTION iris.camera_delete() RETURNS TRIGGER AS
 	$camera_delete$
 BEGIN
+	DELETE FROM iris.camera_ftp_svr WHERE name = OLD.name;
 	DELETE FROM iris._device_io WHERE name = OLD.name;
 	IF FOUND THEN
 		RETURN OLD;
@@ -782,18 +805,32 @@ CREATE TRIGGER camera_delete_trig
     INSTEAD OF DELETE ON iris.camera
     FOR EACH ROW EXECUTE PROCEDURE iris.camera_delete();
 
+CREATE TABLE iris.play_list (
+	name VARCHAR(20) PRIMARY KEY,
+	num INTEGER UNIQUE
+);
+
+CREATE TABLE iris.play_list_camera (
+	play_list VARCHAR(20) NOT NULL REFERENCES iris.play_list,
+	ordinal INTEGER NOT NULL,
+	camera VARCHAR(20) NOT NULL REFERENCES iris._camera
+);
+ALTER TABLE iris.play_list_camera ADD PRIMARY KEY (play_list, ordinal);
+
 CREATE TABLE iris.monitor_style (
 	name VARCHAR(24) PRIMARY KEY,
 	force_aspect BOOLEAN NOT NULL,
 	accent VARCHAR(8) NOT NULL,
-	font_sz INTEGER NOT NULL
+	font_sz INTEGER NOT NULL,
+	title_bar BOOLEAN NOT NULL,
+	hgap INTEGER NOT NULL,
+	vgap INTEGER NOT NULL
 );
 
 CREATE TABLE iris._video_monitor (
 	name VARCHAR(12) PRIMARY KEY,
 	notes VARCHAR(32) NOT NULL,
 	mon_num INTEGER NOT NULL,
-	direct BOOLEAN NOT NULL,
 	restricted BOOLEAN NOT NULL,
 	monitor_style VARCHAR(24) REFERENCES iris.monitor_style,
 	camera VARCHAR(20) REFERENCES iris._camera
@@ -803,7 +840,7 @@ ALTER TABLE iris._video_monitor ADD CONSTRAINT _video_monitor_fkey
 	FOREIGN KEY (name) REFERENCES iris._device_io(name) ON DELETE CASCADE;
 
 CREATE VIEW iris.video_monitor AS SELECT
-	m.name, controller, pin, notes, mon_num, direct, restricted,
+	m.name, controller, pin, notes, mon_num, restricted,
 	monitor_style, camera
 	FROM iris._video_monitor m JOIN iris._device_io d ON m.name = d.name;
 
@@ -812,10 +849,10 @@ CREATE FUNCTION iris.video_monitor_insert() RETURNS TRIGGER AS
 BEGIN
 	INSERT INTO iris._device_io (name, controller, pin)
 	     VALUES (NEW.name, NEW.controller, NEW.pin);
-	INSERT INTO iris._video_monitor (name, notes, mon_num, direct,
-	                                 restricted, monitor_style, camera)
-	     VALUES (NEW.name, NEW.notes, NEW.mon_num, NEW.direct,
-	             NEW.restricted, NEW.monitor_style, NEW.camera);
+	INSERT INTO iris._video_monitor (name, notes, mon_num, restricted,
+	                                 monitor_style, camera)
+	     VALUES (NEW.name, NEW.notes, NEW.mon_num, NEW.restricted,
+	             NEW.monitor_style, NEW.camera);
 	RETURN NEW;
 END;
 $video_monitor_insert$ LANGUAGE plpgsql;
@@ -834,7 +871,6 @@ BEGIN
 	UPDATE iris._video_monitor
 	   SET notes = NEW.notes,
 	       mon_num = NEW.mon_num,
-	       direct = NEW.direct,
 	       restricted = NEW.restricted,
 	       monitor_style = NEW.monitor_style,
 	       camera = NEW.camera
@@ -1343,6 +1379,7 @@ CREATE TABLE iris.tag_reader_dms (
 	tag_reader VARCHAR(20) NOT NULL REFERENCES iris._tag_reader,
 	dms VARCHAR(20) NOT NULL REFERENCES iris._dms
 );
+ALTER TABLE iris.tag_reader_dms ADD PRIMARY KEY (tag_reader, dms);
 
 CREATE TABLE iris.lcs_lock (
 	id INTEGER PRIMARY KEY,
@@ -1776,6 +1813,8 @@ CREATE TABLE event.sign_event (
 	message text,
 	iris_user VARCHAR(15)
 );
+
+CREATE INDEX ON event.sign_event(event_date);
 
 CREATE TABLE event.client_event (
 	event_id integer PRIMARY KEY DEFAULT nextval('event.event_id_seq'),
@@ -2277,11 +2316,12 @@ CREATE VIEW ramp_meter_view AS
 GRANT SELECT ON ramp_meter_view TO PUBLIC;
 
 CREATE VIEW monitor_style_view AS
-	SELECT name, force_aspect, accent, font_sz FROM iris.monitor_style;
+	SELECT name, force_aspect, accent, font_sz, title_bar, hgap, vgap
+	FROM iris.monitor_style;
 GRANT SELECT ON monitor_style_view TO PUBLIC;
 
 CREATE VIEW video_monitor_view AS
-	SELECT m.name, m.notes, mon_num, direct, restricted, monitor_style,
+	SELECT m.name, m.notes, mon_num, restricted, monitor_style,
 	       m.controller, m.pin, ctr.condition, ctr.comm_link, camera
 	FROM iris.video_monitor m
 	LEFT JOIN controller_view ctr ON m.controller = ctr.name;
@@ -2303,6 +2343,12 @@ CREATE VIEW camera_view AS
 	LEFT JOIN geo_loc_view l ON c.geo_loc = l.name
 	LEFT JOIN controller_view ctr ON c.controller = ctr.name;
 GRANT SELECT ON camera_view TO PUBLIC;
+
+CREATE VIEW play_list_view AS
+	SELECT play_list, ordinal, num, camera
+	FROM iris.play_list_camera
+	JOIN iris.play_list ON play_list_camera.play_list = play_list.name;
+GRANT SELECT ON play_list_view TO PUBLIC;
 
 CREATE VIEW camera_preset_view AS
 	SELECT cp.name, camera, preset_num, direction, dp.name AS device
@@ -2635,7 +2681,7 @@ COPY iris.comm_protocol (id, description) FROM stdin;
 9	DMS XML
 10	MSG_FEED
 11	NTCIP Class A
-12	Pelco Switcher
+12	Pelco (OBSOLETE)
 13	Vicon PTZ
 14	SmartSensor 125 HD
 15	OSi ORG-815
@@ -2759,24 +2805,27 @@ COPY iris.encoding (id, description) FROM stdin;
 3	MPEG4
 4	H264
 5	H265
+6	FTP
 \.
 
 COPY iris.system_attribute (name, value) FROM stdin;
 camera_autoplay	true
-camera_blank_url	
 camera_construction_url	
+camera_kbd_panasonic_enable	false
 camera_num_blank	999
 camera_out_of_service_url	
+camera_playlist_dwell_sec	5
 camera_preset_store_enable	false
 camera_ptz_blind	true
 camera_stream_controls_enable	false
+camera_switch_event_purge_days	30
 camera_wiper_precip_mm_hr	8
 client_units_si	true
 comm_event_purge_days	14
 comm_idle_disconnect_dms_sec	-1
 comm_idle_disconnect_gps_sec	5
 comm_idle_disconnect_modem_sec	20
-database_version	4.59.0
+database_version	4.62.0
 detector_auto_fail_enable	true
 dict_allowed_scheme	0
 dict_banned_scheme	0
@@ -2960,6 +3009,7 @@ meter_action
 modem
 monitor_style
 plan_phase
+play_list
 privilege
 quick_message
 ramp_meter
@@ -3010,6 +3060,7 @@ PRV_0025	camera_admin	encoder_type		t
 PRV_0026	camera_admin	camera_preset		t
 PRV_0027	camera_admin	video_monitor		t
 PRV_0028	camera_admin	monitor_style		t
+PRV_002C	camera_admin	play_list		t
 PRV_0029	camera_control	camera	ptz	t
 PRV_0030	camera_control	camera	recallPreset	t
 PRV_0031	camera_control	camera	deviceRequest	t
@@ -3020,6 +3071,7 @@ PRV_0035	camera_tab	camera		f
 PRV_0036	camera_tab	camera_preset		f
 PRV_0037	camera_tab	video_monitor		f
 PRV_0038	camera_tab	monitor_style		f
+PRV_003C	camera_tab	play_list		f
 PRV_0039	comm_admin	comm_link		t
 PRV_0040	comm_admin	modem		t
 PRV_0041	comm_admin	cabinet_style		t
@@ -3131,6 +3183,10 @@ PRV_0146	toll_admin	tag_reader		t
 PRV_0147	toll_admin	toll_zone		t
 PRV_0148	toll_tab	tag_reader		f
 PRV_0149	toll_tab	toll_zone		f
+\.
+
+COPY iris.privilege (name, capability, type_n, group_n, write) FROM stdin;
+PRV_003D	camera_tab	play_list	user	t
 \.
 
 COPY iris.role (name, enabled) FROM stdin;

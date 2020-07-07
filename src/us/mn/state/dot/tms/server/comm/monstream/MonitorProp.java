@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2017  Minnesota Department of Transportation
+ * Copyright (C) 2017-2018  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,6 +57,24 @@ public class MonitorProp extends MonProp {
 		      : MonitorStyle.DEFAULT_FONT_SZ;
 	}
 
+	/** Get the monitor title bar */
+	static private boolean getTitleBar(VideoMonitorImpl mon) {
+		MonitorStyle ms = monitorStyle(mon);
+		return (ms == null) || ms.getTitleBar();
+	}
+
+	/** Get the horizontal gap */
+	static private int getHGap(VideoMonitorImpl mon) {
+		MonitorStyle ms = monitorStyle(mon);
+		return (ms != null) ? ms.getHGap() : 0;
+	}
+
+	/** Get the vertical gap */
+	static private int getVGap(VideoMonitorImpl mon) {
+		MonitorStyle ms = monitorStyle(mon);
+		return (ms != null) ? ms.getVGap() : 0;
+	}
+
 	/** Current controller pin */
 	private int pin = 1;
 
@@ -98,20 +116,27 @@ public class MonitorProp extends MonProp {
 		sb.append(getForceAspect(mon));
 		sb.append(UNIT_SEP);
 		sb.append(Integer.toString(getFontSz(mon)));
+		sb.append(UNIT_SEP);
+		sb.append("AAAA");	// FIXME
+		sb.append(UNIT_SEP);
+		sb.append(Integer.toString(getHGap(mon)));
+		sb.append(UNIT_SEP);
+		sb.append(Integer.toString(getVGap(mon)));
 		sb.append(RECORD_SEP);
 		return sb.toString();
 	}
 
 	/** Get monitor label as a string */
 	private String getMonLabel(VideoMonitorImpl mon) {
-		if (mon != null) {
+		if (getTitleBar(mon)) {
+			assert mon != null;
 			int n = mon.getMonNum();
 			if (n > 0)
 				return Integer.toString(n);
 			else
 				return mon.getName();
-		}
-		return "";
+		} else
+			return "";
 	}
 
 	/** Get a string representation of the property */

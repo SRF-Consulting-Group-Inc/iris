@@ -60,8 +60,8 @@ public enum CommProtocol {
 	/** NTCIP Class A (11) */
 	NTCIP_A("NTCIP Class A", false),
 
-	/** Pelco video matrix switcher (12) */
-	PELCO_SWITCHER("Pelco Switcher", false),
+	/** Banner DXM (12) */
+	BANNER_DXM("Banner DXM", false),
 
 	/** Vicon camera control (13) */
 	VICON_PTZ("Vicon PTZ"),
@@ -142,7 +142,10 @@ public enum CommProtocol {
 	GPS_NMEA("GPS NMEA"),
 
 	/** GPS using RedLion AT+BMDIAG command (39) */
-	GPS_REDLION("GPS RedLion");
+	GPS_REDLION("GPS RedLion"),
+
+	/** GPS using Sierra Wireless GX-series "AT*GPSDATA?" command (40) */
+	GPS_SIERRA_GX("GPS SierraGX");
 
 	/** Create a new comm protocol value */
 	private CommProtocol(String d) {
@@ -176,5 +179,17 @@ public enum CommProtocol {
 			return VALUES[o];
 		else
 			return null;
+	}
+
+	/** Returns true if a protocol is NTCIP */
+	static public boolean isNtcip(CommProtocol p) {
+		return (p == NTCIP_A)
+		    || (p == NTCIP_B)
+		    || (p == NTCIP_C);
+	}
+
+	/** Returns true if a protocol is NTCIP */
+	static public boolean isNtcip(short o) {
+		return isNtcip(fromOrdinal(o));
 	}
 }

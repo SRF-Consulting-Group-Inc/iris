@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2013-2016  Minnesota Department of Transportation
+ * Copyright (C) 2015-2017  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@ import us.mn.state.dot.tms.server.event.GateArmEvent;
  * A Gate Arm is a device for restricting access to a ramp on a road.
  *
  * @author Douglas Lau
+ * @author John L. Stanley
  */
 public class GateArmImpl extends DeviceImpl implements GateArm {
 
@@ -248,6 +250,10 @@ public class GateArmImpl extends DeviceImpl implements GateArm {
 			logEvent(new GateArmEvent(gas, name, owner));
 			arm_state = gas;
 			notifyAttribute("armState");
+
+			// Send gate-array style-change notification
+			// to trigger an arm-state update in client GUI.
+			ga_array.notifyAttribute("styles");
 		}
 		ga_array.updateArmState();
 	}
@@ -271,12 +277,25 @@ public class GateArmImpl extends DeviceImpl implements GateArm {
 	/** Get the gate arm poller */
 	private GateArmPoller getGateArmPoller() {
 		DevicePoller dp = getPoller();
-		return (dp instanceof GateArmPoller) ? (GateArmPoller) dp :null;
+		return (dp instanceof GateArmPoller) ? (GateArmPoller) dp : null;
 	}
 
 	/** Update the gate arm styles.  This is called by the controller
 	 * when active or fail state changes. */
 	public void updateStyles() {
 		ga_array.updateStyles();
+	}
+	
+	//-----------------------------------------------------
+	// Gate arm beacon-on flag used by NDORv5Gate code
+
+	protected boolean bBeaconOn = false;
+
+	public boolean getBeaconOn() {
+		return bBeaconOn;
+	}
+	
+	public void setBeaconOn(boolean bVal) {
+		bBeaconOn = bVal;
 	}
 }

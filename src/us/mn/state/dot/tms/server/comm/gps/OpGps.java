@@ -23,7 +23,8 @@ import us.mn.state.dot.tms.server.comm.PriorityLevel;
  *
  * @author John L. Stanley
  */
-abstract public class OpGps extends OpDevice<GpsProperty> {
+@SuppressWarnings("rawtypes")
+abstract public class OpGps extends OpDevice {
 
 	/** GPS modem to talk to */
 	protected final GpsImpl gps;

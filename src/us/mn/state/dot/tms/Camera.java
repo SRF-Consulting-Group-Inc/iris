@@ -80,4 +80,40 @@ public interface Camera extends Device {
 
 	/** Recall the specified preset */
 	void setRecallPreset(int preset);
+	
+	/** Set the ftp username */
+	void setFtpUsername(String username);
+	
+	/** Get the ftp username */
+	String getFtpUsername();
+	
+	/** Set the ftp password */
+	void setFtpPassword(String password);
+	
+	/** Get the ftp password */
+	String getFtpPassword();
+	
+	/** Set ftp refresh interval*/
+	void setRefInterval(int refInterval);
+	
+	/**	Get ftp refresh interval */
+	int getRefInterval();
+	
+	/** Set ftp base directory */
+	void setFtpPath(String ftpPath);
+	
+	/** Get ftp base directory */
+	String getFtpPath();
+		
+	/** Set flag if ftp filename is constant */
+	void setSameFilename(boolean samefile);
+	
+	/** Get flag if if ftp filename is constant  */
+	boolean getSameFilename();
+	
+	/** Set if ftp filename is */
+	void setFtpFilename(String fname);
+	
+	/** Get if ftp image filename changes and should retrieve most recent image  */
+	String getFtpFilename();
 }

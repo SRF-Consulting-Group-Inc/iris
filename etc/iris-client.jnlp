@@ -20,6 +20,7 @@
 	<jar href="lib/iris-common-@@VERSION@@.jar"/>
 	<jar href="lib/scheduler-@@SCHEDULER.VERSION@@.jar"/>
 	<jar href="lib/sonar-client-@@SONAR.VERSION@@.jar"/>
+	<jar href="lib/edtftpj.jar"/>
 	<extension name="mail" href="mail.jnlp"/>
     </resources>
     <security>

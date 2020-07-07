@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2016  Minnesota Department of Transportation
+ * Copyright (C) 2000-2017  Minnesota Department of Transportation
  * Copyright (C) 2009-2014  AHMCT, University of California
  *
  * This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,7 @@ public class SignMessageComposer extends JPanel {
 	public void updateMessage() {
 		if (adjusting == 0) {
 			adjusting++;
-			dispatcher.setMessage(composeMessage());
+			dispatcher.setComposedMulti(getComposedMulti(), true);
 			dispatcher.selectPreview(true);
 			adjusting--;
 		}
@@ -156,8 +156,9 @@ public class SignMessageComposer extends JPanel {
 		setTabPage(0);
 		for (ComposerPagePanel pg: pages)
 			pg.clearWidgets();
-		dispatcher.setMessage("");
-		misc_pnl.setMessage("");
+		dispatcher.setComposedMulti("", true);
+		misc_pnl.setComposedMulti("");
+		misc_pnl.clearWidgets();
 		adjusting--;
 	}
 
@@ -273,7 +274,7 @@ public class SignMessageComposer extends JPanel {
 	}
 
 	/** Compose a MULTI string using the contents of the widgets */
-	private String composeMessage() {
+	public String getComposedMulti() {
 		MultiString[] mess = new MultiString[n_pages];
 		int fn = default_font;
 		int p = 0;
@@ -306,10 +307,10 @@ public class SignMessageComposer extends JPanel {
 		return mb.toString();
 	}
 
-	/** Set the currently selected message */
-	public void setMessage(String ms) {
+	/** Set the composed MULTI string */
+	public void setComposedMulti(String ms) {
 		adjusting++;
-		misc_pnl.setMessage(ms);
+		misc_pnl.setComposedMulti(ms);
 		// Note: order here is crucial. The font cbox must be updated
 		// first because the line combobox updates (each) result in 
 		// intermediate preview updates which read the (incorrect) 
@@ -368,7 +369,7 @@ public class SignMessageComposer extends JPanel {
 
 	/** Store the composed message as a quick-message */
 	public void storeAsQuickMessage() {
-		String multi = composeMessage();
+		String multi = getComposedMulti();
 		session.getDesktop().show(new StoreQuickMessageForm(session,
 			multi));
 	}
