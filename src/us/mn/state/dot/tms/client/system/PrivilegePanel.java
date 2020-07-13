@@ -66,7 +66,7 @@ public class PrivilegePanel extends ProxyTablePanel<Privilege> {
 		"incident_detail",
 		"inc_locator",
 		"ipaws",
-		"ipaws_alert_notifier",
+		"ipaws_alert_deployer",
 		"lane_action",
 		"lane_marking",
 		"lane_use_multi",

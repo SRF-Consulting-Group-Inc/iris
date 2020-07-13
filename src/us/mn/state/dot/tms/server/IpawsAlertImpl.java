@@ -835,6 +835,25 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		}
 	}
 	
+	/** Set the area from a string */
+	@Override
+	public void setGeoPoly(String gpstr) {
+		try {
+			geo_poly = new MultiPolygon(gpstr);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/** Set the area from a string */
+	public void doSetGeoPoly(String gpstr) throws TMSException {
+		if (geo_poly.toString() != gpstr) {
+			setGeoPoly(gpstr);
+			store.update(this, "geo_poly", geo_poly);
+		}
+	}
+	
 	/** Get the area */
 	@Override
 	public String getArea() {

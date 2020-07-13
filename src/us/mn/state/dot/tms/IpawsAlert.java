@@ -192,6 +192,9 @@ public interface IpawsAlert extends SonarObject {
 	/** Set the areas */
 	void setGeoPoly(MultiPolygon gp);
 	
+	/** Set the areas */
+	void setGeoPoly(String gpstr);
+	
 	/** Get the areas */
 	MultiPolygon getGeoPoly();
 	

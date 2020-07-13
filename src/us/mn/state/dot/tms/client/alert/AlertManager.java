@@ -12,17 +12,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.client.ipaws;
+package us.mn.state.dot.tms.client.alert;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.swing.JOptionPane;
 
+import us.mn.state.dot.sonar.client.ProxyListener;
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.GeoLoc;
-import us.mn.state.dot.tms.IpawsAlertNotifier;
+import us.mn.state.dot.tms.IpawsAlert;
+import us.mn.state.dot.tms.IpawsAlertHelper;
+import us.mn.state.dot.tms.IpawsAlertDeployer;
+import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.incident.IncidentMarker;
 import us.mn.state.dot.tms.client.proxy.GeoLocManager;
@@ -32,18 +38,23 @@ import us.mn.state.dot.tms.client.proxy.ProxyTheme;
 import us.mn.state.dot.tms.client.proxy.SwingProxyAdapter;
 
 /**
- * An IPAWS alert manager is a container for SONAR IpawsAlertNotifierObjects.
+ * An (IPAWS) AlertManager is a container for SONAR IpawsAlertDeployerObjects.
+ * NOTE this would need changing to let alert tab handle other types of
+ * alerts.
  *
  * @author Gordon Parikh
  */
-public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
+public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	
-	/** IpawsAlertNotifier cache */
-	private final TypeCache<IpawsAlertNotifier> cache;
+	/** IpawsAlertDeployer cache */
+	private final TypeCache<IpawsAlertDeployer> adcache;
+
+	/** IpawsAlert cache */
+	private final TypeCache<IpawsAlert> acache;
 	
 	/** Proxy listener for SONAR updates. TODO this will change a lot. */
-	private final SwingProxyAdapter<IpawsAlertNotifier> listener =
-			new SwingProxyAdapter<IpawsAlertNotifier>(true) {
+	private final SwingProxyAdapter<IpawsAlertDeployer> listener =
+			new SwingProxyAdapter<IpawsAlertDeployer>(true) {
 		
 		private boolean enumComplete = false;
 		
@@ -55,29 +66,30 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 		
 		@Override
 		protected void enumerationCompleteSwing(
-				Collection<IpawsAlertNotifier> ians) {
+				Collection<IpawsAlertDeployer> ians) {
 			enumComplete = true;
 		}
 		
 		String[] options = new String[] {"Deploy", "Cancel"};
 		
 		@Override
-		protected void proxyAddedSwing(IpawsAlertNotifier ian) {
+		protected void proxyAddedSwing(IpawsAlertDeployer ian) {
 			if (enumComplete && ian != null) {
 				newAlert = true;
 				sb = new StringBuilder();
 				sb.append("<html><body><p style='width: 400px;'>");
 				sb.append("New alert: " + ian.getAlertId());
 				boolean content = false;
-				if (ian.getDms() != null && ian.getDms().length > 0
-						&& ian.getDms()[0] != null) {
+				if (ian.getAutoDms() != null && ian.getAutoDms().length > 0
+						&& ian.getAutoDms()[0] != null) {
 					sb.append("<br>    ");
-					sb.append("Selected DMS: " + Arrays.toString(ian.getDms()));
+					sb.append("Selected DMS: " +
+							Arrays.toString(ian.getAutoDms()));
 					haveDms = true;
 				}
-				if (ian.getMulti() != null) {
+				if (ian.getAutoMulti() != null) {
 					sb.append("<br>    ");
-					sb.append("MULTI: " + ian.getMulti());
+					sb.append("MULTI: " + ian.getAutoMulti());
 					haveMulti = true;
 				}
 				if (haveDms && haveMulti) {
@@ -92,7 +104,7 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 		}
 		
 		@Override
-		protected void proxyChangedSwing(IpawsAlertNotifier ian, String attr) {
+		protected void proxyChangedSwing(IpawsAlertDeployer ian, String attr) {
 			if (ian != null) {
 				if (sb == null) {
 					sb = new StringBuilder();
@@ -102,14 +114,15 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 				}
 				
 				sb.append("<br>    ");
-				if (attr.equals("dms") && ian.getDms() != null
-						&& ian.getDms().length > 0 && ian.getDms()[0] != null) {
-					System.out.println(ian.getDms());
+				if (attr.equals("dms") && ian.getAutoDms() != null
+						&& ian.getAutoDms().length > 0 && ian.getAutoDms()[0] != null) {
+					System.out.println(ian.getAutoDms());
 					sb.append("Selected DMS: "
-							+ Arrays.toString(ian.getDms()));
+							+ Arrays.toString(ian.getAutoDms()));
 					haveDms = true;
-				} else if (attr.equals("multi") && ian.getMulti() != null) {
-					sb.append("MULTI: " + ian.getMulti());
+				} else if (attr.equals("multi")
+						&& ian.getAutoMulti() != null) {
+					sb.append("MULTI: " + ian.getAutoMulti());
 					haveMulti = true;
 				}
 				
@@ -134,33 +147,76 @@ public class IpawsManager extends ProxyManager<IpawsAlertNotifier> {
 	 *  TODO should we make an IpawsCache class? It will probably become
 	 *  evident that we should at some point...
 	 */
-	static private ProxyDescriptor<IpawsAlertNotifier> descriptor(Session s) {
-		return new ProxyDescriptor<IpawsAlertNotifier>(
-			s.getSonarState().getIpawsCache(), false);
+	static private ProxyDescriptor<IpawsAlertDeployer> descriptor(Session s) {
+		return new ProxyDescriptor<IpawsAlertDeployer>(
+			s.getSonarState().getIpawsDeployerCache(), false);
 	}
 	
-	public IpawsManager(Session s, GeoLocManager lm) {
+	public AlertManager(Session s, GeoLocManager lm) {
 		super(s, lm, descriptor(s), 10);
 		// TODO may change things about this
 		
 		// add the listener to the cache
-		cache = s.getSonarState().getIpawsCache();
-		cache.addProxyListener(listener);
-		Iterator<IpawsAlertNotifier> it = cache.iterator();
+		adcache = s.getSonarState().getIpawsDeployerCache();
+		acache = s.getSonarState().getIpawsAlertCache();
+//		cache.addProxyListener(listener);
+//		Iterator<IpawsAlertDeployer> it = cache.iterator();
+//		while (it.hasNext()) {
+//			IpawsAlertDeployer ian = it.next();
+//			System.out.println("Have alert: " + ian.getAlertId());
+//		}
+	}
+	
+	/** Create an alert tab */
+	public AlertTab createTab() {
+		AlertTab t = new AlertTab(session, this);
+		Iterator<IpawsAlertDeployer> it = adcache.iterator();
 		while (it.hasNext()) {
-			IpawsAlertNotifier ian = it.next();
-			System.out.println("Have alert: " + ian.getAlertId());
+			System.out.println(it.next().getAlertId());
+		}
+
+		LinkedList<ProxyListener<IpawsAlertDeployer>> listeners =
+				adcache.getProxyListeners();
+		for (ProxyListener<IpawsAlertDeployer> l: listeners) {
+			System.out.println(l.toString());
+		}
+		return t;
+	}
+
+	@Override
+	protected AlertTheme createTheme() {
+		return new AlertTheme(this);
+	}
+	
+	@Override
+	public boolean checkStyle(ItemStyle is, IpawsAlertDeployer proxy) {
+		// TODO IpawsAlert objects don't seem to be making it to the client
+		// (or something like that...)
+		IpawsAlert ia = acache.lookupObject(proxy.getAlertId());
+		System.out.println("IpawsAlert: " + ia);
+		switch (is) {
+		case ACTIVE:
+			if (ia != null) {
+				int ALERT = IpawsAlertHelper.checkAlertTimes(ia);
+				return ALERT == IpawsAlertHelper.BEFORE
+						|| ALERT == IpawsAlertHelper.DURING;
+			}
+			return false;
+		case PAST:
+			if (ia != null) {
+				return IpawsAlertHelper.checkAlertTimes(ia)
+						== IpawsAlertHelper.AFTER;
+			}
+			return false;
+		case ALL:
+			return true;
+		default:
+			return false;
 		}
 	}
 
 	@Override
-	protected ProxyTheme<IpawsAlertNotifier> createTheme() {
-		// TODO for now we're stealing the incident marker
-		return new ProxyTheme<IpawsAlertNotifier>(this, new IncidentMarker());
-	}
-
-	@Override
-	protected GeoLoc getGeoLoc(IpawsAlertNotifier proxy) {
+	protected GeoLoc getGeoLoc(IpawsAlertDeployer proxy) {
 		// TODO need to figure out how to handle this, since IPAWS alerts are
 		// areas and not points...
 		return null;

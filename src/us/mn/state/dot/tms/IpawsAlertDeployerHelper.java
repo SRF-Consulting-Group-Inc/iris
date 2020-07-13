@@ -18,37 +18,37 @@ package us.mn.state.dot.tms;
 import java.util.Iterator;
 
 /**
- * Helper class for IPAWS Alert Notifiers. Used on the client and server.
+ * Helper class for IPAWS Alert Deployers. Used on the client and server.
  *
  * @author Gordon Parikh
  */
-public class IpawsAlertNotifierHelper extends BaseHelper {
+public class IpawsAlertDeployerHelper extends BaseHelper {
 	
 	/** Don't instantiate */
-	private IpawsAlertNotifierHelper() {
+	private IpawsAlertDeployerHelper() {
 		assert false;
 	}
 	
-	/** Lookup the alert notifier with the specified name */
-	static public IpawsAlertNotifier lookup(String name) {
-		return (IpawsAlertNotifier) namespace.lookupObject(
-				IpawsAlertNotifier.SONAR_TYPE, name);
+	/** Lookup the alert deployer with the specified name */
+	static public IpawsAlertDeployer lookup(String name) {
+		return (IpawsAlertDeployer) namespace.lookupObject(
+				IpawsAlertDeployer.SONAR_TYPE, name);
 	}
 
-	/** Lookup an alert notifier object for the specified IpawsAlert name. */
-	static public IpawsAlertNotifier lookupAlertNotifierName(String alertId) {
-		Iterator<IpawsAlertNotifier> it = iterator();
+	/** Lookup an alert deployer object for the specified IpawsAlert name. */
+	static public IpawsAlertDeployer lookupAlertDeployerName(String alertId) {
+		Iterator<IpawsAlertDeployer> it = iterator();
 		while (it.hasNext()) {
-			IpawsAlertNotifier ian = it.next();
+			IpawsAlertDeployer ian = it.next();
 			if (ian.getAlertId().equals(alertId))
 				return ian;
 		}
 		return null;
 	}
 	
-	/** Get an IpawsAlertNotifier object iterator */
-	static public Iterator<IpawsAlertNotifier> iterator() {
-		return new IteratorWrapper<IpawsAlertNotifier>(namespace.iterator(
-				IpawsAlertNotifier.SONAR_TYPE));
+	/** Get an IpawsAlertDeployer object iterator */
+	static public Iterator<IpawsAlertDeployer> iterator() {
+		return new IteratorWrapper<IpawsAlertDeployer>(namespace.iterator(
+				IpawsAlertDeployer.SONAR_TYPE));
 	}
 }

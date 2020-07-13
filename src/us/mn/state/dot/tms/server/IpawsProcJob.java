@@ -143,18 +143,18 @@ public class IpawsProcJob extends Job {
 			// set the MultiPolygon on the alert object
 			ia.doSetGeoPoly(mp);
 			
-			// find DMS in the polygon and generate an alert notifier object
+			// find DMS in the polygon and generate an alert deployer object
 			selectDms(ia);
 			
 			// check if the alert was marked purgeable - if it was, move on
 			if (!ia.getPurgeable()) {
 				// if it wasn't, generate MULTI for the message
-				// get the alert notifier object to store it first
-				IpawsAlertNotifierImpl ian =
-						IpawsAlertNotifierImpl.lookupFromAlert(ia.getName());
+				// get the alert deployer object to store it first
+				IpawsAlertDeployerImpl ian =
+						IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
 				String alertMulti = generateMulti(ia);
 				System.out.println("Got MULTI: " + alertMulti);
-				ian.setMultiNotify(alertMulti);
+				ian.setAutoMultiNotify(alertMulti);
 			}
 		}
 	}
@@ -167,7 +167,7 @@ public class IpawsProcJob extends Job {
 		// We will also have this group signs based on their config (we can
 		// maybe/probably use stuff from MultiConfig after merging that) and
 		// use that to look up QuickMessages by event type and config (we
-		// would need to adjust IpawsAlertNotifier for this too).
+		// would need to adjust IpawsAlertDeployer for this too).
 		
 		// lookup a "QuickMessage" for the event type
 		String event = ia.getEvent();
@@ -236,13 +236,7 @@ public class IpawsProcJob extends Job {
 	 */
 	private String getTimeMulti(IpawsAlertImpl ia) {
 		// get the time fields of the alert
-		// try the onset time first, then effective, and finally sent (which
-		// is required)
-		Date alertStart = ia.getOnsetDate();
-		if (alertStart == null)
-			alertStart = ia.getEffectiveDate();
-		if (alertStart == null)
-			alertStart = ia.getSentDate();
+		Date alertStart = IpawsAlertHelper.getAlertStart(ia);
 		
 		// IPAWS requires alert expiration field
 		Date alertEnd = ia.getExpirationDate();
@@ -291,10 +285,10 @@ public class IpawsProcJob extends Job {
 	 *  field, and after that polygon is written to the database with the
 	 *  alert's doSetGeoPoly() method. 
 	 *  
-	 *  If at least one sign is selected, an IpawsAlertNotifier object is
+	 *  If at least one sign is selected, an IpawsAlertDeployer object is
 	 *  created to notify clients for approval (TODO auto mode??).
 	 *  
-	 *  If no signs are found, no notifier object is created and the IpawsAlert
+	 *  If no signs are found, no deployer object is created and the IpawsAlert
 	 *  object is marked purgeable.
 	 */
 	private void selectDms(IpawsAlertImpl ia) throws TMSException {
@@ -316,19 +310,19 @@ public class IpawsProcJob extends Job {
 					
 					if (dms.length > 0) {
 						// if we did, try to look up an alert
-						IpawsAlertNotifierImpl ian =
-						  IpawsAlertNotifierImpl.lookupFromAlert(ia.getName());
+						IpawsAlertDeployerImpl ian =
+						  IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
 						
 						if (ian == null) {
 							// if we didn't find one, generate a new name for
-							// the alert notifier and construct a new object
-							String name = IpawsAlertNotifierImpl
+							// the alert deployer and construct a new object
+							String name = IpawsAlertDeployerImpl
 									.getUniqueName();
-							ian = new IpawsAlertNotifierImpl(
+							ian = new IpawsAlertDeployerImpl(
 									name, ia.getName()); //, dms);
 							ian.notifyCreate();
 						}
-						ian.setDmsNotify(dms);
+						ian.setAutoDmsNotify(dms);
 					} else
 						// if we didn't, mark the alert as purgeable
 						ia.doSetPurgeable(true);

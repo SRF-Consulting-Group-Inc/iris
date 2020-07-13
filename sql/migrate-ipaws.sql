@@ -56,22 +56,35 @@ ALTER TABLE event.ipaws
 	
 INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
 
--- IPAWS Alert Notifier table
-CREATE TABLE event.ipaws_alert_notifier (
-	name VARCHAR(24) PRIMARY KEY,
+-- IPAWS Alert Deployer table
+CREATE TABLE event.ipaws_alert_deployer (
+	name varchar(24) PRIMARY KEY,
+	gen_time timestamp with time zone,
+	approved_time timestamp with time zone,
 	alert_id text,
-	dms text[],
-	multi text,
-	approved_by text
+	alert_start timestamp with time zone,
+	alert_end timestamp with time zone,
+	sign_group varchar(20),
+	quick_message varchar(20),
+	auto_dms text[],
+	optional_dms text[],
+	deployed_dms text[],
+	area_threshold double precision,
+	auto_multi text,
+	deployed_multi text,
+	approved_by varchar(15),
+	deployed boolean,
+	active boolean,
+	replaces varchar(24)
 );
 
-ALTER TABLE event.ipaws_alert_notifier OWNER TO tms;
+ALTER TABLE event.ipaws_alert_deployer OWNER TO tms;
 
 -- Extend sonar type fields to allow a longer name
 
 ALTER TABLE iris.sonar_type ALTER COLUMN name TYPE varchar(32);
 
-INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_notifier');
+INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_deployer');
 
 -- Need to drop the privilege view first
 DROP VIEW public.role_privilege_view;
@@ -88,3 +101,15 @@ CREATE VIEW role_privilege_view AS
 	JOIN iris.privilege ON privilege.capability = capability.name
 	WHERE role.enabled = 't' AND capability.enabled = 't';
 GRANT SELECT ON role_privilege_view TO PUBLIC;
+
+-- Add capability and privileges
+INSERT INTO iris.capability (name, enabled) VALUES ('ipaws', true),
+												   ('ipaws_admin', true);
+
+INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) VALUES
+						   ('PRV_009A','ipaws_tab','ipaws','','','',false),
+						   ('PRV_009B','ipaws_tab','ipaws_alert_deployer','','','',false),
+						   ('PRV_009C','ipaws_admin','ipaws','','','',true),
+						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true);
+
+-- TODO role_capability
