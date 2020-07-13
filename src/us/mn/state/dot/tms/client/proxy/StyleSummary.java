@@ -100,6 +100,10 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 
 	/** Proxy list */
 	private final ProxyJList<T> p_list;
+	
+	public ProxyJList<T> getPlist() {
+		return p_list;
+	}
 
 	/** List scrollpane */
 	private final JScrollPane s_pane;
