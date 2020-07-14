@@ -127,6 +127,12 @@ public interface IpawsAlertDeployer extends SonarObject {
 	/** Get the MULTI actually deployed to DMS. */
 	String getDeployedMulti();
 	
+	/** Set the message priority */
+	void setMsgPriority(Integer p);
+	
+	/** Get the message priority */
+	Integer getMsgPriorty();
+	
 	/** Set the approving user. */
 	void setApprovedBy(String u);
 	
@@ -139,7 +145,7 @@ public interface IpawsAlertDeployer extends SonarObject {
 	/** Get the deployed state of this alert (whether it was ever deployed). */
 	Boolean getDeployed();
 
-	/** Get the state of this alert (whether it is currently deployed or not).*/
+	/** Set the state of this alert (whether it is currently deployed or not).*/
 	void setActive(Boolean a);
 	
 	/** Get the state of this alert (whether it is currently deployed or not).*/
@@ -147,11 +153,11 @@ public interface IpawsAlertDeployer extends SonarObject {
 	
 	// TODO not sure about this one...
 	
-	/** Get the alert deployer that this replaces (if any). Note that updates
+	/** Set the alert deployer that this replaces (if any). Note that updates
 	 *  to alerts trigger creation of a new deployer (not an update).
 	 */
 	void setReplaces(String r);
 	
-	/** Set the alert deployer that this replaces (if any). */
+	/** Get the alert deployer that this replaces (if any). */
 	String getReplaces();
 }

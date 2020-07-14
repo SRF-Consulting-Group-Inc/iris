@@ -74,8 +74,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		store.query("SELECT name, gen_time, approved_time, alert_id," +
 			"alert_start, alert_end, sign_group, quick_message, auto_dms," +
 			"optional_dms, deployed_dms, area_threshold, auto_multi," +
-			"deployed_multi, approved_by, deployed, active, replaces " +
-			"FROM event." + SONAR_TYPE + ";", new ResultFactory()
+			"deployed_multi, msg_priority, approved_by, deployed, active," +
+			"replaces FROM event." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			@Override
 			public void create(ResultSet row) throws Exception {
@@ -104,6 +104,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		map.put("deployed_dms", deployed_dms);
 		map.put("auto_multi", auto_multi);
 		map.put("deployed_multi", deployed_multi);
+		map.put("msg_priority", msg_priority);
 		map.put("approved_by", approved_by);
 		map.put("deployed", deployed);
 		map.put("active", active);
@@ -201,7 +202,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		gen_time = gt;
 	}
 
-	// TODO doSetGenTime()
+	/** Set the generation time of this deployer object */
+	public void doSetGenTime(Date gt) throws TMSException {
+		if (gt != gen_time) {
+			store.update(this, "gen_time", gt);
+			setGenTime(gt);
+		}
+	}
 	
 	/** Get the generation time of this deployer object */
 	@Override
@@ -218,7 +225,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		approved_time = at;
 	}
 	
-	// TODO doSetApprovedTime()
+	/** Set the approval time of this deployer object */
+	public void doSetApprovedTime(Date at) throws TMSException {
+		if (at != approved_time) {
+			store.update(this, "approved_time", at);
+			setApprovedTime(at);
+		}
+	}
 	
 	/** Get the approval time of this deployer object */
 	@Override
@@ -258,7 +271,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		alert_start = t;
 	}
 	
-	// TODO doSet...()
+	/** Set the alert start time */
+	public void doSetAlertStart(Date t) throws TMSException {
+		if (t != alert_start) {
+			store.update(this, "alert_start", t);
+			setAlertStart(t);
+		}
+	}
 	
 	/** Get the alert start time */
 	@Override
@@ -275,7 +294,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		alert_end = t;
 	}
 
-	// TODO doSet...()
+	/** Set the alert end time */
+	public void doSetAlertEnd(Date t) throws TMSException {
+		if (t != alert_end) {
+			store.update(this, "alert_end", t);
+			setAlertEnd(t);
+		}
+	}
 	
 	/** Get the alert end time */
 	@Override
@@ -292,7 +317,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		sign_group = sg;
 	}
 
-	// TODO doSet...()
+	/** Set the sign group used for this deployment */
+	public void doSetSignGroup(String sg) throws TMSException {
+		if (sg != sign_group) {
+			store.update(this, "sign_group", sg);
+			setSignGroup(sg);
+		}
+	}
 	
 	/** Get the sign group used for this deployment */
 	@Override
@@ -309,7 +340,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		quick_message = qm;
 	}
 
-	// TODO doSet...()
+	/** Set the quick message (template) used for this deployment */
+	public void doSetQuickMessage(String qm) throws TMSException {
+		if (qm != quick_message) {
+			store.update(this, "quick_message", qm);
+			setQuickMessage(qm);
+		}
+	}
 	
 	/** Get the quick message (template) used for this deployment */
 	@Override
@@ -369,7 +406,15 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		optional_dms = dms;
 	}
 
-	// TODO doSet...()
+	/** Set the list of DMS suggested automatically by the system as optional 
+	 *  DMS that users may want to include for the deployment.
+	 */
+	public void doSetOptionalDms(String[] dms) throws TMSException {
+		if (dms != optional_dms) {
+			store.update(this, "optional_dms", dms);
+			setOptionalDms(dms);
+		}
+	}
 	
 	/** Get the list of DMS suggested automatically by the system as optional 
 	 *  DMS that users may want to include for the deployment.
@@ -388,7 +433,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		deployed_dms = dms;
 	}
 
-	// TODO doSet...()
+	/** Set the list of DMS actually used to deploy the message. */
+	public void doSetDeployedDms(String[] dms) throws TMSException {
+		if (dms != deployed_dms) {
+			store.update(this, "deployed_dms", dms);
+			setDeployedDms(dms);
+		}
+	}
 	
 	/** Get the list of DMS actually used to deploy the message. */
 	@Override
@@ -399,13 +450,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Area threshold used for including DMS outside the alert area. */
 	private Double alert_threshold;
 	
+	/** Set area threshold used for including DMS outside the alert area. */
 	@Override
 	public void setAreaThreshold(Double t) {
 		alert_threshold = t;
 	}
 
-	// TODO doSet...()
+	/** Set area threshold used for including DMS outside the alert area. */
+	public void doSetAreaThreshold(Double t) throws TMSException {
+		if (t != alert_threshold) {
+			store.update(this, "alert_threshold", t);
+			setAreaThreshold(t);
+		}
+	}
 	
+	/** Get area threshold used for including DMS outside the alert area. */
 	@Override
 	public Double getAreaThreshold() {
 		return alert_threshold;
@@ -459,7 +518,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		deployed_multi = m;
 	}
 
-	// TODO doSet...()
+	/** Set the MULTI actually deployed to DMS. */
+	public void doSetDeployedMulti(String m) throws TMSException {
+		if (m != deployed_multi) {
+			store.update(this, "deployed_multi", m);
+			setDeployedMulti(m);
+		}
+	}
 	
 	/** Get the MULTI actually deployed to DMS. */
 	@Override
@@ -467,6 +532,31 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		return deployed_multi;
 	}
 
+	/** Message priority calculated from alert fields (can be overridden by
+	 *  user). 
+	 */
+	private int msg_priority;
+	
+	/** Set the message priority */
+	@Override
+	public void setMsgPriority(Integer p) {
+		msg_priority = p;
+	}
+	
+	/** Set the message priority  */
+	public void doSetMsgPriority(Integer p) throws TMSException {
+		if (p != msg_priority) {
+			store.update(this, "msg_priority", p);
+			setMsgPriority(p);
+		}
+	}
+	
+	/** Get the message priority */
+	@Override
+	public Integer getMsgPriorty() {
+		return msg_priority;
+	}
+	
 	/** User that approved the alert message posting (may be null or "AUTO"). */
 	private String approved_by;
 
@@ -493,13 +583,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Deployed state of this alert (whether it was ever deployed). */
 	private Boolean deployed;
 	
+	/** Set the deployed state of this alert (whether it was ever deployed). */
 	@Override
 	public void setDeployed(Boolean d) {
 		deployed = d;
 	}
 
-	// TODO doSet...()
+	/** Set the deployed state of this alert (whether it was ever deployed). */
+	public void doSetDeployed(Boolean d) throws TMSException {
+		if (d != deployed) {
+			store.update(this, "deployed", d);
+			setDeployed(d);
+		}
+	}
 	
+	/** Get the deployed state of this alert (whether it was ever deployed). */
 	@Override
 	public Boolean getDeployed() {
 		return deployed;
@@ -508,13 +606,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** State of this alert (whether it is currently deployed or not). */
 	private Boolean active;
 	
+	/** Set the state of this alert (whether it is currently deployed or not).*/
 	@Override
 	public void setActive(Boolean a) {
 		active = a;
 	}
 
-	// TODO doSet...()
+	/** Set the state of this alert (whether it is currently deployed or not).*/
+	public void doSetActive(Boolean a) throws TMSException {
+		if (a != active) {
+			store.update(this, "active", a);
+			setActive(a);
+		}
+	}
 	
+	/** Get the state of this alert (whether it is currently deployed or not).*/
 	@Override
 	public Boolean getActive() {
 		return active;
@@ -525,13 +631,25 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	private String replaces;
 	
+	/** Get the alert deployer that this replaces (if any). Note that updates
+	 *  to alerts trigger creation of a new deployer (not an update).
+	 */
 	@Override
 	public void setReplaces(String r) {
 		replaces = r;
 	}
 
-	// TODO doSet...()
+	/** Get the alert deployer that this replaces (if any). Note that updates
+	 *  to alerts trigger creation of a new deployer (not an update).
+	 */
+	public void doSetReplaces(String r) throws TMSException {
+		if (r != replaces) {
+			store.update(this, "replaces", r);
+			setReplaces(r);
+		}
+	}
 	
+	/** Set the alert deployer that this replaces (if any). */
 	@Override
 	public String getReplaces() {
 		return replaces;

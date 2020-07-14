@@ -72,6 +72,7 @@ CREATE TABLE event.ipaws_alert_deployer (
 	area_threshold double precision,
 	auto_multi text,
 	deployed_multi text,
+	msg_priority integer,
 	approved_by varchar(15),
 	deployed boolean,
 	active boolean,
