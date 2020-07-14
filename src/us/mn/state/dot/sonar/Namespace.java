@@ -71,7 +71,6 @@ abstract public class Namespace {
 			return o.getName();
 		} else if (v instanceof Date) {
 			String dt = iso8601.format(v);
-			System.out.println("Date: " + dt);
 			return dt;
 		}
 		else if (v != null)
