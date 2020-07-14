@@ -1,3 +1,8 @@
+\set ON_ERROR_STOP
+
+SET SESSION AUTHORIZATION 'tms';
+BEGIN;
+
 -- Reserve IPAWS Alert comm protocol value
 INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
 
@@ -5,7 +10,7 @@ INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
 DROP VIEW public.comm_link_view;
 
 -- Extend allowed length of URI field in comm_link table
-ALTER TABLE iris.comm_link ALTER COLUMN uri TYPE character varying(128);
+ALTER TABLE iris.comm_link ALTER COLUMN uri TYPE character varying(256);
 
 -- Recreate comm_link_view with the altered table
 CREATE VIEW comm_link_view AS
@@ -18,31 +23,31 @@ GRANT SELECT ON comm_link_view TO PUBLIC;
 -- IPAWS Alert Event table
 CREATE TABLE event.ipaws
 (
-    name text COLLATE pg_catalog."default",
-    identifier text COLLATE pg_catalog."default",
-    sender text COLLATE pg_catalog."default",
+    name text PRIMARY KEY,
+    identifier text,
+    sender text,
     sent_date timestamp with time zone,
-    status text COLLATE pg_catalog."default",
-    message_type text COLLATE pg_catalog."default",
-    scope text COLLATE pg_catalog."default",
-    codes text[] COLLATE pg_catalog."default",
-    note text COLLATE pg_catalog."default",
-    alert_references text[] COLLATE pg_catalog."default",
-    incidents text[] COLLATE pg_catalog."default",
-    categories text[] COLLATE pg_catalog."default",
-    event text COLLATE pg_catalog."default",
-    response_types text[] COLLATE pg_catalog."default",
-    urgency text COLLATE pg_catalog."default",
-    severity text COLLATE pg_catalog."default",
-    certainty text COLLATE pg_catalog."default",
-    audience text COLLATE pg_catalog."default",
+    status text,
+    message_type text,
+    scope text,
+    codes text[],
+    note text,
+    alert_references text[],
+    incidents text[],
+    categories text[],
+    event text,
+    response_types text[],
+    urgency text,
+    severity text,
+    certainty text,
+    audience text,
     effective_date timestamp with time zone,
     onset_date timestamp with time zone,
     expiration_date timestamp with time zone,
-    sender_name text COLLATE pg_catalog."default",
-    headline text COLLATE pg_catalog."default",
-    alert_description text COLLATE pg_catalog."default",
-    instruction text COLLATE pg_catalog."default",
+    sender_name text,
+    headline text,
+    alert_description text,
+    instruction text,
     parameters jsonb,
     area jsonb,
     geo_poly geography(polygon),
@@ -50,9 +55,6 @@ CREATE TABLE event.ipaws
 );
 
 TABLESPACE pg_default;
-
-ALTER TABLE event.ipaws
-    OWNER TO tms;
 	
 INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
 
@@ -79,7 +81,34 @@ CREATE TABLE event.ipaws_alert_deployer (
 	replaces varchar(24)
 );
 
-ALTER TABLE event.ipaws_alert_deployer OWNER TO tms;
+ALTER TABLE event.ipaws_alert_deployer
+	ADD CONSTRAINT ipaws_alert_deployer_alert_id_fkey
+		FOREIGN KEY (alert_id)
+        REFERENCES event.ipaws (name) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION;
+
+-- IPAWS Alert Config table
+CREATE TABLE iris.ipaws_alert_config (
+	name varchar(24) PRIMARY KEY,
+	event text,
+	sign_group varchar(20),
+	quick_message varchar(20)
+);
+
+ALTER TABLE iris.ipaws_alert_config
+	ADD CONSTRAINT ipaws_alert_config_sign_group_fkey
+		FOREIGN KEY (sign_group)
+        REFERENCES iris.sign_group (name) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION;
+		
+ALTER TABLE iris.ipaws_alert_config
+	ADD CONSTRAINT ipaws_alert_config_quick_message_fkey
+		FOREIGN KEY (quick_message)
+        REFERENCES iris.quick_message (name) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION;
 
 -- Extend sonar type fields to allow a longer name
 
@@ -114,3 +143,5 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true);
 
 -- TODO role_capability
+
+COMMIT;
