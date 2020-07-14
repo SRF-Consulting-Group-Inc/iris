@@ -860,18 +860,18 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		return area;
 	}
 	
-	/** Purgeable flag. Set to true if alert is determined to be irrelevant
-	 *  to this system's users.
+	/** Purgeable flag. Null if the alert has not yet been processed, true if
+	 *  alert is determined to be irrelevant to this system's users.
 	 */
-	private boolean purgeable;
+	private Boolean purgeable;
 	
 	/** Set if this alert is purgeable (irrelevant to us) */
-	public void setPurgeable(boolean p) {
+	public void setPurgeable(Boolean p) {
 		purgeable = p;
 	}
 
 	/** Set the area */
-	public void doSetPurgeable(boolean p) throws TMSException {
+	public void doSetPurgeable(Boolean p) throws TMSException {
 		if (purgeable != p) {
 			store.update(this, "purgeable", p);
 			setPurgeable(p);
@@ -879,7 +879,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	}
 	
 	/** Return if this alert is purgeable (irrelevant to us) */
-	public boolean getPurgeable() {
+	public Boolean getPurgeable() {
 		return purgeable;
 	}
 }

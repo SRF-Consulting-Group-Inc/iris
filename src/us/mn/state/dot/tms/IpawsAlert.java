@@ -198,9 +198,12 @@ public interface IpawsAlert extends SonarObject {
 	/** Get the areas */
 	MultiPolygon getGeoPoly();
 	
-	/** Set if this alert is purgeable (irrelevant to us) */
-	void setPurgeable(boolean p);
+	/** Set if this alert is purgeable (irrelevant to us). Also acts as a flag
+	 *  to indicate whether an alert has been processed or not (null if not
+	 *  processed yet).
+	 */
+	void setPurgeable(Boolean p);
 	
 	/** Return if this alert is purgeable (irrelevant to us) */
-	boolean getPurgeable();
+	Boolean getPurgeable();
 }
