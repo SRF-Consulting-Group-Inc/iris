@@ -51,7 +51,7 @@ CREATE TABLE event.ipaws
     parameters jsonb,
     area jsonb,
     geo_poly geography(polygon),
-    purgeable boolean DEFAULT false
+    purgeable boolean
 );
 
 TABLESPACE pg_default;
