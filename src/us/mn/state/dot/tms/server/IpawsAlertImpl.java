@@ -58,7 +58,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 				try {
 					namespace.addObject(new IpawsAlertImpl(row));
 				} catch(Exception e) {
-					System.out.println(row.getString(1));
+					System.out.println("Error adding: " + row.getString(1));
+					e.printStackTrace();
 				}
 			}
 		});
@@ -115,35 +116,35 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	
 	/** Create an incident advice */
 	private IpawsAlertImpl(ResultSet row) throws SQLException {
-		this(row.getString(1),	// name
-			row.getString(2),	// identifier
-			row.getString(3),	// sender
-			row.getTimestamp(4),// sent date
-			row.getString(5),	// status
-			row.getString(6),	// message type
-			row.getString(7),	// scope
-			(String[])row.getArray(8).getArray(),	// codes
-			row.getString(9),	// note
-			(String[])row.getArray(10).getArray(),	// alert references
-			(String[])row.getArray(11).getArray(),	// incidents
-			(String[])row.getArray(12).getArray(),	// categories
-			row.getString(13),	// event
-			(String[])row.getArray(14).getArray(),	// response types
-			row.getString(15),	// urgency
-			row.getString(16),	// severity
-			row.getString(17),	// certainty
-			row.getString(18), //audience
-			row.getTimestamp(19),// effective date
-			row.getTimestamp(20),// onset date
-			row.getTimestamp(21),// expiration date
-			row.getString(22),	// sender name
-			row.getString(23),	// headline
-			row.getString(24), // alert description
-			row.getString(25), // instruction
-			row.getString(26),	// parameters
-			row.getString(27),	//area
-			row.getString(28),	//geo_poly
-			row.getBoolean(29) // purgeable flag
+		this(row.getString(1),			// name
+			row.getString(2),			// identifier
+			row.getString(3),			// sender
+			row.getTimestamp(4),		// sent date
+			row.getString(5),			// status
+			row.getString(6),			// message type
+			row.getString(7),			// scope
+			getStringArray(row, 8),		// codes
+			row.getString(9),			// note
+			getStringArray(row, 10),	// alert references
+			getStringArray(row, 11),	// incidents
+			getStringArray(row, 12),	// categories
+			row.getString(13),			// event
+			getStringArray(row, 14),	// response types
+			row.getString(15),			// urgency
+			row.getString(16),			// severity
+			row.getString(17),			// certainty
+			row.getString(18), 			// audience
+			row.getTimestamp(19),		// effective date
+			row.getTimestamp(20),		// onset date
+			row.getTimestamp(21),		// expiration date
+			row.getString(22),			// sender name
+			row.getString(23),			// headline
+			row.getString(24), 			// alert description
+			row.getString(25), 			// instruction
+			row.getString(26),			// parameters
+			row.getString(27),			//area
+			row.getString(28),			//geo_poly
+			getBoolean(row, 29) 		// purgeable flag
 		);
 	}
 
@@ -183,7 +184,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			String[] inc, String[] ct, String ev, String[] rt, String u, 
 			String sv, String cy, String au, Date efd, Date od, Date exd, 
 			String sn, String hl, String ades, String in, 
-			String par, String ar, String gp, boolean p) 
+			String par, String ar, String gp, Boolean p) 
 	{
 		super(n);
 		identifier = i;
@@ -212,11 +213,13 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		instruction = in;
 		parameters = par;
 		area = ar;
-		try {
-			geo_poly = new MultiPolygon(gp);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (gp != null) {
+			try {
+				geo_poly = new MultiPolygon(gp);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		purgeable = p;
 	}
