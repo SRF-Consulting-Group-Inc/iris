@@ -14,6 +14,9 @@
  */
 package us.mn.state.dot.tms.server;
 
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.Date;
 import us.mn.state.dot.sched.Job;
@@ -450,6 +453,28 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		nf.setGroupingUsed(false);
 		nf.setMaximumFractionDigits(5);
 		return nf.format(value);
+	}
+	
+	/** Get a Boolean value from a particular column of a ResultSet. Supports
+	 *  returning null values.
+	 */
+	static protected Boolean getBoolean(ResultSet row, int columnIndex)
+			throws SQLException {
+		boolean b = row.getBoolean(columnIndex);
+		if (row.wasNull())
+			return null;
+		return b;
+	}
+	
+	/** Get a String array from a particular column of a ResultSet. Guards
+	 *  against null pointer exceptions.
+	 */
+	static protected String[] getStringArray(ResultSet row, int columnIndex)
+			throws SQLException {
+		Array arr = row.getArray(columnIndex);
+		if (!row.wasNull())
+			return (String[]) arr.getArray();
+		return null;
 	}
 
 	/** Log an event */
