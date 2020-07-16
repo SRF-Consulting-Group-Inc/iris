@@ -129,7 +129,9 @@ public class IpawsProcJob extends Job {
 			
 			IpawsAlertImpl ia = it.next();
 			
-			// TODO add check to avoid re-processing every time (?)
+			// TODO also need to add some sort of check for updates
+			if (ia.getPurgeable() != null)
+				continue;
 			
 			System.out.println("Processing IPAWS alert: " + ia.getName());
 			
@@ -323,6 +325,9 @@ public class IpawsProcJob extends Job {
 							ian.notifyCreate();
 						}
 						ian.setAutoDmsNotify(dms);
+						
+						// note that the alert has been processed
+						ia.doSetPurgeable(false);
 					} else
 						// if we didn't, mark the alert as purgeable
 						ia.doSetPurgeable(true);
