@@ -193,7 +193,6 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 		// TODO IpawsAlert objects don't seem to be making it to the client
 		// (or something like that...)
 		IpawsAlert ia = acache.lookupObject(proxy.getAlertId());
-		System.out.println("IpawsAlert: " + ia);
 		switch (is) {
 		case ACTIVE:
 			if (ia != null) {
