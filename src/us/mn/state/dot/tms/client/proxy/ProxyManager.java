@@ -314,11 +314,19 @@ abstract public class ProxyManager<T extends SonarObject> {
 		return sel_mdl;
 	}
 
-	/** Create a new style summary.
+	/** Create a new style summary with 2 rows of buttons.
 	 * @param size_btns Enable buttons to change cell size.
 	 * @return A style summary for the proxy type T. */
 	public StyleSummary<T> createStyleSummary(boolean size_btns) {
 		return new StyleSummary<T>(this, def_style, size_btns);
+	}
+	
+	/** Create a new style summary.
+	 * @param size_btns Enable buttons to change cell size.
+	 * @param sr Number of rows of style buttons.
+	 * @return A style summary for the proxy type T. */
+	public StyleSummary<T> createStyleSummary(boolean size_btns, int sr) {
+		return new StyleSummary<T>(this, def_style, size_btns, sr);
 	}
 
 	/** Get the specified style list model */
