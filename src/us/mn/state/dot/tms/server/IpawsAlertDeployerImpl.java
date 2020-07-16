@@ -82,7 +82,9 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				try {
 					namespace.addObject(new IpawsAlertDeployerImpl(row));
 				} catch (Exception e) {
-					System.out.println(row.getString(1));
+					// TODO do we need/want this??
+					System.out.println("Error adding: " + row.getString(1));
+					e.printStackTrace();
 				}
 			}
 		});
@@ -125,24 +127,24 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 	
 	private IpawsAlertDeployerImpl(ResultSet row) throws SQLException {
-		this(row.getString(1),						// name
-			row.getTimestamp(2),					// generated time
-			row.getTimestamp(3),					// approval time
-			row.getString(4),						// alert identifier
-			row.getTimestamp(5),					// alert start
-			row.getTimestamp(6),					// alert end
-			row.getString(7),						// sign group
-			row.getString(8),						// quick message
-			(String[])row.getArray(9).getArray(),	// auto DMS list
-			(String[])row.getArray(10).getArray(),	// optional DMS list
-			(String[])row.getArray(11).getArray(),	// deployed DMS list
-			row.getDouble(12),						// area threshold
-			row.getString(13),						// auto MULTI
-			row.getString(14),						// deployed MULTI
-			row.getString(15),						// approving user
-			row.getBoolean(16),						// deployed
-			row.getBoolean(17),						// active
-			row.getString(18)						// replaces
+		this(row.getString(1),			// name
+			row.getTimestamp(2),		// generated time
+			row.getTimestamp(3),		// approval time
+			row.getString(4),			// alert identifier
+			row.getTimestamp(5),		// alert start
+			row.getTimestamp(6),		// alert end
+			row.getString(7),			// sign group
+			row.getString(8),			// quick message
+			getStringArray(row, 9),		// auto DMS list
+			getStringArray(row, 10),	// optional DMS list
+			getStringArray(row, 11),	// deployed DMS list
+			row.getDouble(12),			// area threshold
+			row.getString(13),			// auto MULTI
+			row.getString(14),			// deployed MULTI
+			row.getString(15),			// approving user
+			row.getBoolean(16),			// deployed
+			row.getBoolean(17),			// active
+			row.getString(18)			// replaces
 		 );
 	}
 	
@@ -383,7 +385,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public void setAutoDmsNotify(String[] dms) throws TMSException {
 		if (doSetAutoDms(dms))
-			notifyAttribute("auto_dms");
+			notifyAttribute("autoDms");
 	}
 	
 	/** Get the list of DMS (represented as a string array) automatically 
@@ -498,7 +500,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public void setAutoMultiNotify(String m) throws TMSException {
 		if (doSetAutoMulti(m))
-			notifyAttribute("auto_multi");
+			notifyAttribute("autoMulti");
 	}
 	
 	/** Get the MULTI generated automatically by the system for deploying to
