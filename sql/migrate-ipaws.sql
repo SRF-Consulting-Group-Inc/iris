@@ -50,11 +50,9 @@ CREATE TABLE event.ipaws
     instruction text,
     parameters jsonb,
     area jsonb,
-    geo_poly geography(polygon),
+    geo_poly geography(multipolygon),
     purgeable boolean
 );
-
-TABLESPACE pg_default;
 	
 INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
 
