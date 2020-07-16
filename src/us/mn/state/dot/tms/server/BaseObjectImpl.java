@@ -426,7 +426,10 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 			s.removeObject(this);
 	}
 
-	/** Notify SONAR clients of a change to an attribute */
+	/** Notify SONAR clients of a change to an attribute. Attribute names
+	 *  should use lower camel case instead of underscores (e.g.
+	 *  "someAttribute" instead of "some_attribute").
+	 */
 	protected void notifyAttribute(String aname) {
 		Server s = MainServer.server;
 		if (s != null)
