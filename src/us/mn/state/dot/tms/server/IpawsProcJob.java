@@ -152,6 +152,9 @@ public class IpawsProcJob extends Job {
 			if (!ia.getPurgeable()) {
 				// if it wasn't, generate MULTI for the message
 				// get the alert deployer object to store it first
+				// TODO/NOTE there is a potential problem with this because
+				// we allow multiple alert deployers for one alert, but it
+				// shouldn't come up since that would only happen for updates
 				IpawsAlertDeployerImpl ian =
 						IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
 				String alertMulti = generateMulti(ia);
@@ -296,6 +299,7 @@ public class IpawsProcJob extends Job {
 	private void selectDms(IpawsAlertImpl ia) throws TMSException {
 		// query the list of DMS that falls within the MultiPolygon for this
 		// alert - use array_agg to get one array instead of multiple rows
+		// TODO need to add additional filtering to this
 		IpawsAlertImpl.store.query(
 				"SELECT array_agg(d.name) FROM iris." + DMS.SONAR_TYPE + " d" +
 				" JOIN iris." + GeoLoc.SONAR_TYPE + " g ON d.geo_loc=g.name" +
@@ -312,19 +316,24 @@ public class IpawsProcJob extends Job {
 					
 					if (dms.length > 0) {
 						// if we did, try to look up an alert
-						IpawsAlertDeployerImpl ian =
+						IpawsAlertDeployerImpl iad =
 						  IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
 						
-						if (ian == null) {
+						if (iad == null) {
 							// if we didn't find one, generate a new name for
 							// the alert deployer and construct a new object
 							String name = IpawsAlertDeployerImpl
 									.getUniqueName();
-							ian = new IpawsAlertDeployerImpl(
+							iad = new IpawsAlertDeployerImpl(
 									name, ia.getName()); //, dms);
-							ian.notifyCreate();
+							iad.notifyCreate();
 						}
-						ian.setAutoDmsNotify(dms);
+						iad.setAutoDmsNotify(dms);
+						
+						// set the time fields on the deployer
+						// TODO need to reorganize this whole class
+						iad.doSetAlertStart(IpawsAlertHelper.getAlertStart(ia));
+						iad.doSetAlertEnd(ia.getExpirationDate());
 						
 						// note that the alert has been processed
 						ia.doSetPurgeable(false);
@@ -352,7 +361,7 @@ public class IpawsProcJob extends Job {
 		// **** TODO this is where we would normalize geometry ****
 		String ps = null;
 		if (jo.has("polygon"))
-			ps = (String) jo.get("polygon");
+			ps = jo.getString("polygon");
 		
 		// if we didn't get a polygon, check the other fields in the area to
 		// find one we can use to lookup a geographical area
