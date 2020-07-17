@@ -15,20 +15,20 @@
 package us.mn.state.dot.tms.client.alert;
 
 import java.awt.BorderLayout;
-
-import javax.swing.ListModel;
+import java.util.Set;
 
 import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.client.MapTab;
 import us.mn.state.dot.tms.client.Session;
-import us.mn.state.dot.tms.client.proxy.ProxyJList;
+import us.mn.state.dot.tms.client.proxy.ProxySelectionListener;
+import us.mn.state.dot.tms.client.proxy.ProxySelectionModel;
 import us.mn.state.dot.tms.client.proxy.StyleSummary;
 
 /**
  * The AlertTab class provides the GUI for working with automated alert
  * objects, e.g. weather (and other) alerts from IPAWS.
  * 
- * NOTE this would need changing to let alert tab handle other types of
+ * NOTE this would need changing to let the alert tab handle other types of
  * alerts (we would need a new Alert parent SONAR object - not sure what that
  * would look like yet). 
  *
@@ -41,23 +41,22 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	/** Summary of alerts */
 	private final StyleSummary<IpawsAlertDeployer> summary;
 	
+	/** Alert dispatcher for dispatching and reviewing alerts */
+	private final AlertDispatcher dispatcher;
+	
 	protected AlertTab(Session session, AlertManager man) {
 		super(man);
 		summary = man.createStyleSummary(false, 1);
+		dispatcher = new AlertDispatcher(session, man);
 		add(summary, BorderLayout.NORTH);
+		add(dispatcher,BorderLayout.CENTER);
 	}
 	
 	/** Initialize the alert tab. */
 	@Override
 	public void initialize() {
 		summary.initialize();
-		ProxyJList<IpawsAlertDeployer> plist = summary.getPlist();
-		ListModel<IpawsAlertDeployer> model = plist.getModel();
-		System.out.println("Model has " + model.getSize() + " entries");
-		for (int i = 0; i < model.getSize(); ++i) {
-			IpawsAlertDeployer ian = model.getElementAt(i);
-			System.out.println(ian.getAlertId());
-		}
+		dispatcher.initialize();
 	}
 	
 	/** Dispose of the alert tab. */
@@ -71,4 +70,5 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	public String getTabId() {
 		return "alert";
 	}
+	
 }
