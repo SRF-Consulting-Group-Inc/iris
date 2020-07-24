@@ -28,6 +28,7 @@ import org.postgis.PGgeometry;
 import org.postgis.Polygon;
 
 import us.mn.state.dot.sched.Job;
+import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.IpawsAlert;
@@ -146,21 +147,9 @@ public class IpawsProcJob extends Job {
 			ia.doSetGeoPoly(mp);
 			
 			// find DMS in the polygon and generate an alert deployer object
-			selectDms(ia);
-			
-			// check if the alert was marked purgeable - if it was, move on
-			if (!ia.getPurgeable()) {
-				// if it wasn't, generate MULTI for the message
-				// get the alert deployer object to store it first
-				// TODO/NOTE there is a potential problem with this because
-				// we allow multiple alert deployers for one alert, but it
-				// shouldn't come up since that would only happen for updates
-				IpawsAlertDeployerImpl ian =
-						IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
-				String alertMulti = generateMulti(ia);
-				System.out.println("Got MULTI: " + alertMulti);
-				ian.setAutoMultiNotify(alertMulti);
-			}
+			// this will complete all processing of this alert for this cycle
+			// TODO rename this once AlertConfig is incorporated
+			checkAlert(ia);
 		}
 	}
 	
@@ -272,6 +261,7 @@ public class IpawsProcJob extends Job {
 			if (min > 0)
 				hour += 1;
 			
+			// TODO this will be wrong in some cases with rounding
 			int iAMPM = c.get(Calendar.AM_PM);
 			String ampm = iAMPM == Calendar.AM ? AM : PM;
 			return PREPEND_CURRENT + String.valueOf(hour) + ampm;
@@ -284,11 +274,13 @@ public class IpawsProcJob extends Job {
 		return null;
 	}
 	
-	/** Select the set of DMS to be used for the given IPAWS alert. Uses
+	/** TODO this needs more stuff (SignGroups, QuickMessages, etc.) 
+	 * 	
+	 *  Select the set of DMS to be used for the given IPAWS alert. Uses
 	 *  PostGIS to handle the geospatial operations. Must be called after 
 	 *  getGeoPoly() is used to create a polygon object from the alert's area
 	 *  field, and after that polygon is written to the database with the
-	 *  alert's doSetGeoPoly() method. 
+	 *  alert's doSetGeoPoly() method.
 	 *  
 	 *  If at least one sign is selected, an IpawsAlertDeployer object is
 	 *  created to notify clients for approval (TODO auto mode??).
@@ -296,7 +288,7 @@ public class IpawsProcJob extends Job {
 	 *  If no signs are found, no deployer object is created and the IpawsAlert
 	 *  object is marked purgeable.
 	 */
-	private void selectDms(IpawsAlertImpl ia) throws TMSException {
+	private void checkAlert(IpawsAlertImpl ia) throws TMSException {
 		// query the list of DMS that falls within the MultiPolygon for this
 		// alert - use array_agg to get one array instead of multiple rows
 		// TODO need to add additional filtering to this
@@ -315,28 +307,8 @@ public class IpawsProcJob extends Job {
 					System.out.println("Got DMS: " + Arrays.toString(dms));
 					
 					if (dms.length > 0) {
-						// if we did, try to look up an alert
-						IpawsAlertDeployerImpl iad =
-						  IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
-						
-						if (iad == null) {
-							// if we didn't find one, generate a new name for
-							// the alert deployer and construct a new object
-							String name = IpawsAlertDeployerImpl
-									.getUniqueName();
-							iad = new IpawsAlertDeployerImpl(
-									name, ia.getName()); //, dms);
-							iad.notifyCreate();
-						}
-						iad.setAutoDmsNotify(dms);
-						
-						// set the time fields on the deployer
-						// TODO need to reorganize this whole class
-						iad.doSetAlertStart(IpawsAlertHelper.getAlertStart(ia));
-						iad.doSetAlertEnd(ia.getExpirationDate());
-						
-						// note that the alert has been processed
-						ia.doSetPurgeable(false);
+						// if we did, finish processing the alert
+						createAlertDeployer(ia, dms);
 					} else
 						// if we didn't, mark the alert as purgeable
 						ia.doSetPurgeable(true);
@@ -345,6 +317,49 @@ public class IpawsProcJob extends Job {
 				}
 			}
 		});
+	}
+	
+	/** Create an alert deployer for this alert. Called after querying PostGIS
+	 *  for relevant DMS (only if some were found). Handles generating MULTI
+	 *  and other object creating housekeeping.
+	 */
+	private void createAlertDeployer(IpawsAlertImpl ia, String[] dms)
+			throws SonarException, TMSException {
+		// try to look up a deployer object
+		IpawsAlertDeployerImpl iad =
+				IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
+		
+		// get alert start/end times to save in the deployer for convenience
+		Date aStart = IpawsAlertHelper.getAlertStart(ia);
+		Date aEnd = ia.getExpirationDate();
+		
+		// generate/update MULTI
+		String alertMulti = generateMulti(ia);
+		
+		if (iad == null) {
+			// if we didn't find one, generate a new name for the alert
+			// deployer, get the alert times, generate MULTI and construct a
+			// new object
+			String name = IpawsAlertDeployerImpl.getUniqueName();
+			System.out.println("New MULTI: " + alertMulti);
+			iad = new IpawsAlertDeployerImpl(name, ia.getName(),
+					aStart, aEnd, dms, alertMulti);
+			iad.notifyCreate();
+		} else {
+			// if we did find one, update the attributes
+			// TODO can we update these all in one go? (don't think so...)
+			
+			// update time fields on the deployer
+			iad.doSetAlertStart(aStart);
+			iad.doSetAlertEnd(aEnd);
+			
+			// update DMS and MULTI
+			iad.setAutoDmsNotify(dms);
+			iad.doSetAutoMulti(alertMulti);
+		}
+		
+		// note that the alert has been processed
+		ia.doSetPurgeable(false);
 	}
 	
 	/** Use the area section of an IPAWS alert to creating a PostGIS

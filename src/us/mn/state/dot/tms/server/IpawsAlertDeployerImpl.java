@@ -90,6 +90,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		});
 	}
 	
+	/** Get columns (names and values) for storing this in the database. */
 	@Override
 	public Map<String, Object> getColumns() {
 		HashMap<String, Object> map = new HashMap<String, Object>();
@@ -101,9 +102,9 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		map.put("alert_end", alert_end);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
-		map.put("auto_dms", auto_dms);
-		map.put("optional_dms", optional_dms);
-		map.put("deployed_dms", deployed_dms);
+		map.put("auto_dms", Arrays.toString(auto_dms));
+		map.put("optional_dms", Arrays.toString(optional_dms));
+		map.put("deployed_dms", Arrays.toString(deployed_dms));
 		map.put("auto_multi", auto_multi);
 		map.put("deployed_multi", deployed_multi);
 		map.put("msg_priority", msg_priority);
@@ -155,12 +156,14 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	public IpawsAlertDeployerImpl(String n, String aid)  {
 		super(n);
 		alert_id = aid;
+		gen_time = new Date();
 	}
 	
 	public IpawsAlertDeployerImpl(String n, String aid, String[] dms) {
 		super(n);
 		alert_id = aid;
 		auto_dms = dms;
+		gen_time = new Date();
 	}
 	
 	public IpawsAlertDeployerImpl(String n, String aid, String[] dms,
@@ -170,6 +173,19 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		auto_dms = dms;
 		auto_multi = m;
 		approved_by = u;
+		gen_time = new Date();
+	}
+	
+	public IpawsAlertDeployerImpl(String n, String aid,
+			Date as, Date ae, String[] dms, String m) {
+		// TODO add SignGroup/QuickMessage/etc.
+		super(n);
+		alert_id = aid;
+		alert_start = as;
+		alert_end = ae;
+		auto_dms = dms;
+		auto_multi = m;
+		gen_time = new Date();
 	}
 	
 	public IpawsAlertDeployerImpl(String n, Date gt, Date at, String aid,
@@ -378,6 +394,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		}
 		return false;
 	}
+	
+//	public boolean
 	
 	/** Set the list of DMS (represented as a string array) automatically 
 	 *  selected for deploying alert messages, notifying clients if it has
