@@ -55,28 +55,4 @@ public class IpawsAlertHelper extends BaseHelper {
 		}
 		return alertStart;
 	}
-	
-	public static final int BEFORE = -1;
-	public static final int DURING = 0;
-	public static final int AFTER = 1;
-	
-	/** Check when this alert will start relative to the current time. */
-	static public int checkAlertTimes(IpawsAlert ia) {
-		// get the time fields
-		Date alertStart = getAlertStart(ia);
-
-		// IPAWS requires alert expiration field
-		Date alertEnd = ia.getExpirationDate();
-
-		// check the time of the alert relative to now
-		Date now = new Date();
-		
-		// NOTE since time is measured to the millisecond, it is basically
-		// 100% likely that now will be strictly after alertStart
-		if (now.before(alertStart))
-			return BEFORE;
-		else if (now.after(alertStart) && now.before(alertEnd))
-			return DURING;
-		return AFTER;
-	}
 }

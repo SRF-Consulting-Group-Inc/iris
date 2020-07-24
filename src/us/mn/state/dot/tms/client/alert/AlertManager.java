@@ -190,28 +190,40 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	
 	@Override
 	public boolean checkStyle(ItemStyle is, IpawsAlertDeployer proxy) {
-		// TODO IpawsAlert objects don't seem to be making it to the client
-		// (or something like that...)
-		IpawsAlert ia = acache.lookupObject(proxy.getAlertId());
+		Integer t = checkAlertTimes(proxy);
+		if (t == null)
+			// problem with the dates
+			return false;
 		switch (is) {
 		case ACTIVE:
-			if (ia != null) {
-				int ALERT = IpawsAlertHelper.checkAlertTimes(ia);
-				return ALERT == IpawsAlertHelper.BEFORE
-						|| ALERT == IpawsAlertHelper.DURING;
-			}
-			return false;
+			return t <= 0;
 		case PAST:
-			if (ia != null) {
-				return IpawsAlertHelper.checkAlertTimes(ia)
-						== IpawsAlertHelper.AFTER;
-			}
-			return false;
+			return t > 0;
 		case ALL:
 			return true;
 		default:
 			return false;
 		}
+	}
+	
+	/** Check when this alert will start relative to the current time. Returns
+	 *  -1 if this alert has not yet started, 0 if the alert is currently
+	 *  active, and 1 if the alert is in the past. If the time fields are not
+	 *  filled, null is returned. 
+	 */
+	private Integer checkAlertTimes(IpawsAlertDeployer iad) {
+		if (iad.getAlertStart() != null && iad.getAlertEnd() != null) {
+			// check the time of the alert relative to now
+			Date now = new Date();
+			if (now.before(iad.getAlertStart()))
+				return -1;
+			else if (now.after(iad.getAlertStart())
+					&& now.before(iad.getAlertEnd()))
+				return 0;
+			return 1;
+		}
+		// missing alert times - return null
+		return null;
 	}
 
 	@Override
