@@ -20,6 +20,9 @@ CREATE VIEW comm_link_view AS
         JOIN iris.comm_protocol cp ON cl.protocol = cp.id;
 GRANT SELECT ON comm_link_view TO PUBLIC;
 
+-- Enable PostGIS extension
+CREATE EXTENSION postgis;
+
 -- IPAWS Alert Event table
 CREATE TABLE event.ipaws
 (
@@ -131,8 +134,8 @@ CREATE VIEW role_privilege_view AS
 GRANT SELECT ON role_privilege_view TO PUBLIC;
 
 -- Add capability and privileges
-INSERT INTO iris.capability (name, enabled) VALUES ('ipaws', true),
-												   ('ipaws_admin', true);
+INSERT INTO iris.capability (name, enabled) VALUES ('ipaws_tab', true),
+                                                   ('ipaws_admin', true);
 
 INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) VALUES
 						   ('PRV_009A','ipaws_tab','ipaws','','','',false),
@@ -140,6 +143,8 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009C','ipaws_admin','ipaws','','','',true),
 						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true);
 
--- TODO role_capability
+INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
+                                                           ('administrator', 'ipaws_tab');
 
+-- Commit changes
 COMMIT;
