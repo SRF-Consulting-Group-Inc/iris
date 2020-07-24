@@ -114,6 +114,9 @@ public class AlertDispatcher extends IPanel {
 	/** Cancel deployment button */
 	private JButton cancelBtn;
 	
+	/** Alert DMS dispatcher for deploying/reviewing DMS used for this alert*/
+	private final AlertDmsDispatcher dmsDispatcher;
+	
 	/** Create a new alert dispatcher. */
 	public AlertDispatcher(Session s, AlertManager m) {
 		super();
@@ -125,10 +128,12 @@ public class AlertDispatcher extends IPanel {
 		alertSelMdl.addProxySelectionListener(alertSelLstnr);
 		areaDescKeyLbl = new ILabel("alert.area_desc");
 		editBtn = new JButton(editDeployment);
-		cancelBtn = new JButton(cancelDeployment);
 		
-		// make the buttons the same size (it looks nicer...)
+		// make both buttons the same size (it looks nicer...)
+		cancelBtn = new JButton(cancelDeployment);
 		editBtn.setPreferredSize(cancelBtn.getPreferredSize());
+		
+		dmsDispatcher = new AlertDmsDispatcher(session, manager);
 	}
 
 	/** Initialize the widgets on the panel */
@@ -136,10 +141,10 @@ public class AlertDispatcher extends IPanel {
 	public void initialize() {
 		super.initialize();
 		setTitle(I18N.get("alert.selected"));
-		add(new JButton(editDeployment), Stretch.TALL);
+		add(editBtn, Stretch.TALL);
 		add("alert.id");
 		add(idLbl, Stretch.LAST);
-		add(new JButton(cancelDeployment), Stretch.TALL);
+		add(cancelBtn, Stretch.TALL);
 		add("alert.event");
 		add(eventLbl, Stretch.LAST);
 		add("alert.urgency");
@@ -156,6 +161,10 @@ public class AlertDispatcher extends IPanel {
 		add(expiresLbl, Stretch.LAST);
 		add(areaDescKeyLbl, Stretch.NONE);
 		add(areaDescLbl, Stretch.LAST);
+		
+		dmsDispatcher.initialize();
+		add(dmsDispatcher, Stretch.DOUBLE);
+		
 		alertSelMdl.addProxySelectionListener(alertSelLstnr);
 	}
 	
@@ -190,6 +199,8 @@ public class AlertDispatcher extends IPanel {
 			// we should only have one alert (multiple selection is disabled)
 			for (IpawsAlertDeployer iad: sel) {
 				setSelectedAlert(iad);
+				dmsDispatcher.setSelectedAlert(
+						selectedAlertDepl, selectedAlert);
 				break;
 			}
 		}

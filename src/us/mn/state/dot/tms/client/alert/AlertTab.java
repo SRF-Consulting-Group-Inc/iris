@@ -17,6 +17,9 @@ package us.mn.state.dot.tms.client.alert;
 import java.awt.BorderLayout;
 import java.util.Set;
 
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+
 import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.client.MapTab;
 import us.mn.state.dot.tms.client.Session;
@@ -48,8 +51,11 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 		super(man);
 		summary = man.createStyleSummary(false, 1);
 		dispatcher = new AlertDispatcher(session, man);
-		add(summary, BorderLayout.NORTH);
-		add(dispatcher,BorderLayout.CENTER);
+		JPanel p = new JPanel();
+		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+		p.add(summary);
+		p.add(dispatcher);
+		add(p, BorderLayout.NORTH);
 	}
 	
 	/** Initialize the alert tab. */
