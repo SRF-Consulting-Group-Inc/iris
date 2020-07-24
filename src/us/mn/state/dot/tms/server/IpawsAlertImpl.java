@@ -224,6 +224,19 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		purgeable = p;
 	}
 
+	/** Notify SONAR clients of a change to an attribute. Checks if the alert
+	 *  has been marked purgeable before notifying clients (clients are not
+	 *  notified if purgeable is true, but are if it is false or null).
+	 *  
+	 *  Attribute names should use lower camel case instead of underscores 
+	 *  (e.g. "someAttribute" instead of "some_attribute").
+	 */
+	@Override
+	protected void notifyAttribute(String aname) {
+		if (purgeable == null || !purgeable)
+			super.notifyAttribute(aname);
+	}
+	
 	/** Identifier for the alert */
 	private String identifier;
 
@@ -238,6 +251,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (i != identifier) {
 			store.update(this, "identifier", i);
 			setIdentifier(i);
+			notifyAttribute("identifier");
 		}
 	}
 
@@ -261,6 +275,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (se != sender) {
 			store.update(this, "sender", se);
 			setSender(se);
+			notifyAttribute("sender");
 		}
 	}
 	
@@ -284,6 +299,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (sd != sent_date) {
 			store.update(this, "sent_date", sd);
 			setSentDate(sd);
+			notifyAttribute("sentDate");
 		}
 	}
 
@@ -307,6 +323,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (status != sta) {
 			store.update(this, "status", sta);
 			setStatus(sta);
+			notifyAttribute("status");
 		}
 	}
 	
@@ -330,6 +347,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (message_type != mt) {
 			store.update(this, "message_type", mt);
 			setMsgType(mt);
+			notifyAttribute("msgType");
 		}
 	}
 	
@@ -353,6 +371,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (scope != sc) {
 			store.update(this, "scope", sc);
 			setScope(sc);
+			notifyAttribute("scope");
 		}
 	}
 	
@@ -376,6 +395,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (codes != cd) {
 			store.update(this, "codes", cd);
 			setCodes(cd);
+			notifyAttribute("codes");
 		}
 	}
 	
@@ -399,6 +419,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (note != nt) {
 			store.update(this, "note", nt);
 			setNote(nt);
+			notifyAttribute("note");
 		}
 	}
 	
@@ -422,6 +443,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (alert_references != ref) {
 			store.update(this, "alert_references", ref);
 			setAlertReferences(ref);
+			notifyAttribute("alertReferences");
 		}
 	}
 	
@@ -444,6 +466,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (incidents != inc) {
 			store.update(this, "incidents", inc);
 			setIncidents(inc);
+			notifyAttribute("incidents");
 		}
 	}
 
@@ -467,6 +490,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (categories != ct) {
 			store.update(this, "categories", ct);
 			setCategories(ct);
+			notifyAttribute("categories");
 		}
 	}
 
@@ -490,6 +514,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (event != ev) {
 			store.update(this, "event", ev);
 			setEvent(ev);
+			notifyAttribute("event");
 		}
 	}
 	
@@ -513,6 +538,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (response_types != rt) {
 			store.update(this, "response_types", rt);
 			setResponseTypes(rt);
+			notifyAttribute("responseTypes");
 		}
 	}
 
@@ -536,6 +562,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (urgency != u) {
 			store.update(this, "urgency", u);
 			setUrgency(u);
+			notifyAttribute("urgency");
 		}
 	}
 	
@@ -559,6 +586,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (urgency != sv) {
 			store.update(this, "severity", sv);
 			setSeverity(sv);
+			notifyAttribute("severity");
 		}
 	}
 	
@@ -582,6 +610,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (certainty != cy) {
 			store.update(this, "certainty", cy);
 			setCertainty(cy);
+			notifyAttribute("certainty");
 		}
 	}
 	
@@ -605,6 +634,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (audience != au) {
 			store.update(this, "audience", au);
 			setAudience(au);
+			notifyAttribute("audience");
 		}
 	}
 	
@@ -628,6 +658,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (effective_date != efd) {
 			store.update(this, "effective_date", efd);
 			setEffectiveDate(efd);
+			notifyAttribute("effectiveDate");
 		}
 	}
 	
@@ -651,6 +682,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (od != onset_date) {
 			store.update(this, "onset_date", od);
 			setOnsetDate(od);
+			notifyAttribute("onsetDate");
 		}
 	}
 
@@ -674,6 +706,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (exd != expiration_date) {
 			store.update(this, "expiration_date", exd);
 			setExpirationDate(exd);
+			notifyAttribute("expirationDate");
 		}
 	}
 
@@ -697,6 +730,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (sender_name != sn) {
 			store.update(this, "sender_name", sn);
 			setSenderName(sn);
+			notifyAttribute("senderName");
 		}
 	}
 	
@@ -720,6 +754,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (headline != hl) {
 			store.update(this, "headline", hl);
 			setHeadline(hl);
+			notifyAttribute("headline");
 		}
 	}
 	
@@ -743,6 +778,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (alert_description != ad) {
 			store.update(this, "alert_description", ad);
 			setAlertDescription(ad);
+			notifyAttribute("alertDescription");
 		}
 	}
 	
@@ -766,6 +802,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (instruction != in) {
 			store.update(this, "instruction", in);
 			setInstruction(in);
+			notifyAttribute("instruction");
 		}
 	}
 	
@@ -789,6 +826,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (parameters != par) {
 			store.update(this, "parameters", par);
 			setParameters(par);
+			notifyAttribute("parameters");
 		}
 	}
 	
@@ -812,6 +850,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (area != ar) {
 			store.update(this, "area", ar);
 			setArea(ar);
+			notifyAttribute("area");
 		}
 	}
 	
@@ -835,6 +874,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (geo_poly != gp) {
 			store.update(this, "geo_poly", gp);
 			setGeoPoly(gp);
+			notifyAttribute("geoPoly");
 		}
 	}
 	
@@ -852,8 +892,10 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	/** Set the area from a string */
 	public void doSetGeoPoly(String gpstr) throws TMSException {
 		if (geo_poly.toString() != gpstr) {
+			// NOTE need to use setGeoPoly first, then store.update
 			setGeoPoly(gpstr);
 			store.update(this, "geo_poly", geo_poly);
+			notifyAttribute("geoPoly");
 		}
 	}
 	
@@ -878,6 +920,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (purgeable != p) {
 			store.update(this, "purgeable", p);
 			setPurgeable(p);
+			notifyAttribute("purgeable");
 		}
 	}
 	
