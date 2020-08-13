@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -70,7 +71,11 @@ public class SQLConnection {
 	
 	/** Prepare a string array for SQL */
 	static private String prepareArray(Object value) {
-		return value.toString().replace("[", "{").replace("]", "}");
+		if (value != null && (value.getClass().isArray()
+				|| value instanceof List<?>)) {
+			return value.toString().replace("[", "{").replace("]", "}");
+		}
+		return value.toString();
 	}
 
 	/** Location of database server */
@@ -207,11 +212,11 @@ public class SQLConnection {
 			updateNull(s, field, key);
 			return;
 		}
-		String esc_val = escapeValue(value);
-		String v = prepareArray(esc_val);
-		validateValue(v);
+		String av = prepareArray(value);
+		String ev = escapeValue(av);
+		validateValue(ev);
 		update("UPDATE " + s.getTable() +
-		      " SET " + field + " = '" + v + "'" +
+		      " SET " + field + " = '" + ev + "'" +
 		      " WHERE " + s.getKeyName() + " = '" + key + "';");
 	}
 
@@ -236,11 +241,12 @@ public class SQLConnection {
 				validateIdentifier(field);
 				keys.append(field);
 				keys.append(",");
-				String esc_val = escapeValue(value);
-				String val = prepareArray(esc_val);
-				validateValue(val);
+				String av = prepareArray(value);
+				String ev = escapeValue(av);
+				
+				validateValue(ev);
 				values.append("'");
-				values.append(val);
+				values.append(ev);
 				values.append("',");
 			}
 		}
