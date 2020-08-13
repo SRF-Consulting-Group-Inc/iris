@@ -57,11 +57,10 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 	
 	/** Lookup an IpawsAlertDeployerImpl given and IpawsAlert identifier/name. */
-	static public IpawsAlertDeployerImpl
-				lookupFromAlert(String name) {
+	static public IpawsAlertDeployerImpl lookupFromAlert(String name) {
 		// ask the helper to find the IpawsAlertDeployer object for this alert
 		IpawsAlertDeployer ian =
-				IpawsAlertDeployerHelper.lookupAlertDeployerName(name);
+				IpawsAlertDeployerHelper.lookupDeployerFromAlert(name);
 		if (ian != null)
 			// lookup the IpawsAlertDeployerImpl object using the name
 			return lookupIpawsAlertDeployer(ian.getName());
@@ -102,9 +101,9 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		map.put("alert_end", alert_end);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
-		map.put("auto_dms", Arrays.toString(auto_dms));
-		map.put("optional_dms", Arrays.toString(optional_dms));
-		map.put("deployed_dms", Arrays.toString(deployed_dms));
+		map.put("auto_dms", arrayToString(auto_dms));
+		map.put("optional_dms", arrayToString(optional_dms));
+		map.put("deployed_dms", arrayToString(deployed_dms));
 		map.put("auto_multi", auto_multi);
 		map.put("deployed_multi", deployed_multi);
 		map.put("msg_priority", msg_priority);
@@ -211,6 +210,22 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		replaces = r;
 	}
 
+	/** Check if the provided values (alert start, alert end, auto-suggested
+	 *  DMS, and auto-generated MULTI) are equal to the corresponding values
+	 *  contained in this alert deployer.
+	 */
+	public boolean autoValsEqual(Date aStart, Date aEnd,
+			String[] adms, String aMulti) {
+		boolean startEq = aStart == null ? alert_start == null
+				: aStart.equals(alert_start);
+		boolean endEq = aEnd == null ? alert_end == null
+				: aEnd.equals(alert_end);
+		boolean dmsEq = Arrays.equals(auto_dms, adms);
+		boolean multiEq = aMulti == null ? auto_multi == null
+				: aMulti.equals(auto_multi);
+		return startEq && endEq && dmsEq && multiEq;
+	}
+	
 	/** Generation time of alert deployer */
 	private Date gen_time;
 	
