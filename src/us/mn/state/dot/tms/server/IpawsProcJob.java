@@ -16,6 +16,7 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -32,7 +33,11 @@ import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.IpawsAlert;
+import us.mn.state.dot.tms.IpawsAlertConfig;
+import us.mn.state.dot.tms.IpawsAlertConfigHelper;
 import us.mn.state.dot.tms.IpawsAlertHelper;
+import us.mn.state.dot.tms.QuickMessage;
+import us.mn.state.dot.tms.QuickMessageHelper;
 import us.mn.state.dot.tms.TMSException;
 
 /**
@@ -78,8 +83,8 @@ public class IpawsProcJob extends Job {
 	/** For looking up text to prepend to alert time (depends on if alert is
 	 *  in the future, current, or past)
 	 */
-	private static final String PREPEND_FUTURE = "STARTING ";
-	private static final String PREPEND_CURRENT = "UNTIL ";
+	private static final String PREPEND_FUTURE = "STARTING AT ";
+	private static final String PREPEND_CURRENT = "IN EFFECT UNTIL ";
 	private static final String ALERT_PAST = "ALL CLEAR";
 	private static final String AM = " AM";
 	private static final String PM = " PM";
@@ -104,7 +109,7 @@ public class IpawsProcJob extends Job {
 		// TODO we probably want to add an event field for each response type
 		// and urgency for additional filtering (and a default when event not
 		// found)
-		respTypeLookup.put("Shelter", "SHELTER");
+		respTypeLookup.put("Shelter", "TAKE SHELTER");
 		respTypeLookup.put("Prepare", "TRAVEL NOT[nl]ADVISED");
 		
 		urgencyLookup.put("Immediate", "NOW");
@@ -153,8 +158,8 @@ public class IpawsProcJob extends Job {
 		}
 	}
 	
-	/** Generate a MULTI message from an alert. */
-	private String generateMulti(IpawsAlertImpl ia) {
+	/** Generate a MULTI message from an alert and alert config. */
+	private String generateMulti(IpawsAlertImpl ia, IpawsAlertConfig iac) {
 		// TODO use lookup tables like IncDescriptor/IncLocator/etc. instead
 		// of these hard-coded maps
 		
@@ -166,7 +171,14 @@ public class IpawsProcJob extends Job {
 		// lookup a "QuickMessage" for the event type
 		String event = ia.getEvent();
 		if (quickMessageLookup.containsKey(event)) {
-			String qmMulti = quickMessageLookup.get(event);
+//			String qmMulti = quickMessageLookup.get(event);
+			
+			// TODO this will need to be rewritten
+			String qmn = iac.getQuickMessage();
+			System.out.println("Looking up quick message: " + qmn);
+			QuickMessage qm = QuickMessageHelper.lookup(qmn);
+			String qmMulti = qm != null ? qm.getMulti() : "";
+			System.out.println("Got message template: " + qmMulti);
 			
 			// get the fields that we will substitute in
 			String evMulti = eventLookup.containsKey(event)
@@ -185,7 +197,8 @@ public class IpawsProcJob extends Job {
 					? urgencyLookup.get(urg) : null;
 			
 			// if we got fields for everything, build the message
-			if (evMulti != null && rtMulti != null && urgMulti != null) {
+			if (evMulti != null && rtMulti != null
+					&& urgMulti != null && qmMulti != null) {
 				// get the time field
 				String timeMulti = getTimeMulti(ia);
 				if (timeMulti == ALERT_PAST) {
@@ -197,6 +210,7 @@ public class IpawsProcJob extends Job {
 							" all clear");
 					String m = qmMulti.replace("[capevent]", evMulti)
 								  .replace("[captime]", timeMulti)
+		.replace("[captimeSTARTING AT,IN EFFECT UNTIL,ALL CLEAR]", timeMulti)
 								  .replace("[capresponse]", rtMulti)
 								  .replace("[capurgency]", urgMulti);
 					if (m.endsWith("[nl]"))
@@ -211,6 +225,7 @@ public class IpawsProcJob extends Job {
 						+ rt + " urgency: " + urg);
 				return qmMulti.replace("[capevent]", evMulti)
 							  .replace("[captime]", timeMulti)
+		.replace("[captimeSTARTING AT,IN EFFECT UNTIL,ALL CLEAR]", timeMulti)
 							  .replace("[capresponse]", rtMulti)
 							  .replace("[capurgency]", urgMulti);
 			}
@@ -289,77 +304,99 @@ public class IpawsProcJob extends Job {
 	 *  object is marked purgeable.
 	 */
 	private void checkAlert(IpawsAlertImpl ia) throws TMSException {
-		// query the list of DMS that falls within the MultiPolygon for this
-		// alert - use array_agg to get one array instead of multiple rows
-		// TODO need to add additional filtering to this
-		IpawsAlertImpl.store.query(
+		// get alert configs for this event type
+		String event = ia.getEvent();
+		Iterator<IpawsAlertConfig> it = IpawsAlertConfigHelper.iterator();
+		
+		// collect alert deployers that have been created so we can notify
+		// clients about them
+		ArrayList<IpawsAlertDeployerImpl> iadList =
+				new ArrayList<IpawsAlertDeployerImpl>();
+		
+		while (it.hasNext()) {
+			IpawsAlertConfig iac = it.next();
+			if (event.equals(iac.getEvent())) {
+				// query the list of DMS that falls within the MultiPolygon
+				// for this alert - use array_agg to get one array instead of
+				// multiple rows do this once for each sign group
+				IpawsAlertImpl.store.query(
 				"SELECT array_agg(d.name) FROM iris." + DMS.SONAR_TYPE + " d" +
 				" JOIN iris." + GeoLoc.SONAR_TYPE + " g ON d.geo_loc=g.name" +
 				" WHERE ST_Covers((SELECT geo_poly FROM " + ia.getTable() +
-				" WHERE name='" + ia.getName() + "')," +
-				" ST_Point(g.lon, g.lat)::geography);",
+				" WHERE name='" + ia.getName() + "'), ST_Point(g.lon," + 
+				" g.lat)::geography) AND d.name IN (SELECT dms FROM" + 
+				" iris.dms_sign_group WHERE sign_group='" +
+				iac.getSignGroup() + "');",
 				new ResultFactory() {
-			@Override
-			public void create(ResultSet row) throws Exception {
-				try {
-					// make sure we got some DMS
-					String[] dms = (String[])row.getArray(1).getArray();
-					System.out.println("Got DMS: " + Arrays.toString(dms));
-					
-					if (dms.length > 0) {
-						// if we did, finish processing the alert
-						createAlertDeployer(ia, dms);
-					} else
-						// if we didn't, mark the alert as purgeable
-						ia.doSetPurgeable(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+					@Override
+					public void create(ResultSet row) throws Exception {
+						try {
+							// make sure we got some DMS
+							String[] dms = (String[]) row.getArray(1)
+									.getArray();
+							
+							if (dms.length > 0) {
+								// if we did, finish processing the alert
+								IpawsAlertDeployerImpl iad = 
+										createAlertDeployer(ia, dms, iac);
+								iadList.add(iad);
+							} else
+								// if we didn't, mark the alert as purgeable
+								ia.doSetPurgeable(true);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
 			}
-		});
+		}
+		
+		// note that the alert has been processed - if no deployers were
+		// created, the alert can be purged
+		ia.doSetPurgeable(iadList.isEmpty());
+		
+		// TODO create a notifier object to tell the client about the new/
+		// updated alert
+		// TODO need to create that whole system
 	}
 	
 	/** Create an alert deployer for this alert. Called after querying PostGIS
 	 *  for relevant DMS (only if some were found). Handles generating MULTI
 	 *  and other object creating housekeeping.
 	 */
-	private void createAlertDeployer(IpawsAlertImpl ia, String[] dms)
+	private IpawsAlertDeployerImpl createAlertDeployer(IpawsAlertImpl ia,
+			String[] dms, IpawsAlertConfig iac)
 			throws SonarException, TMSException {
-		// try to look up a deployer object
+		
+		// TODO rewrite using IpawsAlertConfig
+		
+		// try to look up the most recent deployer object for this alert
 		IpawsAlertDeployerImpl iad =
 				IpawsAlertDeployerImpl.lookupFromAlert(ia.getName());
-		
-		// get alert start/end times to save in the deployer for convenience
+
+		// get alert start/end times
 		Date aStart = IpawsAlertHelper.getAlertStart(ia);
 		Date aEnd = ia.getExpirationDate();
 		
 		// generate/update MULTI
-		String alertMulti = generateMulti(ia);
+		String autoMulti = generateMulti(ia, iac);
 		
-		if (iad == null) {
-			// if we didn't find one, generate a new name for the alert
-			// deployer, get the alert times, generate MULTI and construct a
-			// new object
+		// check if any attributes have changed from this last deployer (if we
+		// got one)
+		if (iad == null || !iad.autoValsEqual(aStart, aEnd, dms, autoMulti)) {
+			// if they have, or we didn't get one, make a new one
+			// generate a new name and construct the object
 			String name = IpawsAlertDeployerImpl.getUniqueName();
-			System.out.println("New MULTI: " + alertMulti);
 			iad = new IpawsAlertDeployerImpl(name, ia.getName(),
-					aStart, aEnd, dms, alertMulti);
+					aStart, aEnd, dms, autoMulti);
+			
+			// notify so clients receive the new object
 			iad.notifyCreate();
-		} else {
-			// if we did find one, update the attributes
-			// TODO can we update these all in one go? (don't think so...)
-			
-			// update time fields on the deployer
-			iad.doSetAlertStart(aStart);
-			iad.doSetAlertEnd(aEnd);
-			
-			// update DMS and MULTI
-			iad.setAutoDmsNotify(dms);
-			iad.doSetAutoMulti(alertMulti);
 		}
 		
-		// note that the alert has been processed
-		ia.doSetPurgeable(false);
+		// return the deployer that was created for collecting and handling
+		// the user notification
+		return iad;
 	}
 	
 	/** Use the area section of an IPAWS alert to creating a PostGIS
