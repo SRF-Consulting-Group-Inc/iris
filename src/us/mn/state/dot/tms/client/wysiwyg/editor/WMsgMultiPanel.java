@@ -144,6 +144,8 @@ public class WMsgMultiPanel extends JPanel {
 					
 					// if this error has a token, highlight it
 					int a = txt.indexOf(ts);
+					if (a < 0)
+						continue;
 					int b = a + ts.length();
 					String s = txt.substring(a, b);
 					
