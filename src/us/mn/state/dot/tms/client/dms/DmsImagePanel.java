@@ -103,10 +103,12 @@ public class DmsImagePanel extends ImagePanel {
 		stopTimer();
 	}
 
-	/** Restart the timer and all related variables. */
+	/** Restart the timer and all related variables. Shows the first page of
+	 *  the message (if any, otherwise blank). */
 	private void restartTimer() {
 		phaseMS = 0;
 		pageNum = 0;
+		firstPage();
 		timer.restart();
 	}
 	
@@ -171,6 +173,17 @@ public class DmsImagePanel extends ImagePanel {
 	/** Make the display blank (without advancing the page number) */
 	private void makeBlank() {
 		setImage(blankSign);
+	}
+	
+	/** Display the first page of the message. If there are no pages, the
+	 *  blank sign is shown.
+	 */
+	private void firstPage() {
+		pageNum = 0;
+		if (pgImages != null && pgImages.length > 0)
+			setImage(pgImages[pageNum]);
+		else
+			makeBlank();
 	}
 
 	/** Display the next page of the message */
