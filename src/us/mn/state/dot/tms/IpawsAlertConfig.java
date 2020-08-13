@@ -39,11 +39,23 @@ public interface IpawsAlertConfig extends SonarObject {
 	void setSignGroup(String sg);
 	
 	/** Get the sign group */
-	String getSignGroup(String sg);
-		
+	String getSignGroup();
+	
 	/** Set the quick message (template) */
 	void setQuickMessage(String qm);
 	
 	/** Set the quick message (template) */
-	String getQuickMessage(String qm);
+	String getQuickMessage();
+	
+	/** Set the applicable response type(s) (if any) */
+	void setResponseTypes(String[] rt);
+	
+	/** Get the applicable response type(s) (if any) */
+	String[] getResponseTypes();
+	
+	/** Set the applicable urgency value(s) (if any) */
+	void setUrgencyValues(String[] urg);
+	
+	/** Get the applicable urgency value(s) (if any) */
+	String[] getUrgencyValues();
 }
