@@ -18,6 +18,7 @@ import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.Date;
 import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sonar.SonarException;
@@ -118,6 +119,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		DMSImpl.updateAllStyles();
 		RptConduitImpl.loadAll();
 		IpawsAlertImpl.loadAll();
+		IpawsAlertConfigImpl.loadAll();
 		IpawsAlertDeployerImpl.loadAll();
 	}
 
@@ -476,6 +478,15 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 			return (String[]) arr.getArray();
 		return null;
 	}
+	
+	/** Get an array representation of a string given a string array. If the
+	 *  array provided is null, null is returned (instead of the string "null"
+	 *  returned by Arrays.toString().
+	 */
+	static protected String arrayToString(String[] a) {
+		return a != null ? Arrays.toString(a) : null;
+	}
+	
 
 	/** Log an event */
 	static public void logEvent(final BaseEvent ev) {
