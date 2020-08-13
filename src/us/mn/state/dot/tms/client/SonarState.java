@@ -46,6 +46,7 @@ import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.Gps;
 import us.mn.state.dot.tms.Graphic;
 import us.mn.state.dot.tms.IpawsAlert;
+import us.mn.state.dot.tms.IpawsAlertConfig;
 import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.LaneAction;
 import us.mn.state.dot.tms.LaneMarking;
@@ -283,6 +284,14 @@ public class SonarState extends Client {
 	/** Get the IPAWS Alert Deployer cache */
 	public TypeCache<IpawsAlertDeployer> getIpawsDeployerCache() {
 		return ipaws_deployer_cache;
+	}
+	
+	/** Cache of IpawsAlertConfig objects */
+	private final TypeCache<IpawsAlertConfig> ipaws_config_cache;
+	
+	/** Get the IPAWS Alert Deployer cache */
+	public TypeCache<IpawsAlertConfig> getIpawsConfigCache() {
+		return ipaws_config_cache;
 	}
 
 	/** Cache of LCS objects */
@@ -522,6 +531,8 @@ public class SonarState extends Client {
 		ipaws_alert_cache = new TypeCache<IpawsAlert>(IpawsAlert.class, this);
 		ipaws_deployer_cache = new TypeCache<IpawsAlertDeployer>(
 				IpawsAlertDeployer.class, this);
+		ipaws_config_cache = new TypeCache<IpawsAlertConfig>(
+				IpawsAlertConfig.class, this);
 		lcs_cache = new LcsCache(this);
 		gate_arm_array_model = new ProxyListModel<GateArmArray>(
 			gate_arm_arrays);
@@ -650,6 +661,7 @@ public class SonarState extends Client {
 		}
 		populateReadable(ipaws_alert_cache);
 		populateReadable(ipaws_deployer_cache);
+		populateReadable(ipaws_config_cache);
 	}
 
 	/** Look up the specified connection */
