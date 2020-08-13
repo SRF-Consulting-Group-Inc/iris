@@ -89,12 +89,16 @@ ALTER TABLE event.ipaws_alert_deployer
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 
+INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_deployer');
+
 -- IPAWS Alert Config table
 CREATE TABLE iris.ipaws_alert_config (
 	name varchar(24) PRIMARY KEY,
 	event text,
 	sign_group varchar(20),
-	quick_message varchar(20)
+	quick_message varchar(20),
+	response_types text[],
+	urgency_values text[]
 );
 
 ALTER TABLE iris.ipaws_alert_config
@@ -115,7 +119,7 @@ ALTER TABLE iris.ipaws_alert_config
 
 ALTER TABLE iris.sonar_type ALTER COLUMN name TYPE varchar(32);
 
-INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_deployer');
+INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_config');
 
 -- Need to drop the privilege view first
 DROP VIEW public.role_privilege_view;
@@ -140,8 +144,10 @@ INSERT INTO iris.capability (name, enabled) VALUES ('ipaws_tab', true),
 INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) VALUES
 						   ('PRV_009A','ipaws_tab','ipaws','','','',false),
 						   ('PRV_009B','ipaws_tab','ipaws_alert_deployer','','','',false),
+						   ('PRV_009E','ipaws_tab','ipaws_alert_config','','','',false),
 						   ('PRV_009C','ipaws_admin','ipaws','','','',true),
 						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true);
+						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true);
 
 INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
                                                            ('administrator', 'ipaws_tab');
