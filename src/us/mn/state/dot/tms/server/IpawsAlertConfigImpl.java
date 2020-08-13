@@ -17,6 +17,8 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +46,9 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		this(row.getString(1),		// name
 			row.getString(2),		// event
 			row.getString(3),		// sign group
-			row.getString(4)		// quick message
+			row.getString(4),		// quick message
+			getStringArray(row, 5),	// response types
+			getStringArray(row, 6)	// urgency values
 		);
 	}
 	
@@ -52,11 +56,14 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		super(n);
 	}
 
-	public IpawsAlertConfigImpl(String n, String ev, String sg, String qm) {
+	public IpawsAlertConfigImpl(String n, String ev, String sg,
+			String qm, String[] rt, String[] urg) {
 		super(n);
 		event = ev;
 		sign_group = sg;
 		quick_message = qm;
+		response_types = rt;
+		urgency_values = urg;
 	}
 	
 	/** Get the SONAR type name */
@@ -68,13 +75,14 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	/** Get the database table name */
 	@Override
 	public String getTable() {
-		return "event." + SONAR_TYPE;
+		return "iris." + SONAR_TYPE;
 	}
 
 	/** Load all the IPAWS alert config objects */
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, IpawsAlertConfigImpl.class);
-		store.query("SELECT name, event, sign_group, quick_message " +
+		store.query("SELECT name, event, sign_group, quick_message, " +
+				"response_types, urgency_values " +
 				"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			@Override
@@ -84,6 +92,7 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 				} catch (Exception e) {
 					// TODO do we need/want this??
 					System.out.println(row.getString(1));
+					e.printStackTrace();
 				}
 			}
 		});
@@ -96,6 +105,8 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		map.put("event", event);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
+		map.put("response_types", arrayToString(response_types));
+		map.put("urgency_values", arrayToString(urgency_values));
 		return map;
 	}
 
@@ -108,13 +119,18 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		event = ev;
 	}
 
-	// TODO doSet...()
+	/** Set the alert event type */
+	public void doSetEvent(String ev) throws TMSException {
+		if (ev != event) {
+			store.update(this, "event", ev);
+			setEvent(ev);
+		}
+	}
 
 	/** Get the alert event type */
 	@Override
 	public String getEvent() {
-		// TODO Auto-generated method stub
-		return null;
+		return event;
 	}
 
 	/** Sign group */
@@ -126,11 +142,17 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		sign_group = sg;
 	}
 
-	// TODO doSet...()
+	/** Set the sign group */
+	public void doSetSignGroup(String sg) throws TMSException {
+		if (sg != sign_group) {
+			store.update(this, "sign_group", sg);
+			setSignGroup(sg);
+		}
+	}
 
 	/** Get the sign group */
 	@Override
-	public String getSignGroup(String sg) {
+	public String getSignGroup() {
 		return sign_group;
 	}
 
@@ -143,12 +165,68 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		quick_message = qm;
 	}
 
-	// TODO doSet...()
+	/** Set the quick message (template) */
+	public void doSetQuickMessage(String qm) throws TMSException {
+		if (qm != quick_message) {
+			store.update(this, "quick_message", qm);
+			setQuickMessage(qm);
+		}
+	}
 
 	/** Get the quick message (template) */
 	@Override
-	public String getQuickMessage(String qm) {
+	public String getQuickMessage() {
 		return quick_message;
+	}
+	
+	/** Response types for which this config applies. If not set, all response
+	 *  types are considered valid.
+	 */
+	private String[] response_types;
+
+	/** Set the applicable response type(s) (if any) */
+	@Override
+	public void setResponseTypes(String[] rt) {
+		response_types = rt;
+	}
+
+	/** Set the applicable response type(s) (if any) */
+	public void doSetResponseTypes(String[] rt) throws TMSException {
+		if (rt != response_types) {
+			store.update(this, "response_types", rt);
+			setResponseTypes(rt);
+		}
+	}
+
+	/** Get the applicable response type(s) (if any) */
+	@Override
+	public String[] getResponseTypes() {
+		return response_types;
+	}
+
+	/** Urgency values for which this config applies. If not set, all urgency
+	 *  values are considered valid.
+	 */
+	private String[] urgency_values;
+	
+	/** Set the applicable urgency value(s) (if any) */
+	@Override
+	public void setUrgencyValues(String[] urg) {
+		urgency_values = urg;
+	}
+
+	/** Set the applicable urgency value(s) (if any) */
+	public void doSetUrgencyValues(String[] urg) throws TMSException {
+		if (urg != urgency_values) {
+			store.update(this, "urgency_values", urg);
+			setUrgencyValues(urg);
+		}
+	}
+
+	/** Get the applicable urgency value(s) (if any) */
+	@Override
+	public String[] getUrgencyValues() {
+		return urgency_values;
 	}
 
 }
