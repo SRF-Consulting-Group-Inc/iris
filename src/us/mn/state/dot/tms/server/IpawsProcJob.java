@@ -386,7 +386,7 @@ public class IpawsProcJob extends Job {
 		if (iad == null || !iad.autoValsEqual(aStart, aEnd, dms, autoMulti)) {
 			// if they have, or we didn't get one, make a new one
 			// generate a new name and construct the object
-			String name = IpawsAlertDeployerImpl.getUniqueName();
+			String name = IpawsAlertDeployerImpl.createUniqueName();
 			iad = new IpawsAlertDeployerImpl(name, ia.getName(),
 					aStart, aEnd, dms, autoMulti);
 			

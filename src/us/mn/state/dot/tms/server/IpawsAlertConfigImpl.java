@@ -39,9 +39,6 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	/** Database table name */
 	static private final String TABLE = "iris.ipaws_alert_config";
 	
-	/** Name prefix */
-	static private final String NAME_PREFIX = "ipaws_cfg_";
-
 	private IpawsAlertConfigImpl(ResultSet row) throws SQLException {
 		this(row.getString(1),		// name
 			row.getString(2),		// event

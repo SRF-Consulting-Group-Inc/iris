@@ -17,6 +17,8 @@ package us.mn.state.dot.tms;
 
 import java.util.Iterator;
 
+import us.mn.state.dot.tms.utils.UniqueNameCreator;
+
 /**
  * Helper class for IPAWS Alert Deployers. Used on the client and server.
  *
@@ -41,20 +43,15 @@ public class IpawsAlertConfigHelper extends BaseHelper {
 				IpawsAlertConfig.SONAR_TYPE));
 	}
 	
-	/** Name prefix */
-	static private final String NAME_PREFIX = "ipaws_cfg_";
-	
-	/** Maximum number of records in the table (for generating unique names */
-	static private final int MAX_RECORDS = (int) Math.pow(10, 12);
-	
-	/** Get the first available unique name for a new alert config. */
-	// TODO change to use UniqueNameCreator once merged with video changes
+	/** Name creator */
+	static UniqueNameCreator UNC;
+	static {
+		UNC = new UniqueNameCreator("ipaws_cfg_%d", (n)->lookup(n));
+		UNC.setMaxLength(24);
+	}
+
+	/** Create a unique IpawsAlertConfig record name */
 	static public String createUniqueName() {
-		for (int i = 0; i <= MAX_RECORDS; ++i) {
-			String n = NAME_PREFIX + String.valueOf(i);
-			if (lookup(n) == null)
-				return n;
-		}
-		return null;
+		return UNC.createUniqueName();
 	}
 }

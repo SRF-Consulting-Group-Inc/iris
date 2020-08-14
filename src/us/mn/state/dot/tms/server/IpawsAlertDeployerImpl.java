@@ -25,7 +25,8 @@ import java.util.Map;
 import us.mn.state.dot.sonar.SonarObject;
 import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.IpawsAlertDeployerHelper;
-import us.mn.state.dot.tms.TMSException;;
+import us.mn.state.dot.tms.TMSException;
+import us.mn.state.dot.tms.utils.UniqueNameCreator;;
 
 /**
  * Integrated Public Alert and Warning System (IPAWS) Alert deployer object
@@ -39,21 +40,17 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Database table name */
 	static private final String TABLE = "event.ipaws_alert_deployer";
 	
-	/** Name prefix */
-	static private final String NAME_PREFIX = "ipaws_deployer_";
-	
-	/** Maximum number of records in the table (for generating unique names */
-	static private final int MAX_RECORDS = (int) Math.pow(10, 9);
-	
-	/** Get the first available unique name for a new alert deployer. */
-	// TODO change to use UniqueNameCreator once merged with video changes
-	static public String getUniqueName() {
-		for (int i = 0; i <= MAX_RECORDS; ++i) {
-			String n = NAME_PREFIX + String.valueOf(i);
-			if (lookupIpawsAlertDeployer(n) == null)
-				return n;
-		}
-		return null;
+	/** Name creator */
+	static UniqueNameCreator UNC;
+	static {
+		UNC = new UniqueNameCreator("ipaws_deployer_%d",
+				(n)->lookupIpawsAlertDeployer(n));
+		UNC.setMaxLength(24);
+	}
+
+	/** Create a unique IpawsAlertDeployer record name */
+	static public String createUniqueName() {
+		return UNC.createUniqueName();
 	}
 	
 	/** Lookup an IpawsAlertDeployerImpl given and IpawsAlert identifier/name. */
