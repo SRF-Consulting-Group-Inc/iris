@@ -148,7 +148,7 @@ comm_event_purge_days	14
 comm_idle_disconnect_dms_sec	0
 comm_idle_disconnect_gps_sec	5
 comm_idle_disconnect_modem_sec	20
-database_version	5.14.0
+database_version	5.15.0
 detector_auto_fail_enable	true
 detector_event_purge_days	90
 detector_occ_spike_enable	true
@@ -194,6 +194,7 @@ email_sender_server
 email_smtp_host	
 gate_arm_alert_timeout_secs	90
 gate_arm_event_purge_days	0
+gstreamer_version_windows	1.16.2
 help_trouble_ticket_enable	false
 help_trouble_ticket_url	
 incident_clear_advice_multi	JUST CLEARED
@@ -228,6 +229,12 @@ toll_min_price	0.25
 toll_max_price	8
 travel_time_min_mph	15
 uptime_log_enable	false
+vid_connect_autostart	true
+vid_connect_fail_next_source	true
+vid_connect_fail_sec	20
+vid_lost_timeout_sec	10
+vid_reconnect_auto	true
+vid_reconnect_timeout_sec	10
 vsa_bottleneck_id_mph	55
 vsa_control_threshold	-1000
 vsa_downstream_miles	0.2
@@ -382,6 +389,8 @@ cabinet_style
 camera
 camera_action
 camera_preset
+camera_template
+cam_vid_src_ord
 capability
 catalog
 comm_link
@@ -442,6 +451,7 @@ time_action
 toll_zone
 user
 video_monitor
+vid_src_template
 weather_sensor
 word
 \.
@@ -493,6 +503,9 @@ PRV_0027	camera_admin	video_monitor		t
 PRV_0028	camera_admin	monitor_style		t
 PRV_002C	camera_admin	play_list		t
 PRV_002D	camera_admin	catalog		t
+PRV_002F	camera_admin	camera_template		t
+PRV_002G	camera_admin	cam_vid_src_ord		t
+PRV_002H	camera_admin	vid_src_template		t
 PRV_0029	camera_control	camera	ptz	t
 PRV_0030	camera_control	camera	recallPreset	t
 PRV_0031	camera_control	camera	deviceRequest	t
@@ -507,6 +520,9 @@ PRV_0037	camera_tab	video_monitor		f
 PRV_0038	camera_tab	monitor_style		f
 PRV_003C	camera_tab	play_list		f
 PRV_003E	camera_tab	catalog		f
+PRV_003G	camera_tab	camera_template		f
+PRV_003H	camera_tab	cam_vid_src_ord		f
+PRV_003I	camera_tab	vid_src_template		f
 PRV_0039	comm_admin	comm_link		t
 PRV_0040	comm_admin	modem		t
 PRV_0041	comm_admin	cabinet_style		t
@@ -1419,11 +1435,18 @@ CREATE VIEW encoder_stream_view AS
 	LEFT JOIN iris.encoding_quality eq ON es.quality = eq.id;
 GRANT SELECT ON encoder_stream_view TO PUBLIC;
 
+CREATE TABLE iris.camera_template (
+	name VARCHAR(20) PRIMARY KEY,
+	notes text,
+	label text
+);
+
 CREATE TABLE iris._camera (
 	name VARCHAR(20) PRIMARY KEY,
 	geo_loc VARCHAR(20) REFERENCES iris.geo_loc(name),
 	notes VARCHAR(256) NOT NULL,
 	cam_num INTEGER UNIQUE,
+	cam_template VARCHAR(20) REFERENCES iris.camera_template,
 	encoder_type VARCHAR(8) REFERENCES iris.encoder_type,
 	enc_address INET,
 	enc_port INTEGER CHECK (enc_port > 0 AND enc_port <= 65535),
@@ -1460,9 +1483,9 @@ CREATE TRIGGER camera_table_notify_trig
 	FOR EACH STATEMENT EXECUTE PROCEDURE iris.table_notify();
 
 CREATE VIEW iris.camera AS
-	SELECT c.name, geo_loc, controller, pin, notes, cam_num, encoder_type,
-	       enc_address, enc_port, enc_mcast, enc_channel, publish,
-	       streamable, video_loss
+	SELECT c.name, geo_loc, controller, pin, notes, cam_num, cam_template,
+	       encoder_type, enc_address, enc_port, enc_mcast, enc_channel,
+	       publish, streamable, video_loss
 	FROM iris._camera c
 	JOIN iris._device_io d ON c.name = d.name;
 
@@ -1471,12 +1494,12 @@ CREATE FUNCTION iris.camera_insert() RETURNS TRIGGER AS
 BEGIN
 	INSERT INTO iris._device_io (name, controller, pin)
 	     VALUES (NEW.name, NEW.controller, NEW.pin);
-	INSERT INTO iris._camera (name, geo_loc, notes, cam_num, encoder_type,
-	            enc_address, enc_port, enc_mcast, enc_channel, publish,
-	            streamable, video_loss)
+	INSERT INTO iris._camera (name, geo_loc, notes, cam_num, cam_template,
+	            encoder_type, enc_address, enc_port, enc_mcast, enc_channel,
+	            publish, streamable, video_loss)
 	     VALUES (NEW.name, NEW.geo_loc, NEW.notes, NEW.cam_num,
-	             NEW.encoder_type, NEW.enc_address, NEW.enc_port,
-	             NEW.enc_mcast, NEW.enc_channel, NEW.publish,
+	             NEW.cam_template, NEW.encoder_type, NEW.enc_address,
+	             NEW.enc_port, NEW.enc_mcast, NEW.enc_channel, NEW.publish,
 	             NEW.streamable, NEW.video_loss);
 	RETURN NEW;
 END;
@@ -1497,6 +1520,7 @@ BEGIN
 	   SET geo_loc = NEW.geo_loc,
 	       notes = NEW.notes,
 	       cam_num = NEW.cam_num,
+	       cam_template = NEW.cam_template,
 	       encoder_type = NEW.encoder_type,
 	       enc_address = NEW.enc_address,
 	       enc_port = NEW.enc_port,
@@ -1519,9 +1543,9 @@ CREATE TRIGGER camera_delete_trig
     FOR EACH ROW EXECUTE PROCEDURE iris.device_delete();
 
 CREATE VIEW camera_view AS
-	SELECT c.name, cam_num, encoder_type, et.make, et.model, et.config,
-	       c.enc_address, c.enc_port, c.enc_mcast, c.enc_channel, c.publish,
-	       c.streamable, c.video_loss, c.geo_loc,
+	SELECT c.name, cam_num, c.cam_template, encoder_type, et.make, et.model,
+	       et.config, c.enc_address, c.enc_port, c.enc_mcast, c.enc_channel,
+	       c.publish, c.streamable, c.video_loss, c.geo_loc,
 	       l.roadway, l.road_dir, l.cross_mod, l.cross_street, l.cross_dir,
 	       l.landmark, l.lat, l.lon, l.corridor, l.location,
 	       c.controller, ctr.comm_link, ctr.drop_id, ctr.condition, c.notes
@@ -1533,6 +1557,29 @@ GRANT SELECT ON camera_view TO PUBLIC;
 
 CREATE TABLE iris._cam_sequence (
 	seq_num INTEGER PRIMARY KEY
+);
+
+CREATE TABLE iris.vid_src_template (
+	name VARCHAR(20) PRIMARY KEY,
+	label text,
+	config text,
+	default_port INTEGER,
+	subnets text,
+	latency INTEGER,
+	encoder VARCHAR(64),
+	scheme text,
+	codec text,
+	rez_width INTEGER,
+	rez_height INTEGER,
+	multicast BOOLEAN,
+	notes text
+);
+
+CREATE TABLE iris.cam_vid_src_ord (
+	name VARCHAR(24) PRIMARY KEY,
+	camera_template VARCHAR(20) REFERENCES iris.camera_template,
+	src_order INTEGER,
+	src_template VARCHAR(20) REFERENCES iris.vid_src_template
 );
 
 CREATE TABLE iris._play_list (
@@ -2807,11 +2854,13 @@ CREATE TABLE event.travel_time_event (
 	event_date timestamp WITH time zone NOT NULL,
 	event_desc_id INTEGER NOT NULL
 		REFERENCES event.event_description(event_desc_id),
-	device_id VARCHAR(20)
+	device_id VARCHAR(20),
+	station_id VARCHAR(10)
 );
 
 CREATE VIEW travel_time_event_view AS
-	SELECT event_id, event_date, event_description.description, device_id
+	SELECT event_id, event_date, event_description.description, device_id,
+	       station_id
 	FROM event.travel_time_event
 	JOIN event.event_description
 	ON travel_time_event.event_desc_id = event_description.event_desc_id;

@@ -76,6 +76,9 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		corridors.createCorridors();
 		AlarmImpl.loadAll();
 		GpsImpl.loadAll();
+		CameraTemplateImpl.loadAll();
+		VidSourceTemplateImpl.loadAll();
+		CameraVidSourceOrderImpl.loadAll();
 		DetectorImpl.loadAll();
 		TollZoneImpl.loadAll();
 		EncoderTypeImpl.loadAll();
@@ -229,6 +232,14 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		return (so instanceof EncoderTypeImpl)
 		      ? (EncoderTypeImpl) so
 		      :	null;
+	}
+
+	/** Lookup a camera template */
+	static protected CameraTemplateImpl lookupCameraTemplate(String name) {
+		SonarObject so = lookupObject(CameraTemplateImpl.SONAR_TYPE, name);
+		return (so instanceof CameraTemplateImpl)
+				? (CameraTemplateImpl) so
+				: null;
 	}
 
 	/** Lookup a monitor style */

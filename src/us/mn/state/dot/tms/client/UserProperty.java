@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2012-2018  Minnesota Department of Transportation
+ * Copyright (C) 2012-2020  Minnesota Department of Transportation
  * Copyright (C) 2010-2014  AHMCT, University of California
  * Copyright (C) 2017       Iteris Inc.
  *
@@ -16,14 +16,20 @@
  */
 package us.mn.state.dot.tms.client;
 
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Set;
+
 import javax.swing.JFrame;
 import us.mn.state.dot.tms.VideoMonitor;
 
@@ -47,8 +53,16 @@ public enum UserProperty {
 	TAB_SEL_3	("tab.selected.3"),
 	TAB_LIST	("tab.list"),
 	SCALE		("scale"),
-	VIDEO_EXTVIEWER	("video.extviewer"),
-	VIDEO_MONITOR	("video.monitor");
+	VIDEO_MONITOR	("video.monitor"),
+	STREAM_LNAME	("stream.layoutname"),
+	STREAM_CCTV	("stream.cctv"),
+	STREAM_WIDTH	("stream.width"),
+	STREAM_HEIGHT	("stream.height"),
+	STREAM_X	("stream.x"),
+	STREAM_Y	("stream.y"),
+	STREAM_SRC	("stream.src"),
+	NUM_STREAM	("num.stream"),
+	NUM_LAYOUT	("num.layout");
 
 	/** Property name */
 	public final String name;
@@ -65,7 +79,7 @@ public enum UserProperty {
 		+ "comm, weather_sensor, alert";
 
 	/** Get the directory to store user properties */
-	static private File getDir() {
+	static public File getDir() {
 		String home = System.getProperty("user.home");
 		return new File(home, "iris");
 	}
@@ -122,15 +136,65 @@ public enum UserProperty {
 		setProp(p, up, Integer.toString(i));
 	}
 
+	/** Set a string property with one integer increment */
+	static private void setProp(Properties p, UserProperty up, String v,
+		int i)
+	{
+		p.setProperty(up.name + "." + i, v);
+	}
+
+	/** Set an integer property with one integer increment */
+	static private void setProp(Properties p, UserProperty up, int v,
+		int i)
+	{
+		setProp(p, up, Integer.toString(v), i);
+	}
+
+	/** Set a string property with two integer increments */
+	static private void setProp(Properties p, UserProperty up, String v,
+		int i, int j)
+	{
+		p.setProperty(up.name + "." + i + "." + j, v);
+	}
+
+	/** Set an integer property with two integer increments */
+	static private void setProp(Properties p, UserProperty up, int v, int i,
+		int j)
+	{
+		setProp(p, up, Integer.toString(v), i, j);
+	}
+
 	/** Get a property value as a string */
 	static private String getProp(Properties p, UserProperty up) {
 		return p.getProperty(up.name, "").trim();
+	}
+
+	/** Get a property (with one integer increment) value as a string */
+	static private String getProp(Properties p, UserProperty up, int i) {
+		return p.getProperty(up.name + "." + i, "").trim();
+	}
+
+	/** Get a property (with two integer increments) value as a string */
+	static private String getProp(Properties p, UserProperty up, int i,
+		int j)
+	{
+		return p.getProperty(up.name + "." + i + "." + j, "").trim();
 	}
 
 	/** Get an integer property */
 	static private Integer getPropI(Properties p, UserProperty up) {
 		try {
 			return Integer.parseInt(getProp(p, up));
+		}
+		catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	/** Get an integer property with an integer increment */
+	static private Integer getPropI(Properties p, UserProperty up, int i) {
+		try {
+			return Integer.parseInt(getProp(p, up, i));
 		}
 		catch (NumberFormatException e) {
 			return null;
@@ -145,6 +209,18 @@ public enum UserProperty {
 		catch (NumberFormatException e) {
 			return null;
 		}
+	}
+
+	/** Remove the specified property with one integer increment */
+	static private void removeProp(Properties p, UserProperty up, int i) {
+		p.remove(up.name + "." + i);
+	}
+
+	/** Remove the specified property with two integer increments */
+	static private void removeProp(Properties p, UserProperty up, int i,
+		int j)
+	{
+		p.remove(up.name + "." + i + "." + j);
 	}
 
 	/** Get window position from properties.
@@ -186,6 +262,145 @@ public enum UserProperty {
 		if (t.length() > 0)
 			st.add(t);
 		return st.toArray(new String[0]);
+	}
+
+	/** Get HashMap of camera/stream frames */
+	static public HashMap<String, String> getCameraFrames(Properties p,
+		String layoutName)
+	{
+		HashMap<String, String> hmap = new HashMap<String, String>();
+		Integer lnum = getLayoutNumber(p, layoutName);
+		if (lnum == null)
+			return hmap;
+		Integer num_streams = getPropI(p, NUM_STREAM, lnum);
+		if (num_streams == null)
+			return hmap;
+		hmap.put(NUM_STREAM.name, Integer.toString(num_streams));
+		for (int i = 0; i < num_streams; i++) {
+			hmap.put(STREAM_CCTV.name + "." + i,
+				getProp(p, STREAM_CCTV, lnum, i));
+			hmap.put(STREAM_WIDTH.name + "." + i,
+				getProp(p, STREAM_WIDTH, lnum, i));
+			hmap.put(STREAM_HEIGHT.name + "." + i,
+				getProp(p, STREAM_HEIGHT, lnum, i));
+			hmap.put(STREAM_X.name + "." + i,
+				getProp(p, STREAM_X, lnum, i));
+			hmap.put(STREAM_Y.name + "." + i,
+				getProp(p, STREAM_Y, lnum, i));
+			hmap.put(STREAM_SRC.name + "." + i,
+				getProp(p, STREAM_SRC, lnum, i));
+		}
+		return hmap;
+	}
+
+	/** Save a video stream window layout with the name layoutName. */
+	static public void saveStreamLayout(Properties p, String layoutName) {
+		// try to find this layout in the file - if we can't, start a new one
+		Integer lnum = getLayoutNumber(p, layoutName);
+		if (lnum == null) {
+			lnum = getPropI(p, NUM_LAYOUT);
+			if (lnum == null)
+				lnum = 0;
+		}
+
+		Frame[] frames = IrisClient.getFrames();
+		int j = 0;
+		for (Frame f : frames) {
+			String frame_title = f.getTitle();
+			if (frame_title.contains("Stream Panel") && f.isVisible()) {
+				String cam_name = frame_title.split("Stream Panel: ")[1];
+				setProp(p, STREAM_CCTV, cam_name, lnum, j);
+				setProp(p, STREAM_WIDTH, f.getComponent(0).getWidth(), lnum, j);
+				setProp(p, STREAM_HEIGHT, f.getComponent(0).getHeight(), lnum, j);
+				setProp(p, STREAM_X, String.valueOf(f.getX()), lnum, j);
+				setProp(p, STREAM_Y, String.valueOf(f.getY()), lnum, j);
+				setProp(p, STREAM_SRC, String.valueOf(0), lnum, j); // TODO
+				setProp(p, STREAM_LNAME, layoutName, lnum);
+				j += 1;
+			}
+		}
+		setProp(p, NUM_STREAM, j, lnum);
+		setProp(p, NUM_LAYOUT, lnum + 1);
+	}
+
+	/** Delete a video stream window layout with the name layoutName. */
+	static public void deleteStreamLayout(Properties p, String layoutName) {
+		Integer lnum = getLayoutNumber(p, layoutName);
+		if (lnum == null)
+			return;
+		Integer num_streams = getPropI(p, NUM_STREAM, lnum);
+		if (num_streams == null)
+			num_streams = 0;
+
+		for (int i = 0; i < num_streams; i++) {
+			removeProp(p, STREAM_CCTV, lnum, i);
+			removeProp(p, STREAM_WIDTH, lnum, i);
+			removeProp(p, STREAM_HEIGHT, lnum, i);
+			removeProp(p, STREAM_X, lnum, i);
+			removeProp(p, STREAM_Y, lnum, i);
+			removeProp(p, STREAM_SRC, lnum, i);
+		}
+
+		// delete the layout-level properties
+		removeProp(p, STREAM_LNAME, lnum);
+		removeProp(p, NUM_STREAM, lnum);
+
+		// decrement the layout counter (it's 0-indexed so lnum is correct)
+		setProp(p, NUM_LAYOUT, lnum);
+	}
+
+	/** Get a list of layout names (in case-insensitive alphabetical order). */
+	static public ArrayList<String> getStreamLayoutNames(Properties p) {
+		ArrayList<String> layoutNames = new ArrayList<String>();
+
+		// look through all the entries for STREAM_LNAME entries
+		Set<Entry<Object, Object>> entries = p.entrySet();
+		for (Entry<Object, Object> e: entries) {
+			String k = (String) e.getKey();
+			if (k.startsWith(STREAM_LNAME.name))
+				layoutNames.add((String) e.getValue());
+		}
+		layoutNames.sort(String::compareToIgnoreCase);
+		return layoutNames;
+	}
+
+	/** Get the next available stream layout name */
+	static public String getNextStreamLayoutName(Properties p) {
+		HashSet<String> hSet = new HashSet<String>(
+			getStreamLayoutNames(p));
+		for (int i = 1; i < 999; ++i) {
+			String name = "layout_" + i;
+			if (!hSet.contains(name))
+				return name;
+		}
+		assert false;
+		return null;
+	}
+
+	/** Lookup the layout number for the specified layout name. If not found,
+	 *  null is returned.
+	 */
+	static public Integer getLayoutNumber(Properties p, String layoutName) {
+		// look through all the entries for STREAM_LNAME entries
+		Set<Entry<Object, Object>> entries = p.entrySet();
+		for (Entry<Object, Object> e: entries) {
+			String k = (String) e.getKey();
+			if (k.startsWith(STREAM_LNAME.name)) {
+				String v = (String) e.getValue();
+				if (v.equals(layoutName)) {
+					// if we get one with a value equal to layoutName, get
+					// the number
+					String nStr = k.replace(STREAM_LNAME.name + ".", "");
+					try {
+						return Integer.valueOf(nStr);
+					} catch (NumberFormatException ex) {
+						// TODO this is probably a problem we should deal with
+						ex.printStackTrace();
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	/** Update user properties */
@@ -239,18 +454,6 @@ public enum UserProperty {
 		for (String f : fields)
 			tl.add(f.trim());
 		return tl.toArray(new String[tl.size()]);
-	}
-
-	/**
-	 * Return the external video viewer executable string.
-	 * @return the external video viewer executable string,
-	 *         or null if not found.
-	 */
-	static public String getExternalVideoViewer(Properties p) {
-		String ev = getProp(p, VIDEO_EXTVIEWER);
-		if ("".equals(ev))
-			return null;
-		return ev;
 	}
 
 	/** Get the video monitor string */

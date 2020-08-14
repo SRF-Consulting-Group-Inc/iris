@@ -26,5 +26,8 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/iris/lib/postgis-geometry-2.5.0-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/gst1-java-core-1.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/jna-5.5.0.jar"/>
+	<classpathentry kind="lib" path="lib/jna-platform-5.5.0.jar"/>
 	<classpathentry kind="output" path="bin/eclipse"/>
 </classpath>
