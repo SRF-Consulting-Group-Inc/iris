@@ -78,7 +78,6 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				try {
 					namespace.addObject(new IpawsAlertDeployerImpl(row));
 				} catch (Exception e) {
-					// TODO do we need/want this??
 					System.out.println("Error adding: " + row.getString(1));
 					e.printStackTrace();
 				}
