@@ -124,6 +124,8 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		IpawsAlertImpl.loadAll();
 		IpawsAlertConfigImpl.loadAll();
 		IpawsAlertDeployerImpl.loadAll();
+		CapResponseTypeImpl.loadAll();
+		CapUrgencyImpl.loadAll();
 	}
 
 	/** Get the time as a time stamp */

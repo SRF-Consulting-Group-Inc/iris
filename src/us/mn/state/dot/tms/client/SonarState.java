@@ -39,6 +39,8 @@ import us.mn.state.dot.tms.Beacon;
 import us.mn.state.dot.tms.BeaconAction;
 import us.mn.state.dot.tms.CameraTemplate;
 import us.mn.state.dot.tms.CameraVidSourceOrder;
+import us.mn.state.dot.tms.CapResponseType;
+import us.mn.state.dot.tms.CapUrgency;
 import us.mn.state.dot.tms.DayMatcher;
 import us.mn.state.dot.tms.DayPlan;
 import us.mn.state.dot.tms.DmsAction;
@@ -296,6 +298,22 @@ public class SonarState extends Client {
 	/** Get the IPAWS Alert Deployer cache */
 	public TypeCache<IpawsAlertConfig> getIpawsConfigCache() {
 		return ipaws_config_cache;
+	}
+	
+	/** Cache of CapResponseType objects */
+	private final TypeCache<CapResponseType> cap_response_type_cache;
+	
+	/** Get the CapUrgency cache */
+	public TypeCache<CapResponseType> getCapResponseTypeCache() {
+		return cap_response_type_cache;
+	}
+	
+	/** Cache of CapUrgency objects */
+	private final TypeCache<CapUrgency> cap_urgency_cache;
+	
+	/** Get the CapUrgency cache */
+	public TypeCache<CapUrgency> getCapUrgencyCache() {
+		return cap_urgency_cache;
 	}
 
 	/** Cache of LCS objects */
@@ -564,6 +582,9 @@ public class SonarState extends Client {
 				IpawsAlertDeployer.class, this);
 		ipaws_config_cache = new TypeCache<IpawsAlertConfig>(
 				IpawsAlertConfig.class, this);
+		cap_response_type_cache = new TypeCache<CapResponseType>(
+				CapResponseType.class, this);
+		cap_urgency_cache = new TypeCache<CapUrgency>(CapUrgency.class, this);
 		lcs_cache = new LcsCache(this);
 		gate_arm_array_model = new ProxyListModel<GateArmArray>(
 			gate_arm_arrays);
@@ -696,6 +717,8 @@ public class SonarState extends Client {
 		populateReadable(ipaws_alert_cache);
 		populateReadable(ipaws_deployer_cache);
 		populateReadable(ipaws_config_cache);
+		populateReadable(cap_response_type_cache);
+		populateReadable(cap_urgency_cache);
 	}
 
 	/** Look up the specified connection */

@@ -23,6 +23,25 @@ GRANT SELECT ON comm_link_view TO PUBLIC;
 -- Enable PostGIS extension
 CREATE EXTENSION postgis;
 
+-- Extend sonar_type field to allow longer names
+ALTER TABLE iris.sonar_type ALTER COLUMN name TYPE varchar(32);
+
+-- Need to drop the privilege view first
+DROP VIEW public.role_privilege_view;
+
+ALTER TABLE iris.privilege ALTER COLUMN type_n TYPE varchar(32);
+
+-- Recreate view
+CREATE VIEW role_privilege_view AS
+    SELECT role, role_capability.capability, type_n, obj_n, group_n, attr_n,
+	       write
+	FROM iris.role
+	JOIN iris.role_capability ON role.name = role_capability.role
+	JOIN iris.capability ON role_capability.capability = capability.name
+	JOIN iris.privilege ON privilege.capability = capability.name
+	WHERE role.enabled = 't' AND capability.enabled = 't';
+GRANT SELECT ON role_privilege_view TO PUBLIC;
+
 -- IPAWS Alert Event table
 CREATE TABLE event.ipaws
 (
@@ -115,27 +134,27 @@ ALTER TABLE iris.ipaws_alert_config
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
 
--- Extend sonar type fields to allow a longer name
-
-ALTER TABLE iris.sonar_type ALTER COLUMN name TYPE varchar(32);
-
 INSERT INTO iris.sonar_type (name) VALUES ('ipaws_alert_config');
 
--- Need to drop the privilege view first
-DROP VIEW public.role_privilege_view;
+-- CAP response types table
+CREATE TABLE iris.cap_response_type (
+	name varchar(24) PRIMARY KEY,
+	event text,
+	response_type text,
+	multi text
+);
 
-ALTER TABLE iris.privilege ALTER COLUMN type_n TYPE varchar(32);
+INSERT INTO iris.sonar_type (name) VALUES ('cap_response_type');
 
--- Recreate view
-CREATE VIEW role_privilege_view AS
-    SELECT role, role_capability.capability, type_n, obj_n, group_n, attr_n,
-	       write
-	FROM iris.role
-	JOIN iris.role_capability ON role.name = role_capability.role
-	JOIN iris.capability ON role_capability.capability = capability.name
-	JOIN iris.privilege ON privilege.capability = capability.name
-	WHERE role.enabled = 't' AND capability.enabled = 't';
-GRANT SELECT ON role_privilege_view TO PUBLIC;
+-- CAP urgency values table
+CREATE TABLE iris.cap_urgency (
+	name varchar(24) PRIMARY KEY,
+	event text,
+	urgency text,
+	multi text
+);
+
+INSERT INTO iris.sonar_type (name) VALUES ('cap_urgency');
 
 -- Add capability and privileges
 INSERT INTO iris.capability (name, enabled) VALUES ('ipaws_tab', true),
@@ -145,9 +164,13 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009A','ipaws_tab','ipaws','','','',false),
 						   ('PRV_009B','ipaws_tab','ipaws_alert_deployer','','','',false),
 						   ('PRV_009E','ipaws_tab','ipaws_alert_config','','','',false),
+						   ('PRV_009G','ipaws_tab','cap_response_type','','','',false),
+						   ('PRV_009H','ipaws_tab','cap_urgency','','','',false),
 						   ('PRV_009C','ipaws_admin','ipaws','','','',true),
-						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true);
-						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true);
+						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true),
+						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true),
+						   ('PRV_009I','ipaws_admin','cap_response_type','','','',true),
+						   ('PRV_009J','ipaws_admin','cap_urgency','','','',true);
 
 INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
                                                            ('administrator', 'ipaws_tab');

@@ -42,6 +42,8 @@ public class PrivilegePanel extends ProxyTablePanel<Privilege> {
 		"camera_preset",
 		"camera_template",
 		"cam_vid_src_ord",
+		"cap_response_type",
+		"cap_urgency",
 		"capability",
 		"catalog",
 		"comm_link",

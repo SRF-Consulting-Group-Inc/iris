@@ -27,15 +27,18 @@ public interface CapUrgency extends SonarObject {
 
 	/** SONAR type name */
 	String SONAR_TYPE = "cap_urgency";
+
+	/** Default Event (for use if no other matching event found) */
+	String DEFAULT_EVENT = "<default>";
 	
 	/** Set the applicable alert event type */
 	void setEvent(String ev);
 	
-	/** Set the applicable alert event type */
+	/** Get the applicable alert event type */
 	String getEvent();
 
 	/** Set the applicable urgency value */
-	void setUrgency(String rt);
+	void setUrgency(String u);
 	
 	/** Get the applicable urgency value */
 	String getUrgency();

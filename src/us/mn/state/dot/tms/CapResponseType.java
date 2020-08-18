@@ -28,6 +28,9 @@ public interface CapResponseType extends SonarObject {
 	/** SONAR type name */
 	String SONAR_TYPE = "cap_response_type";
 	
+	/** Default Event (for use if no other matching event found) */
+	String DEFAULT_EVENT = "<default>";
+	
 	/** Set the applicable alert event type */
 	void setEvent(String ev);
 	
@@ -35,10 +38,10 @@ public interface CapResponseType extends SonarObject {
 	String getEvent();
 
 	/** Set the applicable response type */
-	void setResponseTypes(String rt);
+	void setResponseType(String rt);
 	
 	/** Get the applicable response type */
-	String getResponseTypes();
+	String getResponseType();
 	
 	/** Set the MULTI string that will be substituted into the message */
 	void setMulti(String m);

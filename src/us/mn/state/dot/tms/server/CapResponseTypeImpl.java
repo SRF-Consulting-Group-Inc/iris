@@ -15,9 +15,13 @@
 
 package us.mn.state.dot.tms.server;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 import us.mn.state.dot.tms.CapResponseType;
+import us.mn.state.dot.tms.TMSException;
 
 /**
  * Common Alerting Protocol (CAP) response type field substitution value
@@ -32,63 +36,128 @@ public class CapResponseTypeImpl extends BaseObjectImpl
 	/** Database table name */
 	static private final String TABLE = "iris.cap_response_type";
 	
-	protected CapResponseTypeImpl(String n) {
+	public CapResponseTypeImpl(String n) {
 		super(n);
-		// TODO Auto-generated constructor stub
+	}
+
+	public CapResponseTypeImpl(String n, String ev, String rt, String m) {
+		super(n);
+		event = ev;
+		response_type = rt;
+		multi = m;
 	}
 
 	@Override
 	public String getTypeName() {
-		// TODO Auto-generated method stub
-		return null;
+		return SONAR_TYPE;
 	}
 
 	@Override
 	public String getTable() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<String, Object> getColumns() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setEvent(String ev) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getEvent() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setResponseTypes(String rt) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getResponseTypes() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setMulti(String m) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getMulti() {
-		// TODO Auto-generated method stub
-		return null;
+		return "iris." + SONAR_TYPE;
 	}
 	
+	/** Load all the CAP response type substitution values */
+	static public void loadAll() throws TMSException {
+		namespace.registerType(SONAR_TYPE, CapResponseTypeImpl.class);
+		store.query("SELECT name, event, response_type, multi FROM iris." +
+				SONAR_TYPE + ";", new ResultFactory()
+		{
+			@Override
+			public void create(ResultSet row) throws Exception {
+				try {
+					namespace.addObject(new CapResponseTypeImpl(row));
+				} catch (Exception e) {
+					System.out.println("Error adding: " + row.getString(1));
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	@Override
+	public Map<String, Object> getColumns() {
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		map.put("name", name);
+		map.put("event", event);
+		map.put("response_type", response_type);
+		map.put("multi", multi);
+		return map;
+	}
+
+	private CapResponseTypeImpl(ResultSet row) throws SQLException {
+		this(row.getString(1),			// name
+			row.getString(2),			// event
+			row.getString(3),			// response type
+			row.getString(4));			// MULTI
+	}
+	
+	/** Applicable alert event type */
+	private String event;
+	
+	/** Set the applicable alert event type */
+	@Override
+	public void setEvent(String ev) {
+		event = ev;
+	}
+
+	/** Set the applicable alert event type */
+	public void doSetEvent(String ev) throws TMSException {
+		if (ev != event) {
+			store.update(this, "event", ev);
+			setEvent(ev);
+		}
+	}
+	
+	/** Get the applicable alert event type */
+	@Override
+	public String getEvent() {
+		return event;
+	}
+
+	/** Applicable response type */
+	private String response_type;
+	
+	/** Set the applicable response type */
+	@Override
+	public void setResponseType(String rt) {
+		response_type = rt;
+	}
+
+	/** Set the applicable response type */
+	public void doSetResponseType(String rt) throws TMSException {
+		if (rt != response_type) {
+			store.update(this, "response_type", rt);
+			setResponseType(rt);
+		}
+	}
+	
+	/** Get the applicable response type */
+	@Override
+	public String getResponseType() {
+		return response_type;
+	}
+
+	/** MULTI string that will be substituted into the message */
+	private String multi;
+	
+	/** Set the MULTI string that will be substituted into the message */
+	@Override
+	public void setMulti(String m) {
+		multi = m;
+	}
+
+	/** Set the MULTI string that will be substituted into the message */
+	public void doSetMulti(String m) throws TMSException {
+		if (m != multi) {
+			store.update(this, "multi", m);
+			setMulti(m);
+		}
+	}
+	
+	/** Get the MULTI string that will be substituted into the message */
+	@Override
+	public String getMulti() {
+		return multi;
+	}
 }
