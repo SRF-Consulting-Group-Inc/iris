@@ -15,6 +15,10 @@
 
 package us.mn.state.dot.tms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import us.mn.state.dot.tms.utils.UniqueNameCreator;
@@ -44,6 +48,29 @@ public class CapResponseTypeHelper extends BaseHelper {
 				CapResponseType.SONAR_TYPE));
 	}
 
+	/** Return all known response type substitution MULTI strings that match
+	 *  the given response types (or any response types, if rtypes is empty).
+	 */
+	static public ArrayList<String> getMaxLen(String[] rtypes) {
+		// make a HashSet of the response types to evaluate inclusion
+		HashSet<String> rts = null;
+		if (rtypes.length > 0)
+			rts = new HashSet<String>(Arrays.asList(rtypes));
+		
+		// go through all response type substitution MULTI strings
+		ArrayList<String> multiStrs = new ArrayList<String>();
+		Iterator<CapResponseType> it = iterator();
+		while (it.hasNext()) {
+			CapResponseType crt = it.next();
+			if (rts == null || rts.contains(crt.getResponseType())) {
+				String multi = crt.getMulti();
+				if (multi != null)
+					multiStrs.add(multi);
+			}
+		}
+		return multiStrs;
+	}
+	
 	/** Name creator */
 	static UniqueNameCreator UNC;
 	static {

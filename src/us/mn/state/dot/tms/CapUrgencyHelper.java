@@ -15,6 +15,10 @@
 
 package us.mn.state.dot.tms;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import us.mn.state.dot.tms.utils.UniqueNameCreator;
@@ -44,6 +48,29 @@ public class CapUrgencyHelper extends BaseHelper {
 				CapUrgency.SONAR_TYPE));
 	}
 
+	/** All known urgency substitution MULTI strings that match the given
+	 *  urgency values (or any urgency values if uvals is empty).
+	 */
+	static public ArrayList<String> getMaxLen(String[] uvals) {
+		// make a HashSet of the urgency values to evaluate inclusion
+		HashSet<String> uvs = null;
+		if (uvals.length > 0)
+			uvs = new HashSet<String>(Arrays.asList(uvals));
+		
+		// go through all urgency value substitution MULTI strings
+		ArrayList<String> multiStrs = new ArrayList<String>();
+		Iterator<CapUrgency> it = iterator();
+		while (it.hasNext()) {
+			CapUrgency cu = it.next();
+			if (uvs == null || uvs.contains(cu.getUrgency())) {
+				String multi = cu.getMulti();
+				if (multi != null)
+					multiStrs.add(multi);
+			}
+		}
+		return multiStrs;
+	}
+	
 	/** Name creator */
 	static UniqueNameCreator UNC;
 	static {
