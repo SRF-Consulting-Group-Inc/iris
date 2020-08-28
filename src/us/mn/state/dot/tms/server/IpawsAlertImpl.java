@@ -24,8 +24,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONObject;
 import org.postgis.MultiPolygon;
 
+import us.mn.state.dot.tms.CapResponseTypeEnum;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IteratorWrapper;
 import us.mn.state.dot.tms.SystemAttrEnum;
@@ -218,23 +220,70 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 				geo_poly = new MultiPolygon(gp);
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
+				System.out.println("Error generating polygon from: " + gp);
 				e.printStackTrace();
 			}
 		}
 		purgeable = p;
 	}
 
-	/** Notify SONAR clients of a change to an attribute. Checks if the alert
-	 *  has been marked purgeable before notifying clients (clients are not
-	 *  notified if purgeable is true, but are if it is false or null).
+	/** Notify SONAR clients of a change to an attribute. Clears the purgeable
+	 *  flag to trigger reprocessing of the alert.
 	 *  
 	 *  Attribute names should use lower camel case instead of underscores 
 	 *  (e.g. "someAttribute" instead of "some_attribute").
 	 */
 	@Override
 	protected void notifyAttribute(String aname) {
-		if (purgeable == null || !purgeable)
-			super.notifyAttribute(aname);
+		notifyAttribute(aname, true);
+	}
+
+	/** Notify SONAR clients of a change to an attribute. If clearPurgeable is
+	 *  true, the the purgeable flag is cleared to trigger reprocessing of the
+	 *  alert.
+	 */
+	protected void notifyAttribute(String aname, boolean clearPurgeable) {
+		// notify clients about the change
+		super.notifyAttribute(aname);
+		
+		// clear the purgeable flag so the alert gets reprocessed (since this
+		// only gets called when the alert changes)
+		if (clearPurgeable) {
+			try {
+				doSetPurgeable(null);
+			} catch (TMSException e) {
+				setPurgeable(null);
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/** Compare the two object values, protecting against null pointers */
+	private boolean objEq(Object s1, Object s2) {
+		boolean eq = s1 == null ? s2 == null : s1.equals(s2);
+		if (!eq)
+			System.out.println(s1 + " == " + s2 + " ? " + eq);
+		return eq;
+	}
+	
+	/** Compare the two list values, protecting against null pointers and
+	 *  whitespace issues.
+	 */
+	private boolean listEq(List<?> l1, List<?> l2) {
+		// TODO whitespace is making checking for equality here difficult - 
+		// this works around that
+		String s1 = l1 != null ? l1.toString().replace(", ", ",") : null;
+		String s2 = l2 != null ? l2.toString().replace(", ", ",") : null;
+		return objEq(s1, s2);
+	}
+	
+	/** Compare the two JSON-formatted strings. */
+	private boolean jsonStrEq(String js1, String js2) {
+		String j1 = (js1 != null && !js1.isEmpty())
+				? new JSONObject(js1).toString() : null;
+		String j2 = (js2 != null && !js2.isEmpty())
+				? new JSONObject(js2).toString() : null;
+		return objEq(j1, j2);
 	}
 	
 	/** Identifier for the alert */
@@ -248,7 +297,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the identifier */
 	public void doSetIdentifier(String i) throws TMSException {
-		if (i != identifier) {
+		if (!objEq(i, identifier)) {
 			store.update(this, "identifier", i);
 			setIdentifier(i);
 			notifyAttribute("identifier");
@@ -272,7 +321,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the sender */
 	public void doSetSender(String se) throws TMSException {
-		if (se != sender) {
+		if (!objEq(se, sender)) {
 			store.update(this, "sender", se);
 			setSender(se);
 			notifyAttribute("sender");
@@ -296,7 +345,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the sent date */
 	public void doSetSentDate(Date sd) throws TMSException {
-		if (sd != sent_date) {
+		if (!objEq(sd, sent_date)) {
 			store.update(this, "sent_date", sd);
 			setSentDate(sd);
 			notifyAttribute("sentDate");
@@ -320,7 +369,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the status */
 	public void doSetStatus(String sta) throws TMSException {
-		if (status != sta) {
+		if (!objEq(status, sta)) {
 			store.update(this, "status", sta);
 			setStatus(sta);
 			notifyAttribute("status");
@@ -344,7 +393,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the message type */
 	public void doSetMsgType(String mt) throws TMSException {
-		if (message_type != mt) {
+		if (!objEq(message_type, mt)) {
 			store.update(this, "message_type", mt);
 			setMsgType(mt);
 			notifyAttribute("msgType");
@@ -368,7 +417,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the scope */
 	public void doSetScope(String sc) throws TMSException {
-		if (scope != sc) {
+		if (!objEq(scope, sc)) {
 			store.update(this, "scope", sc);
 			setScope(sc);
 			notifyAttribute("scope");
@@ -392,7 +441,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the codes */
 	public void doSetCodes(List<String> cd) throws TMSException {
-		if (codes != cd) {
+		if (!listEq(codes, cd)) {
 			store.update(this, "codes", cd);
 			setCodes(cd);
 			notifyAttribute("codes");
@@ -416,7 +465,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the note */
 	public void doSetNote(String nt) throws TMSException {
-		if (note != nt) {
+		if (!objEq(note, nt)) {
 			store.update(this, "note", nt);
 			setNote(nt);
 			notifyAttribute("note");
@@ -440,7 +489,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the alert references */
 	public void doSetAlertReferences(List<String> ref) throws TMSException {
-		if (alert_references != ref) {
+		if (!listEq(alert_references, ref)) {
+			System.out.println(alert_references + " == " + ref + " ? false");
 			store.update(this, "alert_references", ref);
 			setAlertReferences(ref);
 			notifyAttribute("alertReferences");
@@ -463,7 +513,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the incidents */
 	public void doSetIncidents(List<String> inc) throws TMSException {
-		if (incidents != inc) {
+		if (!listEq(incidents, inc)) {
 			store.update(this, "incidents", inc);
 			setIncidents(inc);
 			notifyAttribute("incidents");
@@ -487,7 +537,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the categories */
 	public void doSetCategories(List<String> ct) throws TMSException {
-		if (categories != ct) {
+		if (!listEq(categories, ct)) {
 			store.update(this, "categories", ct);
 			setCategories(ct);
 			notifyAttribute("categories");
@@ -511,7 +561,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the event */
 	public void doSetEvent(String ev) throws TMSException {
-		if (event != ev) {
+		if (!objEq(event, ev)) {
 			store.update(this, "event", ev);
 			setEvent(ev);
 			notifyAttribute("event");
@@ -535,7 +585,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the response types */
 	public void doSetResponseTypes(List<String> rt) throws TMSException {
-		if (response_types != rt) {
+		if (!listEq(response_types, rt)) {
 			store.update(this, "response_types", rt);
 			setResponseTypes(rt);
 			notifyAttribute("responseTypes");
@@ -546,6 +596,19 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	@Override
 	public List<String> getResponseTypes() {
 		return response_types;
+	}
+	
+	/** Get the highest-priority response type */
+	public String getPriorityResponseType() {
+		// go through all response types to get the one with the highest
+		// ordinal
+		CapResponseTypeEnum maxRT = CapResponseTypeEnum.NONE;
+		for (String rts: response_types) {
+			CapResponseTypeEnum crte = CapResponseTypeEnum.fromValue(rts);
+			if (crte.ordinal() > maxRT.ordinal())
+				maxRT = crte;
+		}
+		return maxRT.value;
 	}
 	
 	/** Urgency of alert */
@@ -559,7 +622,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the urgency */
 	public void doSetUrgency(String u) throws TMSException {
-		if (urgency != u) {
+		if (!objEq(urgency, u)) {
 			store.update(this, "urgency", u);
 			setUrgency(u);
 			notifyAttribute("urgency");
@@ -583,7 +646,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the severity */
 	public void doSetSeverity(String sv) throws TMSException {
-		if (urgency != sv) {
+		if (!objEq(severity, sv)) {
 			store.update(this, "severity", sv);
 			setSeverity(sv);
 			notifyAttribute("severity");
@@ -607,7 +670,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the certainty */
 	public void doSetCertainty(String cy) throws TMSException {
-		if (certainty != cy) {
+		if (!objEq(certainty, cy)) {
 			store.update(this, "certainty", cy);
 			setCertainty(cy);
 			notifyAttribute("certainty");
@@ -631,7 +694,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the audience */
 	public void doSetAudience(String au) throws TMSException {
-		if (audience != au) {
+		if (!objEq(audience, au)) {
 			store.update(this, "audience", au);
 			setAudience(au);
 			notifyAttribute("audience");
@@ -655,7 +718,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the effective date */
 	public void doSetEffectiveDate(Date efd) throws TMSException {
-		if (effective_date != efd) {
+		if (!objEq(efd, effective_date)) {
 			store.update(this, "effective_date", efd);
 			setEffectiveDate(efd);
 			notifyAttribute("effectiveDate");
@@ -679,7 +742,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the onset date */
 	public void doSetOnsetDate(Date od) throws TMSException {
-		if (od != onset_date) {
+		if (!objEq(od, onset_date)) {
 			store.update(this, "onset_date", od);
 			setOnsetDate(od);
 			notifyAttribute("onsetDate");
@@ -703,7 +766,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the expiration date */
 	public void doSetExpirationDate(Date exd) throws TMSException {
-		if (exd != expiration_date) {
+		if (!objEq(exd, expiration_date)) {
 			store.update(this, "expiration_date", exd);
 			setExpirationDate(exd);
 			notifyAttribute("expirationDate");
@@ -727,7 +790,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the sender's name */
 	public void doSetSenderName(String sn) throws TMSException {
-		if (sender_name != sn) {
+		if (!objEq(sender_name, sn)) {
 			store.update(this, "sender_name", sn);
 			setSenderName(sn);
 			notifyAttribute("senderName");
@@ -751,7 +814,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the alert headline */
 	public void doSetHeadline(String hl) throws TMSException {
-		if (headline != hl) {
+		if (!objEq(headline, hl)) {
 			store.update(this, "headline", hl);
 			setHeadline(hl);
 			notifyAttribute("headline");
@@ -775,7 +838,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the alert description */
 	public void doSetAlertDescription(String ad) throws TMSException {
-		if (alert_description != ad) {
+		if (!objEq(alert_description, ad)) {
 			store.update(this, "alert_description", ad);
 			setAlertDescription(ad);
 			notifyAttribute("alertDescription");
@@ -799,7 +862,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the instruction */
 	public void doSetInstruction(String in) throws TMSException {
-		if (instruction != in) {
+		if (!objEq(instruction, in)) {
 			store.update(this, "instruction", in);
 			setInstruction(in);
 			notifyAttribute("instruction");
@@ -823,7 +886,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the parameters */
 	public void doSetParameters(String par) throws TMSException {
-		if (parameters != par) {
+		if (!jsonStrEq(parameters, par)) {
 			store.update(this, "parameters", par);
 			setParameters(par);
 			notifyAttribute("parameters");
@@ -847,7 +910,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 
 	/** Set the area */
 	public void doSetArea(String ar) throws TMSException {
-		if (area != ar) {
+		if (!jsonStrEq(area, ar)) {
 			store.update(this, "area", ar);
 			setArea(ar);
 			notifyAttribute("area");
@@ -871,7 +934,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	
 	/** Set the area */
 	public void doSetGeoPoly(MultiPolygon gp) throws TMSException {
-		if (geo_poly != gp) {
+		if (!objEq(geo_poly, gp)) {
 			store.update(this, "geo_poly", gp);
 			setGeoPoly(gp);
 			notifyAttribute("geoPoly");
@@ -891,7 +954,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	
 	/** Set the area from a string */
 	public void doSetGeoPoly(String gpstr) throws TMSException {
-		if (geo_poly.toString() != gpstr) {
+		if (!objEq(geo_poly.toString(), gpstr)) {
 			// NOTE need to use setGeoPoly first, then store.update
 			setGeoPoly(gpstr);
 			store.update(this, "geo_poly", geo_poly);
@@ -915,12 +978,14 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		purgeable = p;
 	}
 
-	/** Set the area */
+	/** Set if this alert is purgeable (irrelevant to us). Notifies clients of
+	 *  the change.
+	 */
 	public void doSetPurgeable(Boolean p) throws TMSException {
-		if (purgeable != p) {
+		if (!objEq(purgeable, p)) {
 			store.update(this, "purgeable", p);
 			setPurgeable(p);
-			notifyAttribute("purgeable");
+			notifyAttribute("purgeable", false);
 		}
 	}
 	
