@@ -252,10 +252,11 @@ public class IpawsReader {
     
     
     private static String getValuePairJson(String tag, Element element) {
-		StringBuilder sb = new StringBuilder();
-		sb.append('{');
 		
-    	// Check if tag exists
+		// store key/value pairs in a HashMap of ArrayLists to allow for
+		// multiple instances of the same key
+		HashMap<String,ArrayList<String>> kvPairs =
+				new HashMap<String,ArrayList<String>>();
         if (element.getElementsByTagName(tag).getLength() > 0) {       
 	        NodeList nodeList = element.getElementsByTagName(tag);
 	        for (int i = 0; i < nodeList.getLength(); i++) {
@@ -264,10 +265,23 @@ public class IpawsReader {
 	        			.item(0).getTextContent();
 	        	String value = childElement.getElementsByTagName("value")
 	        			.item(0).getTextContent();
-	        	sb.append(Json.str(key, value));
+	        	if (!kvPairs.containsKey(key))
+	        		kvPairs.put(key, new ArrayList<String>());
+	        	ArrayList<String> vals = kvPairs.get(key);
+	        	vals.add(value);
 	        }
         }
         
+        // make a JSON string with all the key/value pairs
+        StringBuilder sb = new StringBuilder();
+		sb.append('{');
+		
+		for (String key: kvPairs.keySet()) {
+			ArrayList<String> vals = kvPairs.get(key);
+			String value = vals.size() == 1 ? vals.get(0) : vals.toString();
+			sb.append(Json.str(key, value));
+		}
+		
 		// remove trailing comma
 		if (sb.charAt(sb.length() - 1) == ',')
 			sb.setLength(sb.length() - 1);
