@@ -42,6 +42,24 @@ public class CapResponseTypeHelper extends BaseHelper {
 				CapResponseType.SONAR_TYPE, name);
 	}
 	
+	/** Lookup the response type substitution value corresponding to the given
+	 *  event and response type.
+	 */
+	static public CapResponseType lookupFor(String event, String rType) {
+		if (event == null || rType == null)
+			return null;
+		
+		Iterator<CapResponseType> it = iterator();
+		while (it.hasNext()) {
+			CapResponseType crt = it.next();
+			if (event.equals(crt.getEvent())
+					&& rType.equals(crt.getResponseType())) {
+				return crt;
+			}
+		}
+		return null;
+	}
+	
 	/** Get an CapResponseType object iterator */
 	static public Iterator<CapResponseType> iterator() {
 		return new IteratorWrapper<CapResponseType>(namespace.iterator(

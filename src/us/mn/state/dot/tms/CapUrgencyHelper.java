@@ -36,10 +36,26 @@ public class CapUrgencyHelper extends BaseHelper {
 		assert false;
 	}
 	
-	/** Lookup the response type substitution value with the specified name */
+	/** Lookup the urgency substitution value with the specified name */
 	static public CapUrgency lookup(String name) {
 		return (CapUrgency) namespace.lookupObject(
 				CapUrgency.SONAR_TYPE, name);
+	}
+	
+	/** Lookup the urgency substitution value corresponding to the given event
+	 *  and urgency value.
+	 */
+	static public CapUrgency lookupFor(String event, String urg) {
+		if (event == null || urg == null)
+			return null;
+		
+		Iterator<CapUrgency> it = iterator();
+		while (it.hasNext()) {
+			CapUrgency cu = it.next();
+			if (event.equals(cu.getEvent()) && urg.equals(cu.getUrgency()))
+				return cu;
+		}
+		return null;
 	}
 	
 	/** Get an CapResponseType object iterator */
