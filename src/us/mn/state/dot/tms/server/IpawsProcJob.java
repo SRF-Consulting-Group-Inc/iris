@@ -40,6 +40,7 @@ import us.mn.state.dot.tms.CapUrgencyHelper;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.DmsMsgPriority;
 import us.mn.state.dot.tms.GeoLoc;
+import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertConfig;
 import us.mn.state.dot.tms.IpawsAlertConfigHelper;
 import us.mn.state.dot.tms.IpawsAlertDeployerHelper;
@@ -102,6 +103,10 @@ public class IpawsProcJob extends Job {
 			
 			// set the MultiPolygon on the alert object
 			ia.doSetGeoPoly(mp);
+			
+			// generate a GeoLoc for the alert (the alert area's centroid)
+			GeoLoc gl = getGeoLoc(ia);
+			ia.doSetGeoLoc(gl);
 			
 			// find DMS in the polygon and generate an alert deployer object
 			// this will complete all processing of this alert for this cycle
@@ -408,6 +413,37 @@ public class IpawsProcJob extends Job {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	/** Generate a GeoLoc for the alert as the alert area's centroid. */
+	private GeoLocImpl getGeoLoc(IpawsAlertImpl ia) throws TMSException {
+		// generate a GeoLoc for the alert (the alert's centroid)
+		IpawsAlertImpl.store.query(
+		"SELECT ST_AsText(ST_Centroid(geo_poly)) FROM event." +
+		IpawsAlert.SONAR_TYPE + " WHERE name='" + ia.getName() + "';",
+		new ResultFactory() {
+			@Override
+			public void create(ResultSet row) throws Exception {
+				// strip out the lat/long from the POINT(lon lat) string
+				String pStr = row.getString(1);
+				String llStr = pStr.replace("POINT(", "").replace(")", "");
+				String[] ll = llStr.split(" ");
+				if (ll.length == 2) {
+					Double lon = Double.valueOf(ll[0]);
+					Double lat = Double.valueOf(ll[1]);
+					
+					// construct a GeoLoc that will be associated with the
+					// deployer object
+					GeoLocImpl gl = new GeoLocImpl(ia.getName(),
+							IpawsAlert.SONAR_TYPE, lat, lon);
+					gl.notifyCreate();
+				}
+			}
+		});
+		
+		// lookup and return the GeoLoc for this alert (which should hopefully
+		// exist now)
+		return GeoLocImpl.lookupGeoLoc(ia.getName());
 	}
 	
 	/** Reformat the text taken from the polygon section of a CAP alert's area
