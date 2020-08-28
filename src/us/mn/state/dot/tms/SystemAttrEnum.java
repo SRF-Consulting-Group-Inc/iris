@@ -108,6 +108,9 @@ public enum SystemAttrEnum {
 	INCIDENT_CLEAR_ADVICE_MULTI(String.class),
 	INCIDENT_CLEAR_SECS(600, 0, 3600),
 	IPAWS_ALERT_PURGE_DAYS(1, 1),
+	IPAWS_PRIORITY_WEIGHT_URGENCY(1.0f),
+	IPAWS_PRIORITY_WEIGHT_SEVERITY(1.0f),
+	IPAWS_PRIORITY_WEIGHT_CERTAINTY(1.0f),
 	MAP_EXTENT_NAME_INITIAL("Home"),
 	MAP_ICON_SIZE_SCALE_MAX(30f, 0f, 9000f),
 	MAP_SEGMENT_MAX_METERS(2000, 100, Change.RESTART_CLIENT),
@@ -229,6 +232,11 @@ public enum SystemAttrEnum {
 	/** Create an Integer attribute with default and min values */
 	private SystemAttrEnum(int d, int mn, Change ca) {
 		this(Integer.class, d, mn, null, ca);
+	}
+	
+	/** Create a Float attribute with a default value */
+	private SystemAttrEnum(float d) {
+		this(Float.class, d, null, null, Change.NONE);
 	}
 
 	/** Create a Float attribute with default, min and max values */

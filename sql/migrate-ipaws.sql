@@ -3,6 +3,12 @@
 SET SESSION AUTHORIZATION 'tms';
 BEGIN;
 
+-- Add System Attributes
+INSERT INTO iris.system_attribute (name, value)
+VALUES ('ipaws_priority_weight_urgency', 1.0),
+		('ipaws_priority_weight_severity', 1.0),
+		('ipaws_priority_weight_certainty', 1.0);
+
 -- Reserve IPAWS Alert comm protocol value
 INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
 
