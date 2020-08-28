@@ -497,7 +497,9 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 	 *  returned by Arrays.toString().
 	 */
 	static protected String arrayToString(String[] a) {
-		return a != null ? Arrays.toString(a) : null;
+		if (a != null)
+			return Arrays.toString(a).replace("[", "{").replace("]", "}");
+		return null;
 	}
 	
 
