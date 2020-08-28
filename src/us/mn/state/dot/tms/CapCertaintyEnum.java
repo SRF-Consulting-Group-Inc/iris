@@ -61,4 +61,9 @@ public enum CapCertaintyEnum {
 			svals[i] = evals[i].value;
 		return svals;
 	}
+
+	/** Return the number of possible values. */
+	static public int nValues() {
+		return values().length;
+	}
 }
