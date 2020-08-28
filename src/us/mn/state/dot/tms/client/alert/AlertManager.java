@@ -227,10 +227,12 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	}
 
 	@Override
-	protected GeoLoc getGeoLoc(IpawsAlertDeployer proxy) {
-		// TODO need to figure out how to handle this, since IPAWS alerts are
-		// areas and not points...
-		return null;
+	protected GeoLoc getGeoLoc(IpawsAlertDeployer iad) {
+		// get the IpawsAlert object that corresponds to this deployer
+		IpawsAlert ia = IpawsAlertHelper.lookup(iad.getAlertId());
+		
+		// return the GeoLoc
+		return ia.getGeoLoc();
 	}
 	
 }
