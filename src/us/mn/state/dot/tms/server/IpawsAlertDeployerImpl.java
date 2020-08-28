@@ -172,14 +172,18 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 	
 	public IpawsAlertDeployerImpl(String n, String aid,
-			Date as, Date ae, String[] dms, String m) {
+			Date as, Date ae, String sg, String[] dms,
+			String qm, String m, int mp) {
 		// TODO add SignGroup/QuickMessage/etc.
 		super(n);
 		alert_id = aid;
 		alert_start = as;
 		alert_end = ae;
+		sign_group = sg;
 		auto_dms = dms;
+		quick_message = qm;
 		auto_multi = m;
+		msg_priority = mp;
 		gen_time = new Date();
 	}
 	

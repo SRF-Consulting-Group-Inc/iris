@@ -15,10 +15,14 @@
 
 package us.mn.state.dot.tms;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Helper class for IPAWS Alert Deployers. Used on the client and server.
@@ -109,4 +113,40 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 		return new IteratorWrapper<IpawsAlertDeployer>(namespace.iterator(
 				IpawsAlertDeployer.SONAR_TYPE));
 	}
+	
+	/** Default time format string (hour and AM/PM) for CAP time tags. */
+	private final static DateTimeFormatter DEFAULT_TIME_FMT =
+			DateTimeFormatter.ofPattern("h a");
+	
+	/** Regex pattern for extracting time format string */
+	private final static Pattern TMSUB = Pattern.compile("\\{([^}]*)\\}");
+	
+	/** Process time format substitution fields, substituting in the time
+	 *  value provided.
+	 */
+	public static String replaceTimeFmt(String tmplt, LocalDateTime dt) {
+		// use regex to find match groups in curly braces
+		Matcher m = TMSUB.matcher(tmplt);
+		String str = tmplt;
+		while (m.find()) {
+			String tmfmt = m.group(1);
+			String subst;
+			DateTimeFormatter dtFmt;
+			
+			// get the full string for replacement and a DateTimeFormatter
+			if (tmfmt.trim().isEmpty()) {
+				dtFmt = DEFAULT_TIME_FMT;
+				subst = "{}";
+			} else {
+				dtFmt = DateTimeFormatter.ofPattern(tmfmt);
+				subst = "{" + tmfmt + "}";
+			}
+			
+			// format the time string and swap it in
+			String tmstr = dt.format(dtFmt);
+			str = str.replace(subst, tmstr);
+		}
+		return str;
+	}
+	
 }
