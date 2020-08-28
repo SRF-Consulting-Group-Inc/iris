@@ -79,6 +79,7 @@ CREATE TABLE event.ipaws
     parameters jsonb,
     area jsonb,
     geo_poly geography(multipolygon),
+	geo_loc varchar(20),
     purgeable boolean
 );
 	

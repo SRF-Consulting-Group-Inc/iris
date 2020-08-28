@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import org.postgis.MultiPolygon;
 
 import us.mn.state.dot.tms.CapResponseTypeEnum;
+import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IteratorWrapper;
 import us.mn.state.dot.tms.SystemAttrEnum;
@@ -260,10 +261,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	
 	/** Compare the two object values, protecting against null pointers */
 	private boolean objEq(Object s1, Object s2) {
-		boolean eq = s1 == null ? s2 == null : s1.equals(s2);
-		if (!eq)
-			System.out.println(s1 + " == " + s2 + " ? " + eq);
-		return eq;
+		return s1 == null ? s2 == null : s1.equals(s2);
 	}
 	
 	/** Compare the two list values, protecting against null pointers and
@@ -490,7 +488,6 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	/** Set the alert references */
 	public void doSetAlertReferences(List<String> ref) throws TMSException {
 		if (!listEq(alert_references, ref)) {
-			System.out.println(alert_references + " == " + ref + " ? false");
 			store.update(this, "alert_references", ref);
 			setAlertReferences(ref);
 			notifyAttribute("alertReferences");
@@ -916,6 +913,12 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			notifyAttribute("area");
 		}
 	}
+
+	/** Get the area */
+	@Override
+	public String getArea() {
+		return area;
+	}
 	
 	/** Get the geographic polygon representing the area. */
 	@Override
@@ -961,11 +964,30 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			notifyAttribute("geoPoly");
 		}
 	}
+
+	/** GeoLoc for this alert (the alert area's centroid). */
+	private GeoLoc geo_loc;
 	
-	/** Get the area */
+	/** Set the GeoLoc, which is the alert area's centroid */
 	@Override
-	public String getArea() {
-		return area;
+	public void setGeoLoc(GeoLoc gl) {
+		geo_loc = gl;
+	}
+	
+	/** Set the GeoLoc, which is the alert area's centroid */
+	public void doSetGeoLoc(GeoLoc gl) throws TMSException {
+		if (!objEq(geo_loc, gl)) {
+			store.update(this, "geo_loc", gl);
+			setGeoLoc(gl);
+			notifyAttribute("geoLoc");
+		}
+		geo_loc = gl;
+	}
+	
+	/** Get the GeoLoc, which is the alert area's centroid */
+	@Override
+	public GeoLoc getGeoLoc() {
+		return geo_loc;
 	}
 	
 	/** Purgeable flag. Null if the alert has not yet been processed, true if
