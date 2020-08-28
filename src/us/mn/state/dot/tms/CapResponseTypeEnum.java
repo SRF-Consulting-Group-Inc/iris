@@ -23,17 +23,17 @@ package us.mn.state.dot.tms;
  * @author Gordon Parikh
  */
 public enum CapResponseTypeEnum {
-	SHELTER("Shelter", "Take shelter in place or per <instruction>"),
-	EVACUATE("Evacuate", "Relocate as instructed in the <instruction>"),
-	PREPARE("Prepare", "Make preparations per the <instruction>"),
-	EXECUTE("Execute",
-			"Execute a pre-planned activity identified in <instruction>"),
-	AVOID("Avoid", "Avoid the subject event as per the <instruction>"),
-	MONITOR("Monitor",
-			"Attend to information sources as described in <instruction>"),
+	NONE("None", "No action recommended"),
 	ALL_CLEAR("All Clear", "The subject event no longer poses a threat or " +
 			"concern and any follow on action is described in <instruction>"),
-	NONE("None", "No action recommended");
+	MONITOR("Monitor",
+			"Attend to information sources as described in <instruction>"),
+	AVOID("Avoid", "Avoid the subject event as per the <instruction>"),
+	EXECUTE("Execute",
+			"Execute a pre-planned activity identified in <instruction>"),
+	PREPARE("Prepare", "Make preparations per the <instruction>"),
+	EVACUATE("Evacuate", "Relocate as instructed in the <instruction>"),
+	SHELTER("Shelter", "Take shelter in place or per <instruction>");
 	
 	// NOTE the following is included in the CAP standard but is advised to
 	// not be used for public warning applications and should not be enabled
