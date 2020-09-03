@@ -72,9 +72,13 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 		summary.dispose();
 	}
 	
+	/** Get the alert tab ID. Overridden to generalize name. */
 	@Override
 	public String getTabId() {
-		return "alert";
+		return getAlertTabId();
 	}
 	
+	public static String getAlertTabId() {
+		return "alert";
+	}
 }
