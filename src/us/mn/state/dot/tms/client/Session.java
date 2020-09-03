@@ -117,6 +117,11 @@ public class Session {
 	/** Location manager */
 	private final GeoLocManager loc_manager;
 
+	/** Get the location manager */
+	public GeoLocManager getGeoLocManager() {
+		return loc_manager;
+	}
+	
 	/** List of proxy managers */
 	private final LinkedList<ProxyManager<?>> managers;
 
