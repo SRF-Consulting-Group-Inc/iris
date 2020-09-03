@@ -51,6 +51,11 @@ public class ProxyLayerState<T extends SonarObject> extends LayerState {
 	/** Proxy manager */
 	private final ProxyManager<T> manager;
 
+	/** Get the proxy manager */
+	public ProxyManager<T> getManager() {
+		return manager;
+	}
+	
 	/** Proxy selection model */
 	private final ProxySelectionModel<T> model;
 
