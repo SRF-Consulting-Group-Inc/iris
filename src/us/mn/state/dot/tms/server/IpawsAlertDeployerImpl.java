@@ -410,8 +410,6 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		return false;
 	}
 	
-//	public boolean
-	
 	/** Set the list of DMS (represented as a string array) automatically 
 	 *  selected for deploying alert messages, notifying clients if it has
 	 *  changed.
