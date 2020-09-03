@@ -206,6 +206,16 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 		}
 	}
 	
+	/** Check if a style is visible. All alert styles are visible (only
+	 *  selected alerts are drawn). TODO may need to change this.
+	 */
+	@Override
+	protected boolean isStyleVisible(IpawsAlertDeployer proxy) {
+		if (proxy != null)
+			System.out.println("Checking proxy: " + proxy.getName());
+		return true;
+	}
+	
 	/** Check when this alert will start relative to the current time. Returns
 	 *  -1 if this alert has not yet started, 0 if the alert is currently
 	 *  active, and 1 if the alert is in the past. If the time fields are not
