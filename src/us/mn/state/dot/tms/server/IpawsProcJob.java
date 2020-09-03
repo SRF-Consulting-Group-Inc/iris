@@ -40,6 +40,7 @@ import us.mn.state.dot.tms.CapUrgencyHelper;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.DmsMsgPriority;
 import us.mn.state.dot.tms.GeoLoc;
+import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertConfig;
 import us.mn.state.dot.tms.IpawsAlertConfigHelper;
@@ -432,11 +433,18 @@ public class IpawsProcJob extends Job {
 					Double lon = Double.valueOf(ll[0]);
 					Double lat = Double.valueOf(ll[1]);
 					
-					// construct a GeoLoc that will be associated with the
-					// deployer object
-					GeoLocImpl gl = new GeoLocImpl(ia.getName(),
-							IpawsAlert.SONAR_TYPE, lat, lon);
-					gl.notifyCreate();
+					// construct or update a GeoLoc that will be associated
+					// with the deployer object
+					GeoLocImpl gl = GeoLocImpl.lookupGeoLoc(ia.getName());
+					if (gl == null) {
+						gl = new GeoLocImpl(ia.getName(),
+								IpawsAlert.SONAR_TYPE, lat, lon);
+						gl.notifyCreate();
+					} else {
+						gl.setLatNotify(lat);
+						gl.setLonNotify(lon);
+					}
+					
 				}
 			}
 		});

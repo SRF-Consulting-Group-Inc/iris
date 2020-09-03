@@ -54,8 +54,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			"categories, event, response_types, urgency, severity, " +
 			"certainty, audience, effective_date, onset_date, " +
 			"expiration_date, sender_name, headline, alert_description, " + 
-			"instruction, parameters, area, ST_AsText(geo_poly), purgeable " +
-			"FROM event." + SONAR_TYPE + ";", new ResultFactory()
+			"instruction, parameters, area, ST_AsText(geo_poly), geo_loc, " +
+			"purgeable FROM event." + SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				try {
@@ -145,9 +145,10 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			row.getString(24), 			// alert description
 			row.getString(25), 			// instruction
 			row.getString(26),			// parameters
-			row.getString(27),			//area
-			row.getString(28),			//geo_poly
-			getBoolean(row, 29) 		// purgeable flag
+			row.getString(27),			// area
+			row.getString(28),			// geo_poly
+			row.getString(29),			// geo_loc
+			getBoolean(row, 30) 		// purgeable flag
 		);
 	}
 
@@ -186,8 +187,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			String mt, String sc, String[] cd, String nt, String[]ref,
 			String[] inc, String[] ct, String ev, String[] rt, String u, 
 			String sv, String cy, String au, Date efd, Date od, Date exd, 
-			String sn, String hl, String ades, String in, 
-			String par, String ar, String gp, Boolean p) 
+			String sn, String hl, String ades, String in, String par, 
+			String ar, String gp, String gl, Boolean p) 
 	{
 		super(n);
 		identifier = i;
@@ -225,6 +226,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 				e.printStackTrace();
 			}
 		}
+		geo_loc = lookupGeoLoc(gl);
 		purgeable = p;
 	}
 
