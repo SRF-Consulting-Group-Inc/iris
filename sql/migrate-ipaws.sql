@@ -163,6 +163,25 @@ CREATE TABLE iris.cap_urgency (
 
 INSERT INTO iris.sonar_type (name) VALUES ('cap_urgency');
 
+-- Push Notification table
+CREATE TABLE event.push_notification (
+	name varchar(30) PRIMARY KEY,
+	ref_object_type varchar(32),
+	ref_object_name text,
+	sent_time timestamp with time zone,
+	title text,
+	description text
+);
+
+ALTER TABLE event.push_notification
+	ADD CONSTRAINT push_notification_ref_object_type_fkey
+		FOREIGN KEY (ref_object_type)
+        REFERENCES iris.sonar_type (name) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION;
+
+INSERT INTO iris.sonar_type (name) VALUES ('push_notification');
+
 -- Add capability and privileges
 INSERT INTO iris.capability (name, enabled) VALUES ('ipaws_tab', true),
                                                    ('ipaws_admin', true);
@@ -177,7 +196,8 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009D','ipaws_admin','ipaws_alert_deployer','','','',true),
 						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true),
 						   ('PRV_009I','ipaws_admin','cap_response_type','','','',true),
-						   ('PRV_009J','ipaws_admin','cap_urgency','','','',true);
+						   ('PRV_009J','ipaws_admin','cap_urgency','','','',true),
+						   ('PRV_009K','login','push_notification','','','',true);
 
 INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
                                                            ('administrator', 'ipaws_tab');

@@ -58,6 +58,7 @@ import us.mn.state.dot.tms.MapExtent;
 import us.mn.state.dot.tms.MeterAction;
 import us.mn.state.dot.tms.ParkingArea;
 import us.mn.state.dot.tms.PlanPhase;
+import us.mn.state.dot.tms.PushNotification;
 import us.mn.state.dot.tms.RampMeter;
 import us.mn.state.dot.tms.Road;
 import us.mn.state.dot.tms.RoadAffix;
@@ -316,6 +317,14 @@ public class SonarState extends Client {
 		return cap_urgency_cache;
 	}
 
+	/** Cache of PushNotification objects */
+	private final TypeCache<PushNotification> push_notification_cache;
+	
+	/** Get the PushNotification cache */
+	public TypeCache<PushNotification> getPushNotificationCache() {
+		return push_notification_cache;
+	}
+	
 	/** Cache of LCS objects */
 	private final LcsCache lcs_cache;
 
@@ -585,6 +594,8 @@ public class SonarState extends Client {
 		cap_response_type_cache = new TypeCache<CapResponseType>(
 				CapResponseType.class, this);
 		cap_urgency_cache = new TypeCache<CapUrgency>(CapUrgency.class, this);
+		push_notification_cache = new TypeCache<PushNotification>(
+				PushNotification.class, this);
 		lcs_cache = new LcsCache(this);
 		gate_arm_array_model = new ProxyListModel<GateArmArray>(
 			gate_arm_arrays);
@@ -719,6 +730,7 @@ public class SonarState extends Client {
 		populateReadable(ipaws_config_cache);
 		populateReadable(cap_response_type_cache);
 		populateReadable(cap_urgency_cache);
+		populateReadable(push_notification_cache);
 	}
 
 	/** Look up the specified connection */
