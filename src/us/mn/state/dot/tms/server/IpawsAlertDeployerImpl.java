@@ -443,7 +443,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 *  DMS that users may want to include for the deployment.
 	 */
 	public void doSetOptionalDms(String[] dms) throws TMSException {
-		if (dms != optional_dms) {
+		if (!Arrays.deepEquals(dms, this.optional_dms)) {
 			store.update(this, "optional_dms", dms);
 			setOptionalDms(dms);
 		}
@@ -468,7 +468,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 
 	/** Set the list of DMS actually used to deploy the message. */
 	public void doSetDeployedDms(String[] dms) throws TMSException {
-		if (dms != deployed_dms) {
+		if (!Arrays.deepEquals(dms, this.deployed_dms)) {
 			store.update(this, "deployed_dms", dms);
 			setDeployedDms(dms);
 		}
