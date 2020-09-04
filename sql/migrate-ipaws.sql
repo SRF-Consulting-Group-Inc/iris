@@ -4,10 +4,12 @@ SET SESSION AUTHORIZATION 'tms';
 BEGIN;
 
 -- Add System Attributes
-INSERT INTO iris.system_attribute (name, value)
-VALUES ('ipaws_priority_weight_urgency', 1.0),
+INSERT INTO iris.system_attribute (name, value) VALUES
+		('ipaws_priority_weight_urgency', 1.0),
 		('ipaws_priority_weight_severity', 1.0),
-		('ipaws_priority_weight_certainty', 1.0);
+		('ipaws_priority_weight_certainty', 1.0),
+		('ipaws_deploy_auto_mode', false),
+		('ipaws_deploy_auto_timeout_secs', 0);
 
 -- Reserve IPAWS Alert comm protocol value
 INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
@@ -197,7 +199,7 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true),
 						   ('PRV_009I','ipaws_admin','cap_response_type','','','',true),
 						   ('PRV_009J','ipaws_admin','cap_urgency','','','',true),
-						   ('PRV_009K','login','push_notification','','','',true);
+						   ('PRV_009K','login','push_notification','','','',false);
 
 INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
                                                            ('administrator', 'ipaws_tab');
