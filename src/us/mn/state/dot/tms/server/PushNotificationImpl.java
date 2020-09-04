@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import us.mn.state.dot.tms.PushNotification;
+import us.mn.state.dot.tms.PushNotificationHelper;
 import us.mn.state.dot.tms.TMSException;
 
 /** 
@@ -91,6 +92,15 @@ public class PushNotificationImpl extends BaseObjectImpl
 		super(n);
 	}
 
+	/** Create a new PushNotification. Automatically generates a new unique
+	 *  SONAR name and sets the sent time.
+	 */
+	public PushNotificationImpl(String rt, String rn,
+			String t, String d) {
+		this(PushNotificationHelper.createUniqueName(),
+				rt, rn, new Date(), t, d);
+	}
+	
 	public PushNotificationImpl(String n, String rt, String rn,
 			Date st, String t, String d) {
 		super(n);
@@ -112,7 +122,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the type of the object that is being referenced */
 	public void doSetRefObjectType(String rt) throws TMSException {
-		if (rt != ref_object_type) {
+		if (objectEquals(rt, ref_object_type)) {
 			store.update(this, "ref_object_type", rt);
 			setRefObjectType(rt);
 		}
@@ -135,7 +145,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the SONAR name of the object that is being referenced */
 	public void doSetRefObjectName(String rn) throws TMSException {
-		if (rn != ref_object_name) {
+		if (objectEquals(rn, ref_object_name)) {
 			store.update(this, "ref_object_name", rn);
 			setRefObjectName(rn);
 		}
@@ -158,7 +168,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the time the notification was generated/sent */
 	public void doSetSentTime(Date st) throws TMSException {
-		if (st != sent_time) {
+		if (objectEquals(st, sent_time)) {
 			store.update(this, "sent_time", st);
 			setSentTime(st);
 		}
@@ -181,7 +191,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the notification title */
 	public void doSetTitle(String t) throws TMSException {
-		if (t != title) {
+		if (objectEquals(t, title)) {
 			store.update(this, "title", t);
 			setTitle(t);
 		}
@@ -203,11 +213,19 @@ public class PushNotificationImpl extends BaseObjectImpl
 	}
 
 	/** Set the notification description */
-	public void doSetDescription(String d) throws TMSException {
-		if (d != description) {
+	public boolean doSetDescription(String d) throws TMSException {
+		if (objectEquals(d, description)) {
 			store.update(this, "description", d);
 			setDescription(d);
+			return true;
 		}
+		return false;
+	}
+	
+	/** Set the notification description, notifying clients if it changes.*/
+	public void setDescriptionNotify(String d) throws TMSException {
+		if (doSetDescription(d))
+			notifyAttribute("description");
 	}
 	
 	/** Get the notification description */
