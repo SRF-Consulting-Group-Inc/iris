@@ -403,7 +403,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public boolean doSetAutoDms(String[] dms) throws TMSException {
 		if (!Arrays.deepEquals(dms, this.auto_dms)) {
-			store.update(this, "auto_dms", Arrays.toString(dms));
+			store.update(this, "auto_dms", arrayToString(dms));
 			setAutoDms(dms);
 			return true;
 		}
@@ -444,7 +444,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public void doSetOptionalDms(String[] dms) throws TMSException {
 		if (!Arrays.deepEquals(dms, this.optional_dms)) {
-			store.update(this, "optional_dms", dms);
+			store.update(this, "optional_dms", arrayToString(dms));
 			setOptionalDms(dms);
 		}
 	}
@@ -469,7 +469,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Set the list of DMS actually used to deploy the message. */
 	public void doSetDeployedDms(String[] dms) throws TMSException {
 		if (!Arrays.deepEquals(dms, this.deployed_dms)) {
-			store.update(this, "deployed_dms", dms);
+			store.update(this, "deployed_dms", arrayToString(dms));
 			setDeployedDms(dms);
 		}
 	}
