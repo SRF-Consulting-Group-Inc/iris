@@ -19,15 +19,16 @@ import java.awt.event.ActionEvent;
 import javax.swing.JButton;
 
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.notification.PushNotificationForm;
 import us.mn.state.dot.tms.client.widget.IAction;
 
 /**
- * A tool panel that opens a notification manager.
+ * A tool panel that opens a push notification manager.
  *
  * @author Gordon Parikh
  */
 @SuppressWarnings("serial")
-public class NotificationPanel extends ToolPanel {
+public class PushNotificationPanel extends ToolPanel {
 	
 	/** Is this panel IRIS enabled? */
 	static public boolean getIEnabled() {
@@ -44,12 +45,11 @@ public class NotificationPanel extends ToolPanel {
 	private final IAction openNotifMgr = new IAction("notification") {
 		@Override
 		protected void doActionPerformed(ActionEvent ev) throws Exception {
-			// TODO for now just printing
-			System.out.println("Opening notification manager...");
+			session.getDesktop().show(new PushNotificationForm(session));
 		}
 	};
 	
-	public NotificationPanel(Session s) {
+	public PushNotificationPanel(Session s) {
 		session = s;
 		notificationBtn = new JButton(openNotifMgr);
 		add(notificationBtn);

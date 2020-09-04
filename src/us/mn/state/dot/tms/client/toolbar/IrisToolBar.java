@@ -50,8 +50,8 @@ public class IrisToolBar extends JToolBar {
 			add(new CoordinatePanel(map));
 			add(Box.createGlue());
 		}
-		if (NotificationPanel.getIEnabled()) {
-			add(new NotificationPanel(s));
+		if (PushNotificationPanel.getIEnabled()) {
+			add(new PushNotificationPanel(s));
 			add(Box.createHorizontalStrut(10));
 		}
 		if (EditModePanel.getIEnabled())
