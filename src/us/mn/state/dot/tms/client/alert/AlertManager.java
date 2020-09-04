@@ -211,8 +211,6 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	 */
 	@Override
 	protected boolean isStyleVisible(IpawsAlertDeployer proxy) {
-		if (proxy != null)
-			System.out.println("Checking proxy: " + proxy.getName());
 		return true;
 	}
 	
