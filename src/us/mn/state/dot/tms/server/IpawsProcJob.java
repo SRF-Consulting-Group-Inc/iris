@@ -16,6 +16,8 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IllegalFormatException;
 import java.util.Iterator;
 
 import org.json.JSONObject;
@@ -44,12 +47,15 @@ import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertConfig;
 import us.mn.state.dot.tms.IpawsAlertConfigHelper;
+import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.IpawsAlertDeployerHelper;
 import us.mn.state.dot.tms.IpawsAlertHelper;
+import us.mn.state.dot.tms.PushNotificationHelper;
 import us.mn.state.dot.tms.QuickMessage;
 import us.mn.state.dot.tms.QuickMessageHelper;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
+import us.mn.state.dot.tms.utils.I18N;
 import us.mn.state.dot.tms.utils.MultiBuilder;
 import us.mn.state.dot.tms.utils.MultiString;
 
@@ -373,11 +379,137 @@ public class IpawsProcJob extends Job {
 			
 			// notify so clients receive the new object
 			iad.notifyCreate();
+			
+			// process the alert for deployment
+			deployAlert(iad, ia);
 		}
 		
 		// return the deployer that was created for collecting and handling
 		// the user notification
 		return iad;
+	}
+	
+	/** Process the alert for deploying, checking the mode (auto or manual)
+	 *  first. In manual mode, this sends a push notification to clients to
+	 *  request a user to review and approve the alert. In auto mode, this
+	 *  either deploys the alert then sends a notification indicating the
+	 *  new alert, or (if a non-zero timeout is configured) sends a
+	 *  notification then waits until the timeout has elapsed and (if a user
+	 *  hasn't deployed it manually) deploys the alert.
+	 */
+	private void deployAlert(IpawsAlertDeployerImpl iad, IpawsAlertImpl ia)
+					throws TMSException, SonarException {
+		// check the deploy mode and timeouts in system attributes
+		boolean autoMode = SystemAttrEnum.IPAWS_DEPLOY_AUTO_MODE.getBoolean();
+		int timeout = SystemAttrEnum.IPAWS_DEPLOY_AUTO_TIMEOUT_SECS.getInt();
+		
+		// generate and send the notification - the static method handles
+		// the content of the notification based on the mode and timeout
+		PushNotificationImpl pn = getNotification(ia.getEvent(),
+				autoMode, timeout, iad.getName());
+		
+		// process the alert deployment/notification updates
+		if (autoMode) {
+			// auto mode - check timeout first
+			if (timeout > 0) {
+				// non-zero timeout - wait for timeout to pass. NOTE that this
+				// is already happening in it's own thread, so we will just
+				// wait here
+				for (int i = 0; i < timeout; i++) {
+					// wait a second
+					try { Thread.sleep(1000); }
+					catch (InterruptedException e) { /* Ignore */ }
+					
+					// update the notification with a new message (so the user
+					// knows how much time they have before the alert deploys)
+					pn.setDescriptionNotify(getTimeoutString(
+							ia.getEvent(), timeout - i));
+				}
+				
+				// after timeout passes, check if the alert has been deployed
+				if (!iad.getDeployed())
+					// if it hasn't, deploy it (if it has, we're done!)
+					deployAlertDMS(iad);
+			} else
+				// no timeout - just deploy it
+				deployAlertDMS(iad);
+		} else {
+			// manual mode - send notification to clients - fingers crossed
+			// someone sees it!!
+			// TODO - the client is going to need to trigger this when the
+			// user clicks the "Deploy" button
+		}
+	}
+	
+	/** Deploy the alert to DMS. This is what actually sends MULTI to signs. */
+	private void deployAlertDMS(IpawsAlertDeployerImpl iad) {
+		// TODO
+	}
+	
+	/** Create a notification for an alert deployer given the event type,
+	 *  deployment mode (auto/manual), timeout, and the name of the deployer
+	 *  object.
+	 */
+	private static PushNotificationImpl getNotification(String event,
+			boolean autoMode, int timeout, String dName)
+				throws TMSException, SonarException {
+		// substitute the event type into the notification title
+		String title;
+		try {
+			title = String.format(I18N.get("ipaws.notification.title"), event);
+		} catch (IllegalFormatException e) {
+			title = String.format("New %s Alert", event);
+		}
+		// same with the description
+		String description;
+		if (autoMode) {
+			if (timeout == 0) {
+				try {
+					description = String.format(I18N.get(
+						"ipaws.notification.description.auto.no_timeout"),
+						event);
+				} catch (IllegalFormatException e) {
+					description = String.format("New %s alert received " +
+						"from IPAWS. This alert has been automatically " +
+						"deployed.", event);
+				}
+			} else
+				description = getTimeoutString(event, timeout);
+		} else {
+			try {
+				description = String.format(I18N.get(
+					"ipaws.notification.description.manual"), event);
+			} catch (IllegalFormatException e) {
+				description = String.format("New %s alert received from " + 
+					"IPAWS. Please review it for deployment.", event);
+			}
+		}
+		// create the notification object with the values we got
+		PushNotificationImpl pn = new PushNotificationImpl(
+				IpawsAlertDeployer.SONAR_TYPE, dName, title, description);
+		
+		// notify clients of the creation so they receive it, then return
+		pn.notifyCreate();
+		return pn;
+	}
+	
+	/** Get a string containing the amount of time until the timeout expires
+	 *  (for auto deployment mode) given an event type and the time in seconds.
+	 */
+	private static String getTimeoutString(String event, int secs) {
+		// use the time value to create a duration string
+		String dur = Duration.ofSeconds(secs).toString();
+		
+		// add the string 
+		String dFormat = I18N.get(
+				"ipaws.notification.description.auto.timeout");
+		try {
+			return String.format(dFormat, event, dur);
+		} catch (IllegalFormatException e) {
+			return String.format("New %s alert received from IPAWS. This " +
+				"alert will be automatically deployed in %s if no action " +
+				"is taken.", event, dur);
+		}
 	}
 	
 	/** Use the area section of an IPAWS alert to creating a PostGIS
