@@ -35,8 +35,20 @@ public class ProxyTableForm<T extends SonarObject> extends AbstractForm {
 	}
 
 	/** Create a new proxy table form */
+	public ProxyTableForm(String t, ProxyTableModel<T> m, boolean resiz) {
+		super(t, resiz);
+		panel = new ProxyTablePanel<T>(m);
+	}
+
+	/** Create a new proxy table form */
 	public ProxyTableForm(String t, ProxyTablePanel<T> p) {
 		super(t);
+		panel = p;
+	}
+
+	/** Create a new proxy table form */
+	public ProxyTableForm(String t, ProxyTablePanel<T> p, boolean resiz) {
+		super(t, resiz);
 		panel = p;
 	}
 
