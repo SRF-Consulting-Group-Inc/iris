@@ -41,6 +41,16 @@ public interface PushNotification extends SonarObject {
 	
 	/** Get the SONAR name of the object that is being referenced */
 	String getRefObjectName();
+
+	/** Set whether users must be able to write this type of objects to see
+	 *  this notification.
+	 */
+	void setNeedsWrite(boolean nw);
+
+	/** Get whether users must be able to write this type of objects to see
+	 *  this notification.
+	 */
+	boolean getNeedsWrite();
 	
 	/** Set the time the notification was generated/sent */
 	void setSentTime(Date st);
@@ -60,8 +70,15 @@ public interface PushNotification extends SonarObject {
 	/** Get the notification description */
 	String getDescription();
 	
-	// TODO need to add some field(s) for filtering who gets the notifications
-	// (i.e. type/attribute they must be able to read/write) and recording when
-	// it has been addressed (and who dealt with it - perhaps same field)
+	/** Set the name of the user who addressed this notification */
+	void setAddressedBy(String u);
 	
+	/** Get the name of the user who addressed this notification */
+	String getAddressedBy();
+	
+	/** Set the time at which this notification was addressed */
+	void setAddressedTime(Date at);
+	
+	/** Get the time at which this notification was addressed */
+	Date getAddressedTime();
 }

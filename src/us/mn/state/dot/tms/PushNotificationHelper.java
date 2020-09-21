@@ -15,8 +15,14 @@
 
 package us.mn.state.dot.tms;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Iterator;
 
+import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.utils.UniqueNameCreator;
 
 /**
@@ -53,5 +59,79 @@ public class PushNotificationHelper extends BaseHelper {
 	static public Iterator<PushNotification> iterator() {
 		return new IteratorWrapper<PushNotification>(namespace.iterator(
 				PushNotification.SONAR_TYPE));
+	}
+	
+	/** Check if the user can see this notification based on their privileges
+	 *  and whether the notification has been addressed. If pastOk is True,
+	 *  recently-addressed notifications are also included.
+	 */
+	static public boolean check(Session s,
+			PushNotification pn, boolean pastOk) {
+		return checkPrivileges(s, pn) && checkAddressed(pn, pastOk);
+	}
+	
+	/** Check if the user can see this notification based on their privileges.
+	 *  If needs_write is true, the user must be able to write objects of this
+	 *  type, otherwise they must be able to read them. Note that this
+	 *  overrides edit mode.
+	  */
+	static public boolean checkPrivileges(Session s, PushNotification pn) {
+		String tname = (pn != null) ? pn.getRefObjectType() : null;
+		if (tname != null) {
+			return pn.getNeedsWrite() ? s.canWrite(tname, true)
+					: s.canRead(tname);
+		}
+		return false;
+	}
+	
+	/** Check if this notification has been addressed. If pastOk is true, the
+	 *  the time since this notification has been addressed is checked against
+	 *  a system attribute, otherwise this only checks if the addressed_time
+	 *  attribute has been set (if so returning false).
+	 */
+	static public boolean checkAddressed(PushNotification pn, boolean pastOk) {
+		if (pn != null) {
+			Date addrTime = pn.getAddressedTime();
+			if (!pastOk)
+				return addrTime == null;
+			if (addrTime != null) {
+				LocalDateTime at = addrTime.toInstant().atZone(
+						ZoneId.systemDefault()).toLocalDateTime();
+				return Duration.between(at, LocalDateTime.now()).getSeconds()
+					<= SystemAttrEnum.PUSH_NOTIFICATION_TIMEOUT_SECS.getInt();
+			} else
+				// if hasn't been addressed, show it
+				return true;
+		}
+		return false;
+	}
+	
+	/** Make a human-readable duration string from a Date object and the
+	 *  current date/time. Effectively calls Duration.between(d, now), 
+	 *  but works with LocalDateTime objects (using the system's time zone to
+	 *  convert from the Date object). This truncates to seconds (no
+	 *  milliseconds are shown).
+	 */
+	static public String getDurationString(Date d) {
+		if (d != null) {
+			LocalDateTime dt = d.toInstant().truncatedTo(
+					ChronoUnit.SECONDS).atZone(ZoneId.systemDefault())
+					.toLocalDateTime();
+			LocalDateTime now = LocalDateTime.now()
+					.truncatedTo(ChronoUnit.SECONDS);
+			return getDurationString(Duration.between(dt, now));
+		}
+		return "";
+	}
+	
+	/** Make a human-readable duration string from a Duration object. This
+	 *  truncates to seconds (no milliseconds are shown).
+	 */
+	static public String getDurationString(Duration d) {
+		if (d != null) {
+			return d.toString().substring(2).replaceAll(
+					"(\\d[HMS])(?!$)", "$1 ").toLowerCase();
+		}
+		return "";
 	}
 }

@@ -51,7 +51,8 @@ public class PushNotificationImpl extends BaseObjectImpl
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, PushNotificationImpl.class);
 		store.query("SELECT name, ref_object_type, ref_object_name, " +
-			"sent_time, title, description FROM event." + SONAR_TYPE +
+			"needs_write, sent_time, title, description, addressed_by, " +
+			"addressed_time FROM event." + SONAR_TYPE +
 			";", new ResultFactory()
 		{
 			@Override
@@ -72,9 +73,12 @@ public class PushNotificationImpl extends BaseObjectImpl
 		map.put("name", name);
 		map.put("ref_object_type", ref_object_type);
 		map.put("ref_object_name", ref_object_name);
+		map.put("needs_write", needs_write);
 		map.put("sent_time", sent_time);
 		map.put("title", title);
 		map.put("description", description);
+		map.put("addressed_by", addressed_by);
+		map.put("addressed_time", addressed_time);
 		return map;
 	}
 	
@@ -82,9 +86,12 @@ public class PushNotificationImpl extends BaseObjectImpl
 		this(row.getString(1),			// name
 			row.getString(2),			// ref_object_type
 			row.getString(3),			// ref_object_name
-			row.getTimestamp(4),		// sent_time
-			row.getString(5),			// title
-			row.getString(6)			// description
+			row.getBoolean(4),			// needs_write
+			row.getTimestamp(5),		// sent_time
+			row.getString(6),			// title
+			row.getString(7),			// description
+			row.getString(8),			// addressed_by
+			row.getTimestamp(9)			// addressed_time
 		);
 	}
 	
@@ -95,20 +102,23 @@ public class PushNotificationImpl extends BaseObjectImpl
 	/** Create a new PushNotification. Automatically generates a new unique
 	 *  SONAR name and sets the sent time.
 	 */
-	public PushNotificationImpl(String rt, String rn,
+	public PushNotificationImpl(String rt, String rn, boolean nw,
 			String t, String d) {
 		this(PushNotificationHelper.createUniqueName(),
-				rt, rn, new Date(), t, d);
+				rt, rn, nw, new Date(), t, d, null, null);
 	}
 	
-	public PushNotificationImpl(String n, String rt, String rn,
-			Date st, String t, String d) {
+	public PushNotificationImpl(String n, String rt, String rn, boolean nw,
+			Date st, String t, String d, String u, Date at) {
 		super(n);
 		ref_object_type = rt;
 		ref_object_name = rn;
+		needs_write = nw;
 		sent_time = st;
 		title = t;
 		description = d;
+		addressed_by = u;
+		addressed_time = at;
 	}
 
 	/** Type of object being referenced */
@@ -122,7 +132,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the type of the object that is being referenced */
 	public void doSetRefObjectType(String rt) throws TMSException {
-		if (objectEquals(rt, ref_object_type)) {
+		if (!objectEquals(rt, ref_object_type)) {
 			store.update(this, "ref_object_type", rt);
 			setRefObjectType(rt);
 		}
@@ -145,7 +155,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the SONAR name of the object that is being referenced */
 	public void doSetRefObjectName(String rn) throws TMSException {
-		if (objectEquals(rn, ref_object_name)) {
+		if (!objectEquals(rn, ref_object_name)) {
 			store.update(this, "ref_object_name", rn);
 			setRefObjectName(rn);
 		}
@@ -157,6 +167,37 @@ public class PushNotificationImpl extends BaseObjectImpl
 		return ref_object_name;
 	}
 
+	/** Whether users must be able to write this type of objects to see this
+	 *  notification (by necessity they must be able to read them).
+	 */
+	private boolean needs_write;
+	
+	/** Set whether users must be able to write this type of objects to see
+	 *  this notification.
+	 */
+	@Override
+	public void setNeedsWrite(boolean nw) {
+		needs_write = nw;
+	}
+	
+	/** Set whether users must be able to write this type of objects to see
+	 *  this notification.
+	 */
+	public void doSetNeedsWrite(boolean nw) throws TMSException {
+		if (nw != needs_write) {
+			store.update(this, "needs_write", nw);
+			setNeedsWrite(nw);
+		}
+	}
+	
+	/** Get whether users must be able to write this type of objects to see
+	 *  this notification.
+	 */
+	@Override
+	public boolean getNeedsWrite() {
+		return needs_write;
+	}
+	
 	/** Time the notification was generated/sent */
 	private Date sent_time;
 	
@@ -168,7 +209,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the time the notification was generated/sent */
 	public void doSetSentTime(Date st) throws TMSException {
-		if (objectEquals(st, sent_time)) {
+		if (!objectEquals(st, sent_time)) {
 			store.update(this, "sent_time", st);
 			setSentTime(st);
 		}
@@ -191,7 +232,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the notification title */
 	public void doSetTitle(String t) throws TMSException {
-		if (objectEquals(t, title)) {
+		if (!objectEquals(t, title)) {
 			store.update(this, "title", t);
 			setTitle(t);
 		}
@@ -214,7 +255,7 @@ public class PushNotificationImpl extends BaseObjectImpl
 
 	/** Set the notification description */
 	public boolean doSetDescription(String d) throws TMSException {
-		if (objectEquals(d, description)) {
+		if (!objectEquals(d, description)) {
 			store.update(this, "description", d);
 			setDescription(d);
 			return true;
@@ -232,6 +273,68 @@ public class PushNotificationImpl extends BaseObjectImpl
 	@Override
 	public String getDescription() {
 		return description;
+	}
+
+	/** Name of the user who addressed this notification */
+	private String addressed_by;
+	
+	/** Set the name of the user who addressed this notification */
+	@Override
+	public void setAddressedBy(String u) {
+		addressed_by = u;
+	}
+	
+	/** Set the name of the user who addressed this notification */
+	public boolean doSetAddressedBy(String u) throws TMSException {
+		if (!objectEquals(u, addressed_by)) {
+			store.update(this, "addressed_by", u);
+			setAddressedBy(u);
+			return true;
+		}
+		return false;
+	}
+	
+	/** Set the name of the user who addressed this notification */
+	public void setAddressedByNotify(String d) throws TMSException {
+		if (doSetAddressedBy(d))
+			notifyAttribute("addressedBy");
+	}
+	
+	/** Get the name of the user who addressed this notification */
+	@Override
+	public String getAddressedBy() {
+		return addressed_by;
+	}
+
+	/** Time at which this notification was addressed */
+	private Date addressed_time;
+	
+	/** Set the time at which this notification was addressed */
+	@Override
+	public void setAddressedTime(Date at) {
+		addressed_time = at;
+	}
+
+	/** Set the time at which this notification was addressed */
+	public boolean doSetAddressedTime(Date at) throws TMSException {
+		if (!objectEquals(at, addressed_time)) {
+			store.update(this, "addressed_time", at);
+			setAddressedTime(at);
+			return true;
+		}
+		return false;
+	}
+	
+	/** Set the time at which this notification was addressed */
+	public void setAddressedTimeNotify(Date at) throws TMSException {
+		if (doSetAddressedTime(at))
+			notifyAttribute("addressedTime");
+	}
+	
+	/** Get the time at which this notification was addressed */
+	@Override
+	public Date getAddressedTime() {
+		return addressed_time;
 	}
 	
 }

@@ -85,6 +85,7 @@ public class PrivilegePanel extends ProxyTablePanel<Privilege> {
 		"plan_phase",
 		"play_list",
 		"privilege",
+		"push_notification",
 		"quick_message",
 		"ramp_meter",
 		"r_node",

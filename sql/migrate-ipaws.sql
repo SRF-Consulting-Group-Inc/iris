@@ -9,7 +9,8 @@ INSERT INTO iris.system_attribute (name, value) VALUES
 		('ipaws_priority_weight_severity', 1.0),
 		('ipaws_priority_weight_certainty', 1.0),
 		('ipaws_deploy_auto_mode', false),
-		('ipaws_deploy_auto_timeout_secs', 0);
+		('ipaws_deploy_auto_timeout_secs', 0),
+		('push_notification_timeout_secs', 900);
 
 -- Reserve IPAWS Alert comm protocol value
 INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
@@ -170,9 +171,12 @@ CREATE TABLE event.push_notification (
 	name varchar(30) PRIMARY KEY,
 	ref_object_type varchar(32),
 	ref_object_name text,
+	needs_write boolean,
 	sent_time timestamp with time zone,
 	title text,
-	description text
+	description text,
+	addressed_by varchar(15),
+	addressed_time timestamp with time zone
 );
 
 ALTER TABLE event.push_notification
@@ -181,6 +185,8 @@ ALTER TABLE event.push_notification
         REFERENCES iris.sonar_type (name) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION;
+
+-- NOTE that we don't have a foreign key linking addressed_by to the i_user table so we can put 'auto' in there
 
 INSERT INTO iris.sonar_type (name) VALUES ('push_notification');
 
@@ -199,7 +205,8 @@ INSERT INTO iris.privilege (name,capability,type_n,obj_n,attr_n,group_n,write) V
 						   ('PRV_009F','ipaws_admin','ipaws_alert_config','','','',true),
 						   ('PRV_009I','ipaws_admin','cap_response_type','','','',true),
 						   ('PRV_009J','ipaws_admin','cap_urgency','','','',true),
-						   ('PRV_009K','login','push_notification','','','',false);
+						   ('PRV_009K','login','push_notification','','','',false),
+						   ('PRV_009L','login','push_notification','','','',true);
 
 INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'ipaws_admin'),
                                                            ('administrator', 'ipaws_tab');

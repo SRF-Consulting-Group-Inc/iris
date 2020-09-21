@@ -40,6 +40,7 @@ import us.mn.state.dot.tms.client.map.MapModel;
 import us.mn.state.dot.tms.client.map.TileLayer;
 import us.mn.state.dot.tms.client.marking.LaneMarkingManager;
 import us.mn.state.dot.tms.client.meter.MeterManager;
+import us.mn.state.dot.tms.client.notification.PushNotificationManager;
 import us.mn.state.dot.tms.client.parking.ParkingAreaManager;
 import us.mn.state.dot.tms.client.proxy.GeoLocManager;
 import us.mn.state.dot.tms.client.proxy.ProxyManager;
@@ -164,6 +165,14 @@ public class Session {
 	public LCSArrayManager getLCSArrayManager() {
 		return lcs_array_manager;
 	}
+	
+	/** Push notification manager */
+	private final PushNotificationManager push_notif_manager;
+	
+	/** Get the push notification Manager */
+	public PushNotificationManager getPushNotificationManager() {
+		return push_notif_manager;
+	}
 
 	/** Mapping of all tabs */
 	private final HashMap<String, MapTab> all_tabs =
@@ -208,6 +217,8 @@ public class Session {
 		managers.add(inc_manager);
 		managers.add(new PlanManager(this, loc_manager));
 		managers.add(new AlertManager(this, loc_manager));
+		push_notif_manager = new PushNotificationManager(this, loc_manager);
+		managers.add(push_notif_manager);
 		tile_layer = createTileLayer(props.getProperty("map.tile.url"));
 		setCurrent(this, null);
 	}
@@ -358,7 +369,7 @@ public class Session {
 	 * @param tname Type name of attribute to check.
 	 * @param can_edit Flag to allow editing.
 	 * @return true if user can write the attribute */
-	private boolean canWrite(String tname, boolean can_edit) {
+	public boolean canWrite(String tname, boolean can_edit) {
 		return canWrite(tname, "aname", can_edit);
 	}
 

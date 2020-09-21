@@ -34,6 +34,11 @@ abstract public class MapTab<T extends SonarObject> extends JPanel {
 	/** Proxy manager */
 	protected final ProxyManager<T> manager;
 
+	/** Get the proxy manager */
+	public ProxyManager<T> getManager() {
+		return manager;
+	}
+	
 	/** Get the tab ID */
 	public String getTabId() {
 		return manager.getSonarType();

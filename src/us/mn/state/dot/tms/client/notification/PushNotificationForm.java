@@ -16,9 +16,10 @@
 package us.mn.state.dot.tms.client.notification;
 
 import us.mn.state.dot.tms.PushNotification;
+import us.mn.state.dot.tms.client.ScreenPane;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.map.MapBean;
 import us.mn.state.dot.tms.client.proxy.ProxyTableForm;
-import us.mn.state.dot.tms.client.proxy.ProxyTablePanel;
 import us.mn.state.dot.tms.utils.I18N;
 
 /**
@@ -36,8 +37,8 @@ public class PushNotificationForm extends ProxyTableForm<PushNotification> {
 	}
 	
 	/** Create a new Push Notification form */
-	public PushNotificationForm(Session s) {
-		// TODO can we make proxy table panel resizeable??
-		super(I18N.get("notification"), new PushNotificationModel(s), true);
+	public PushNotificationForm(Session s, MapBean map, ScreenPane p) {
+		super(I18N.get("notification"), new PushNotificationProxyPanel(
+				new PushNotificationModel(s), map, p));
 	}
 }
