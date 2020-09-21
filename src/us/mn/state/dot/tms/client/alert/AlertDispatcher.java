@@ -190,6 +190,11 @@ public class AlertDispatcher extends IPanel {
 		
 	};
 	
+	/** Set the selected alert in the list (for calling from other code). */
+	public void selectAlert(IpawsAlertDeployer iad) {
+		alertSelMdl.setSelected(iad);
+	}
+	
 	/** Update the display to reflect the alert selected. */
 	private void selectAlert() {
 		Set<IpawsAlertDeployer> sel = alertSelMdl.getSelected();
@@ -199,8 +204,6 @@ public class AlertDispatcher extends IPanel {
 			// we should only have one alert (multiple selection is disabled)
 			for (IpawsAlertDeployer iad: sel) {
 				setSelectedAlert(iad);
-				dmsDispatcher.setSelectedAlert(
-						selectedAlertDepl, selectedAlert);
 				break;
 			}
 		}
@@ -247,6 +250,9 @@ public class AlertDispatcher extends IPanel {
 			d.height *= lines;
 		}
 		areaDescLbl.setPreferredSize(d);
+		
+		// set the alert in the DMS dispatcher so sign list updates
+		dmsDispatcher.setSelectedAlert(selectedAlertDepl, selectedAlert);
 	}
 	
 	/** Clear the selected alert. */
