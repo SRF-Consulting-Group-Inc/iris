@@ -105,6 +105,13 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 		return p_list;
 	}
 
+	/** Ensure the selected proxy is visible, adjusting scroll offsets if
+	 *  necessary.
+	 */
+	public void ensureSelectedProxyVisible() {
+		p_list.ensureIndexIsVisible(p_list.getSelectedIndex());
+	}
+	
 	/** List scrollpane */
 	private final JScrollPane s_pane;
 
