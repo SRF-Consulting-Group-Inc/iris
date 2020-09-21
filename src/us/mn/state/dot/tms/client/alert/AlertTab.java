@@ -21,6 +21,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import us.mn.state.dot.tms.IpawsAlertDeployer;
+import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.client.MapTab;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionListener;
@@ -80,5 +81,17 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	
 	public static String getAlertTabId() {
 		return "alert";
+	}
+	
+	/** Select an alert in the tab */
+	@Override
+	public void setSelectedProxy(IpawsAlertDeployer proxy) {
+		// check the style of the alert and select the appropriate one
+		ItemStyle style = manager.getItemStyle(proxy);
+		if (style != null)
+			manager.setSelectedStyle(style);
+		
+		dispatcher.selectAlert(proxy);
+		summary.ensureSelectedProxyVisible();
 	}
 }
