@@ -361,6 +361,14 @@ abstract public class ProxyManager<T extends SonarObject> {
 		return false;
 	}
 
+	/** Get the ItemStyle of a proxy */
+	public ItemStyle getItemStyle(T proxy) {
+		Style style = getStyle(proxy);
+		if (style != null)
+			return ItemStyle.lookupStyle(style.toString());
+		return null;
+	}
+	
 	/** Get the style of a proxy */
 	public Style getStyle(T proxy) {
 		return theme.getStyle(proxy);
