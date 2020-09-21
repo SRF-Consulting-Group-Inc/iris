@@ -30,6 +30,7 @@ import us.mn.state.dot.tms.client.proxy.ProxyManager;
 import us.mn.state.dot.tms.client.proxy.ProxyTheme;
 import us.mn.state.dot.tms.client.proxy.SwingProxyAdapter;
 import us.mn.state.dot.tms.client.toolbar.PushNotificationPanel;
+import us.mn.state.dot.tms.client.widget.IWorker;
 
 /**
  * A container for SONAR PushNotification objects used for alerting users of
@@ -81,22 +82,46 @@ public class PushNotificationManager extends ProxyManager<PushNotification> {
 		@Override
 		protected void proxyChangedSwing(PushNotification pn, String attr) {
 			if ("addressed_time".equals(attr)) {
-				// check all notifications the user can see
-				Iterator<PushNotification> it =
-						PushNotificationHelper.iterator();
-				boolean stopBlink = true;
-				while (it.hasNext()) {
-					PushNotification n = it.next();
-					if (PushNotificationHelper.checkPrivileges(session, n) &&
-							PushNotificationHelper.checkAddressed(n, false))
-						stopBlink = false;
-				}
-				if (stopBlink)
-					notifPnl.stopButtonBlink();
+				checkStopBlink();
 			}
 		}
 	};
 	
+	/** Check if the notification button should stop blinking, stopping the
+	 *  blinking if it should.
+	 */
+	private void checkStopBlink() {
+		// check all notifications the user can see
+		Iterator<PushNotification> it =
+				PushNotificationHelper.iterator();
+		boolean stopBlink = true;
+		while (it.hasNext()) {
+			PushNotification n = it.next();
+			System.out.println("Checking notification " + n.getName() +
+					": priv = " + PushNotificationHelper.
+					checkPrivileges(session, n) + " | addr = " +
+					PushNotificationHelper.checkAddressed(n, false));
+			if (PushNotificationHelper.checkPrivileges(session, n) &&
+					PushNotificationHelper.checkAddressed(n, false))
+				stopBlink = false;
+		}
+		if (stopBlink)
+			notifPnl.stopButtonBlink();
+	}
+	
+	/** Run a background job to check if the notification button should stop
+	 *  blinking.
+	 */
+	public void checkStopBlinkBG() {
+		IWorker<Void> blinkWorker = new IWorker<Void>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				checkStopBlink();
+				return null;
+			}
+		};
+		blinkWorker.execute();
+	}
 	
 	/** Create a proxy descriptor */
 	static private ProxyDescriptor<PushNotification> descriptor(Session s) {

@@ -92,6 +92,9 @@ public class PushNotificationProxyPanel
 		pn.setAddressedTime(new Date());
 		pn.setAddressedBy(session.getUser().getName());
 		
+		// run a background job to check if the button should stop blinking
+		session.getPushNotificationManager().checkStopBlinkBG();
+		
 		String refType = pn.getRefObjectType();
 		String refName = pn.getRefObjectName();
 		if (refType == null)
