@@ -427,9 +427,22 @@ public class IpawsProcJob extends Job {
 				}
 				
 				// after timeout passes, check if the alert has been deployed
-				if (!iad.getDeployed())
+				if (iad.getDeployed() == null) {
 					// if it hasn't, deploy it (if it has, we're done!)
 					deployAlertDMS(iad);
+					
+					// change the description - use the no-timeout description
+					pn.setDescriptionNotify(getNoTimeoutDescription(
+							ia.getEvent()));
+					
+					// also record that it was addressed automatically so the
+					// notification goes away
+					pn.setAddressedByNotify("auto");
+					pn.setAddressedTimeNotify(new Date());
+				} else if (iad.getDeployed() == false) {
+					// TODO process the cancel
+					
+				}
 			} else
 				// no timeout - just deploy it
 				deployAlertDMS(iad);
@@ -441,9 +454,18 @@ public class IpawsProcJob extends Job {
 		}
 	}
 	
-	/** Deploy the alert to DMS. This is what actually sends MULTI to signs. */
-	private void deployAlertDMS(IpawsAlertDeployerImpl iad) {
+	/** Deploy the alert to DMS. This is what actually sends MULTI to signs.
+	 *  
+	 *  TODO we may change this some - make it static, move the functionality
+	 *  to IpawsAlertDeployerImpl, etc.
+	 */
+	private void deployAlertDMS(IpawsAlertDeployerImpl iad)
+			throws TMSException {
+		System.out.println("Deploying alert with deployer" + iad.getName());
+		iad.setDeployedNotify(true);
 		// TODO
+		
+		// TODO update the notification
 	}
 	
 	/** Create a notification for an alert deployer given the event type,
@@ -463,17 +485,9 @@ public class IpawsProcJob extends Job {
 		// same with the description
 		String description;
 		if (autoMode) {
-			if (timeout == 0) {
-				try {
-					description = String.format(I18N.get(
-						"ipaws.notification.description.auto.no_timeout"),
-						event);
-				} catch (IllegalFormatException e) {
-					description = String.format("New %s alert received " +
-						"from IPAWS. This alert has been automatically " +
-						"deployed.", event);
-				}
-			} else
+			if (timeout == 0)
+				description = getNoTimeoutDescription(event);
+			else
 				description = getTimeoutString(event, timeout);
 		} else {
 			try {
@@ -485,20 +499,37 @@ public class IpawsProcJob extends Job {
 			}
 		}
 		// create the notification object with the values we got
+		// note that users must be able to write alert deployer objects to see
+		// these (otherwise they won't be able to to approve them)
 		PushNotificationImpl pn = new PushNotificationImpl(
-				IpawsAlertDeployer.SONAR_TYPE, dName, title, description);
+				IpawsAlertDeployer.SONAR_TYPE, dName,
+				true, title, description);
+		System.out.println("Sending notification " + pn.getName());
 		
 		// notify clients of the creation so they receive it, then return
 		pn.notifyCreate();
 		return pn;
 	}
 	
-	/** Get a string containing the amount of time until the timeout expires
-	 *  (for auto deployment mode) given an event type and the time in seconds.
+	/** Get an alert description string for auto-deploy, no-timeout cases. */
+	private static String getNoTimeoutDescription(String event) {
+		try {
+			return String.format(I18N.get(
+				"ipaws.notification.description.auto.no_timeout"), event);
+		} catch (IllegalFormatException e) {
+			return String.format("New %s alert received from IPAWS. " +
+				"This alert has been automatically deployed.", event);
+		}
+	}
+	
+	/** Get the alert description string containing the amount of time until
+	 *  the timeout expires (for auto deployment mode) given an event type and
+	 *  the time in seconds.
 	 */
 	private static String getTimeoutString(String event, int secs) {
 		// use the time value to create a duration string
-		String dur = Duration.ofSeconds(secs).toString();
+		String dur = PushNotificationHelper.getDurationString(
+				Duration.ofSeconds(secs));
 		
 		// add the string 
 		String dFormat = I18N.get(

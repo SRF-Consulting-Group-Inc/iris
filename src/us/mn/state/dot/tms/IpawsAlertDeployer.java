@@ -139,17 +139,20 @@ public interface IpawsAlertDeployer extends SonarObject {
 	/** Get the approving user. */
 	String getApprovedBy();
 	
-	/** Set the deployed state of this alert (whether it was ever deployed). */
+	/** Set the deployed state of this alert (whether it was ever deployed).
+	 *  This value is null if no action has been taken (i.e. approval is
+	 *  required but has not yet been given).
+	 */
 	void setDeployed(Boolean d);
 	
 	/** Get the deployed state of this alert (whether it was ever deployed). */
 	Boolean getDeployed();
 
 	/** Set the state of this alert (whether it is currently deployed or not).*/
-	void setActive(Boolean a);
+	void setActive(boolean a);
 	
 	/** Get the state of this alert (whether it is currently deployed or not).*/
-	Boolean getActive();
+	boolean getActive();
 	
 	// TODO not sure about this one...
 	

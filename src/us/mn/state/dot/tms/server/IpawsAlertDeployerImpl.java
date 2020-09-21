@@ -144,10 +144,6 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		 );
 	}
 	
-	public IpawsAlertDeployerImpl(String n)  {
-		super(n);
-	}
-	
 	public IpawsAlertDeployerImpl(String n, String aid)  {
 		super(n);
 		alert_id = aid;
@@ -623,11 +619,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 
 	/** Set the deployed state of this alert (whether it was ever deployed). */
-	public void doSetDeployed(Boolean d) throws TMSException {
+	public boolean doSetDeployed(Boolean d) throws TMSException {
 		if (d != deployed) {
 			store.update(this, "deployed", d);
 			setDeployed(d);
+			return true;
 		}
+		return false;
+	}
+	
+	/** Set the deployed state of this alert (whether it was ever deployed),
+	 *  notifying clients if it has changed.
+	 */
+	public void setDeployedNotify(Boolean d) throws TMSException {
+		if (doSetDeployed(d))
+			notifyAttribute("deployed");
 	}
 	
 	/** Get the deployed state of this alert (whether it was ever deployed). */
@@ -637,16 +643,16 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 	
 	/** State of this alert (whether it is currently deployed or not). */
-	private Boolean active;
+	private boolean active;
 	
 	/** Set the state of this alert (whether it is currently deployed or not).*/
 	@Override
-	public void setActive(Boolean a) {
+	public void setActive(boolean a) {
 		active = a;
 	}
 
 	/** Set the state of this alert (whether it is currently deployed or not).*/
-	public void doSetActive(Boolean a) throws TMSException {
+	public void doSetActive(boolean a) throws TMSException {
 		if (a != active) {
 			store.update(this, "active", a);
 			setActive(a);
@@ -655,7 +661,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	
 	/** Get the state of this alert (whether it is currently deployed or not).*/
 	@Override
-	public Boolean getActive() {
+	public boolean getActive() {
 		return active;
 	}
 	

@@ -15,7 +15,9 @@
 
 package us.mn.state.dot.tms;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -149,4 +151,10 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 		return str;
 	}
 	
+	/** Get the time since the alert deployer was generated in seconds. */
+	public static long getTimeSinceGenerated(IpawsAlertDeployer iad) {
+		LocalDateTime at = iad.getGenTime().toInstant().atZone(
+				ZoneId.systemDefault()).toLocalDateTime();
+		return Duration.between(at, LocalDateTime.now()).getSeconds();
+	}
 }
