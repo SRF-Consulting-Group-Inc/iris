@@ -254,19 +254,19 @@ public class PushNotificationImpl extends BaseObjectImpl
 	}
 
 	/** Set the notification description */
-	public boolean doSetDescription(String d) throws TMSException {
+	public void doSetDescription(String d) throws TMSException {
 		if (!objectEquals(d, description)) {
 			store.update(this, "description", d);
 			setDescription(d);
-			return true;
 		}
-		return false;
 	}
 	
 	/** Set the notification description, notifying clients if it changes.*/
 	public void setDescriptionNotify(String d) throws TMSException {
-		if (doSetDescription(d))
+		if (!objectEquals(d, description)) {
+			doSetDescription(d);
 			notifyAttribute("description");
+		}
 	}
 	
 	/** Get the notification description */
@@ -285,19 +285,19 @@ public class PushNotificationImpl extends BaseObjectImpl
 	}
 	
 	/** Set the name of the user who addressed this notification */
-	public boolean doSetAddressedBy(String u) throws TMSException {
+	public void doSetAddressedBy(String u) throws TMSException {
 		if (!objectEquals(u, addressed_by)) {
 			store.update(this, "addressed_by", u);
 			setAddressedBy(u);
-			return true;
 		}
-		return false;
 	}
 	
 	/** Set the name of the user who addressed this notification */
-	public void setAddressedByNotify(String d) throws TMSException {
-		if (doSetAddressedBy(d))
+	public void setAddressedByNotify(String u) throws TMSException {
+		if (!objectEquals(u, addressed_by)) {
+			doSetAddressedBy(u);
 			notifyAttribute("addressedBy");
+		}
 	}
 	
 	/** Get the name of the user who addressed this notification */
@@ -316,19 +316,19 @@ public class PushNotificationImpl extends BaseObjectImpl
 	}
 
 	/** Set the time at which this notification was addressed */
-	public boolean doSetAddressedTime(Date at) throws TMSException {
+	public void doSetAddressedTime(Date at) throws TMSException {
 		if (!objectEquals(at, addressed_time)) {
 			store.update(this, "addressed_time", at);
 			setAddressedTime(at);
-			return true;
 		}
-		return false;
 	}
 	
 	/** Set the time at which this notification was addressed */
 	public void setAddressedTimeNotify(Date at) throws TMSException {
-		if (doSetAddressedTime(at))
+		if (!objectEquals(at, addressed_time)) {
+			doSetAddressedTime(at);
 			notifyAttribute("addressedTime");
+		}
 	}
 	
 	/** Get the time at which this notification was addressed */

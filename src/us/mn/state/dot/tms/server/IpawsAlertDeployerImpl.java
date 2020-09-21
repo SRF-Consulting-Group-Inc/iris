@@ -397,13 +397,11 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Set the list of DMS (represented as a string array) automatically 
 	 *  selected for deploying alert messages.
 	 */
-	public boolean doSetAutoDms(String[] dms) throws TMSException {
+	public void doSetAutoDms(String[] dms) throws TMSException {
 		if (!Arrays.deepEquals(dms, this.auto_dms)) {
 			store.update(this, "auto_dms", arrayToString(dms));
 			setAutoDms(dms);
-			return true;
 		}
-		return false;
 	}
 	
 	/** Set the list of DMS (represented as a string array) automatically 
@@ -411,8 +409,10 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 *  changed.
 	 */
 	public void setAutoDmsNotify(String[] dms) throws TMSException {
-		if (doSetAutoDms(dms))
+		if (!Arrays.deepEquals(dms, this.auto_dms)) {
+			doSetAutoDms(dms);
 			notifyAttribute("autoDms");
+		}
 	}
 	
 	/** Get the list of DMS (represented as a string array) automatically 
@@ -513,21 +513,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Set the MULTI generated automatically by the system for deploying to
 	 *  DMS.
 	 */
-	public boolean doSetAutoMulti(String m) throws TMSException {
-		if (m == null || !m.equals(auto_multi)) {
+	public void doSetAutoMulti(String m) throws TMSException {
+		if (objectEquals(m, auto_multi)) {
 			store.update(this, "auto_multi", m);
 			setAutoMulti(m);
-			return true;
 		}
-		return false;
 	}
 
 	/** Set the MULTI generated automatically by the system for deploying to
 	 *  DMS, notifying clients if it has changed.
 	 */
 	public void setAutoMultiNotify(String m) throws TMSException {
-		if (doSetAutoMulti(m))
+		if (m == null || !m.equals(auto_multi)) {
+			doSetAutoMulti(m);
 			notifyAttribute("autoMulti");
+		}
 	}
 	
 	/** Get the MULTI generated automatically by the system for deploying to
@@ -619,21 +619,21 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	}
 
 	/** Set the deployed state of this alert (whether it was ever deployed). */
-	public boolean doSetDeployed(Boolean d) throws TMSException {
-		if (d != deployed) {
+	public void doSetDeployed(Boolean d) throws TMSException {
+		if (objectEquals(d, deployed)) {
 			store.update(this, "deployed", d);
 			setDeployed(d);
-			return true;
 		}
-		return false;
 	}
 	
 	/** Set the deployed state of this alert (whether it was ever deployed),
 	 *  notifying clients if it has changed.
 	 */
 	public void setDeployedNotify(Boolean d) throws TMSException {
-		if (doSetDeployed(d))
+		if (objectEquals(d, deployed)) {
+			doSetDeployed(d);
 			notifyAttribute("deployed");
+		}
 	}
 	
 	/** Get the deployed state of this alert (whether it was ever deployed). */
