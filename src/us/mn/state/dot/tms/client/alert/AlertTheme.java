@@ -58,7 +58,8 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 	public AlertTheme(ProxyManager<IpawsAlertDeployer> m) {
 		// TODO for now we're stealing the incident marker
 		super(m, new IncidentMarker());
-		addStyle(ItemStyle.ACTIVE, ProxyTheme.COLOR_AVAILABLE);
+		addStyle(ItemStyle.PENDING, ProxyTheme.COLOR_AVAILABLE);
+		addStyle(ItemStyle.ACTIVE, ProxyTheme.COLOR_DEPLOYED);
 		addStyle(ItemStyle.PAST, ProxyTheme.COLOR_INACTIVE);
 		addStyle(ItemStyle.ALL, Color.WHITE);
 	}
@@ -150,6 +151,7 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 			// add more drawing code for auto/suggested in deployer dialog,
 			// perhaps making auto_dms "AVAILABLE", optional_dms "ALL", and
 			// deployed_dms "DEPLOYED", or something like that)
+			// TODO account for selection in AlertDmsDispatcher
 			System.out.println("Going to draw " + iad.getAutoDms().length + " DMS");
 			for (String dmsName: iad.getAutoDms()) {
 				DMS dms = DMSHelper.lookup(dmsName);
@@ -160,8 +162,8 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 				MapGeoLoc dmgl = glMan.findMapGeoLoc(dms.getGeoLoc());
 				
 				// TODO this is where we would change styles
-				System.out.println("Drawing DMS " + dmsName + " with " +
-						dmgl.getTransform());
+//				System.out.println("Drawing DMS " + dmsName + " with " +
+//						dmgl.getTransform());
 				dsym.draw(g, dmgl, deployedStyle);
 				g.setTransform(t); // reset transform
 			}

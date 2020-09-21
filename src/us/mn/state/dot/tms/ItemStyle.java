@@ -67,7 +67,8 @@ public enum ItemStyle {
 	METER,
 	TIME,
 	/* Alert styles */
-	PAST;
+	PAST,
+	PENDING;
 
 	/** Get a string representation of the item style */
 	@Override
