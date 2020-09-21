@@ -28,7 +28,9 @@ import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertHelper;
 import us.mn.state.dot.tms.IpawsAlertDeployer;
+import us.mn.state.dot.tms.IpawsAlertDeployerHelper;
 import us.mn.state.dot.tms.ItemStyle;
+import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.incident.IncidentMarker;
 import us.mn.state.dot.tms.client.proxy.GeoLocManager;
@@ -38,8 +40,8 @@ import us.mn.state.dot.tms.client.proxy.ProxyTheme;
 import us.mn.state.dot.tms.client.proxy.SwingProxyAdapter;
 
 /**
- * An (IPAWS) AlertManager is a container for SONAR IpawsAlertDeployerObjects.
- * NOTE this would need changing to let alert tab handle other types of
+ * An (IPAWS) AlertManager is a container for SONAR IpawsAlertDeployer Objects.
+ * NOTE this would need some changes to let alert tab handle other types of
  * alerts.
  *
  * @author Gordon Parikh
@@ -51,6 +53,9 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 
 	/** IpawsAlert cache */
 	private final TypeCache<IpawsAlert> acache;
+	
+	/** Keep a handle to the theme */
+	private AlertTheme theme;
 	
 	/** Proxy listener for SONAR updates. TODO this will change a lot. */
 	private final SwingProxyAdapter<IpawsAlertDeployer> listener =
@@ -142,11 +147,7 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 		}
 	};
 	
-	/** Create a proxy descriptor.
-	 * 
-	 *  TODO should we make an IpawsCache class? It will probably become
-	 *  evident that we should at some point...
-	 */
+	/** Create a proxy descriptor. */
 	static private ProxyDescriptor<IpawsAlertDeployer> descriptor(Session s) {
 		return new ProxyDescriptor<IpawsAlertDeployer>(
 			s.getSonarState().getIpawsDeployerCache(), false);
@@ -185,7 +186,8 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 
 	@Override
 	protected AlertTheme createTheme() {
-		return new AlertTheme(this);
+		theme = new AlertTheme(this);
+		return theme;
 	}
 	
 	@Override
@@ -195,6 +197,17 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 			// problem with the dates
 			return false;
 		switch (is) {
+		case PENDING:
+			// alert is pending if we're in manual mode or auto mode pre-
+			// timeout and the alert has not been approved yet
+			boolean autoMode = SystemAttrEnum.
+					IPAWS_DEPLOY_AUTO_MODE.getBoolean();
+			int timeout = SystemAttrEnum.
+					IPAWS_DEPLOY_AUTO_TIMEOUT_SECS.getInt();
+			long timeSinceGen = IpawsAlertDeployerHelper.
+					getTimeSinceGenerated(proxy);
+			return !autoMode || (timeSinceGen <= timeout && 
+					proxy.getDeployed() == null);
 		case ACTIVE:
 			return t <= 0;
 		case PAST:
