@@ -123,4 +123,9 @@ abstract public class MapTab<T extends SonarObject> extends JPanel {
 	public boolean isSelectedTab() {
 		return side_pnl.getSelectedTab() == this;
 	}
+	
+	/** Set a proxy for selection. Must be implemented by child classes to do
+	 *  anything.
+	 */
+	public void setSelectedProxy(T proxy) { }
 }
