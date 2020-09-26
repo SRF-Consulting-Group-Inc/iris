@@ -1202,45 +1202,45 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		p.sendMessage(this, sm, owner);
 	}
 
+	/** Create a new (IPAWS) sign-message. */
+	public SignMessage createIpawsMsg(String multi,
+			int priority, Integer duration) {
+		DmsMsgPriority mp = 
+			DmsMsgPriority.fromOrdinal(priority);
+		int src = SignMsgSource.ipaws.bit();
+		String owner = "IPAWS";
+		return findOrCreateMsg(null, multi, false,
+				false, mp, src,	owner, duration);
+	}
+
 	/** Send IPAWS message to sign.
-	 * Creates new Ipaws SignMessage.  Sends it
-	 * to sign if priority is equal to or greater
-	 * than priority of the current user-message.
+	 * Creates and sends a new Ipaws SignMessage
+	 * to the sign if priority is equal to or
+	 * greater than priority of the current
+	 * user-message.
 	 *  
-	 * @param qm Original QuickMessage.
 	 * @param msg Message MULTI string.
 	 * @param priority Message priority.
-	 * @param duration Message duration; null for indefinite.
+	 * @param duration Message duration in minutes;
+	 *                 null for indefinite.
 	 * @return true if message queued to be sent.
-	 *   false if new priority is below priority
-	 *   of current user message.
+	 *         false if new priority is below the
+	 *         priority of the current message or
+	 *         we're unable to create the message.
+	 * @throws TMSException if there is some other
+	 *         problem.
 	 **/
-	public boolean sendIpawsMsg(QuickMessage qm,
-			String multi, int priority,
-			Integer duration) throws TMSException {
-		DMSPoller p = getDMSPoller();
-		if (null == p)
-			throw new ChangeVetoException(
-				name + ": NO ACTIVE POLLER");
+	public boolean sendIpawsMsg(String multi,
+			int priority, Integer duration)
+					throws TMSException {
 		SignMessage sm = msg_user;
-		if ((sm != null) && (sm.getMsgPriority() > priority))
+		if ((sm != null)
+		 && (sm.getMsgPriority() > priority))
 			return false;
-		String msgName = "ipaws_"+name;
-		DmsMsgPriority mp = DmsMsgPriority.fromOrdinal(priority);
-		int src = SignMsgSource.toBits(
-				SignMsgSource.ipaws,
-				SignMsgSource.external);
-		String owner = "IPAWS";
-		SignMessageCreator creator = new SignMessageCreator();
-		sm = creator.create(msgName, sign_config,
-				multi, priority, src, owner,
-				duration);
+		sm = createIpawsMsg(multi, priority, duration);
 		if (sm == null)
 			return false;
-		SignMessageHelper.validate(sm, this);
-		setMsgUser(sm);
-		sm = getMsgValidated();
-		sendMsg(p, sm, owner);
+		doSetMsgUser(sm);
 		return true;
 	}
 
@@ -1248,10 +1248,10 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	 * (Will only blank the sign if the current
 	 *  user-message is an IPAWS message.) */
 	public boolean blankIpawsMsg() throws ChangeVetoException {
-		SignMessage sm = msg_current;
+		SignMessage sm = msg_user;
 		if (sm != null) {
 			// If it's not an ipaws message, don't blank it.
-			if (!"IPAWS".equals(sm.getOwner()))
+			if (!SignMsgSource.ipaws.checkBit(sm.getSource()))
 				return false;
 		}
 		blankMsgUser();
