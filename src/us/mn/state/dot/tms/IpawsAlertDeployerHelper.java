@@ -45,11 +45,26 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 	}
 
 	/** Lookup an alert deployer object for the specified IpawsAlert name.
-	 *  Returns the most recent deployer for this alert.
+	 *  Returns the most recent active deployer for this alert.
 	 */
 	static public IpawsAlertDeployer lookupDeployerFromAlert(String alertId) {
 		// get the list of deployers for this alert sorted newest to oldest
-		ArrayList<IpawsAlertDeployer> deployers = getDeployerList(alertId);
+		ArrayList<IpawsAlertDeployer> deployers =
+				getDeployerList(alertId, null);
+		if (deployers.size() > 0)
+			return deployers.get(0);
+		return null;
+	}
+	
+	/** Lookup an alert deployer object for the specified IpawsAlert name and
+	 *  config name. Returns the most recent active deployer for the alert and
+	 *  config.
+	 */
+	static public IpawsAlertDeployer lookupDeployerFromAlert(
+			String alertId, String configName) {
+		// get the list of deployers for this alert sorted newest to oldest
+		ArrayList<IpawsAlertDeployer> deployers =
+				getDeployerList(alertId, configName);
 		if (deployers.size() > 0)
 			return deployers.get(0);
 		return null;
@@ -88,27 +103,39 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 		
 	}
 	
-	/** Get a list of all deployers associated with the alert ID provided.
-	 *  Objects are sorted from newest to oldest.
+	/** Get a list of all active deployers associated with the alert ID and
+	 *  config provided. If configName is null, all matching active alerts are
+	 *  returned. Objects are sorted from newest to oldest.
 	 */
 	static public ArrayList<IpawsAlertDeployer>
-					getDeployerList(String alertId) {
+					getDeployerList(String alertId, String configName) {
+		return getDeployerList(alertId, configName, false);
+	}
+	
+	/** Get a list of all active deployers associated with the alert ID and
+	 *  config provided. If configName is null, all matching active alerts are
+	 *  returned. Objects are sorted from newest to oldest.
+	 */
+	static public ArrayList<IpawsAlertDeployer>
+			getDeployerList(String alertId, String configName,
+					boolean ascending) {
 		ArrayList<IpawsAlertDeployer> deployers =
 				new ArrayList<IpawsAlertDeployer>();
 		
 		// find all deployers associated with this alert
 		Iterator<IpawsAlertDeployer> it = iterator();
 		while (it.hasNext()) {
-			IpawsAlertDeployer ian = it.next();
-			if (ian.getAlertId().equals(alertId))
-				deployers.add(ian);
+			IpawsAlertDeployer iad = it.next();
+			if (iad.getAlertId().equals(alertId) && (configName == null
+					|| configName.equals(iad.getConfig()))
+					&& Boolean.TRUE.equals(iad.getDeployed()))
+				deployers.add(iad);
 		}
 		
 		// sort the list using a custom comparator
-		deployers.sort(new DeployerGenTimeComparator(false));
+		deployers.sort(new DeployerGenTimeComparator(ascending));
 		return deployers;
 	}
-	
 	
 	/** Get an IpawsAlertDeployer object iterator */
 	static public Iterator<IpawsAlertDeployer> iterator() {
