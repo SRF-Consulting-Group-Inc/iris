@@ -31,12 +31,12 @@ public class IpawsAlertConfigHelper extends BaseHelper {
 		assert false;
 	}
 	
-	/** Lookup the alert deployer with the specified name */
+	/** Lookup the alert config with the specified name */
 	static public IpawsAlertConfig lookup(String name) {
 		return (IpawsAlertConfig) namespace.lookupObject(
 				IpawsAlertConfig.SONAR_TYPE, name);
 	}
-
+	
 	/** Get an IpawsAlertConfig object iterator */
 	static public Iterator<IpawsAlertConfig> iterator() {
 		return new IteratorWrapper<IpawsAlertConfig>(namespace.iterator(
