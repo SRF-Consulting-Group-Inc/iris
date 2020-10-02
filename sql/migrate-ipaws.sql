@@ -10,7 +10,12 @@ INSERT INTO iris.system_attribute (name, value) VALUES
 		('ipaws_priority_weight_certainty', 1.0),
 		('ipaws_deploy_auto_mode', false),
 		('ipaws_deploy_auto_timeout_secs', 0),
+		('ipaws_sign_thresh_auto_meters', 1000),
+		('ipaws_sign_thresh_opt_meters', 4000),
 		('push_notification_timeout_secs', 900);
+
+-- Add IPAWS sign message source
+INSERT INTO iris.sign_msg_source (bit, source) VALUES (13, 'ipaws');
 
 -- Reserve IPAWS Alert comm protocol value
 INSERT INTO iris.comm_protocol (id, description) VALUES (42, 'IPAWS Alert');
@@ -90,12 +95,14 @@ INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
 
 -- IPAWS Alert Deployer table
 CREATE TABLE event.ipaws_alert_deployer (
-	name varchar(24) PRIMARY KEY,
+	name varchar(20) PRIMARY KEY,
 	gen_time timestamp with time zone,
 	approved_time timestamp with time zone,
 	alert_id text,
+	geo_loc varchar(20),
 	alert_start timestamp with time zone,
 	alert_end timestamp with time zone,
+	config varchar(24),
 	sign_group varchar(20),
 	quick_message varchar(20),
 	auto_dms text[],
@@ -107,7 +114,7 @@ CREATE TABLE event.ipaws_alert_deployer (
 	msg_priority integer,
 	approved_by varchar(15),
 	deployed boolean,
-	active boolean,
+	was_deployed boolean,
 	replaces varchar(24)
 );
 
@@ -126,8 +133,7 @@ CREATE TABLE iris.ipaws_alert_config (
 	event text,
 	sign_group varchar(20),
 	quick_message varchar(20),
-	response_types text[],
-	urgency_values text[]
+	after_alert_time integer DEFAULT 0
 );
 
 ALTER TABLE iris.ipaws_alert_config
