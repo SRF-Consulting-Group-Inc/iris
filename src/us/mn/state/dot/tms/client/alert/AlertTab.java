@@ -15,10 +15,17 @@
 package us.mn.state.dot.tms.client.alert;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Timer;
 
 import us.mn.state.dot.tms.IpawsAlertDeployer;
 import us.mn.state.dot.tms.ItemStyle;
@@ -48,15 +55,26 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	/** Alert dispatcher for dispatching and reviewing alerts */
 	private final AlertDispatcher dispatcher;
 	
+	/** JScrollPane that contains all the elements of the tab (since it can
+	 *  get big).
+	 */
+	private JScrollPane sp;
+	
+	/** Component adapter for handling resize events. */
+	private ComponentAdapter resizeHandler = new ComponentAdapter() {
+		@Override
+		public void componentResized(ComponentEvent e) {
+			Dimension d = sp.getPreferredSize();
+			d.height = side_pnl.getSize().height - 80;
+			sp.setPreferredSize(d);
+		}
+	};
+	
 	protected AlertTab(Session session, AlertManager man) {
 		super(man);
 		summary = man.createStyleSummary(false, 1);
 		dispatcher = new AlertDispatcher(session, man);
-		JPanel p = new JPanel();
-		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-		p.add(summary);
-		p.add(dispatcher);
-		add(p, BorderLayout.NORTH);
+		addComponentListener(resizeHandler);
 	}
 	
 	/** Initialize the alert tab. */
@@ -64,6 +82,19 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	public void initialize() {
 		summary.initialize();
 		dispatcher.initialize();
+		JPanel p = new JPanel(new BorderLayout());
+		p.add(summary, BorderLayout.NORTH);
+		p.add(dispatcher, BorderLayout.CENTER);
+		sp = new JScrollPane(p, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		add(sp, BorderLayout.NORTH);
+	}
+	
+	@Override
+	public void postInit() {
+		Dimension d = sp.getPreferredSize();
+		d.height = side_pnl.getSize().height - 80;
+		sp.setPreferredSize(d);
 	}
 	
 	/** Dispose of the alert tab. */
@@ -89,9 +120,33 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 		// check the style of the alert and select the appropriate one
 		ItemStyle style = manager.getItemStyle(proxy);
 		if (style != null)
-			manager.setSelectedStyle(style);
+			summary.setStyle(style);
 		
 		dispatcher.selectAlert(proxy);
 		summary.ensureSelectedProxyVisible();
+	}
+	
+	/** Update the counts in the style summary */
+	public void updateStyleCounts() {
+		System.out.println("Updating style counts");
+		
+		// use a timer to fire this in just a bit
+		Timer t = new Timer(100, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				summary.updateCounts();
+			}
+		});
+		t.start();
+	}
+	
+	/** Get the AlertDispatcher */
+	public AlertDispatcher getAlertDispatcher() {
+		return dispatcher;
+	}
+
+	/** Get the AlertDmsDispatcher */
+	public AlertDmsDispatcher getDmsDispatcher() {
+		return dispatcher.getDmsDispatcher();
 	}
 }

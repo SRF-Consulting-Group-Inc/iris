@@ -20,12 +20,14 @@ import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 
 import org.json.JSONObject;
 
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertDeployer;
+import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionListener;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionModel;
@@ -81,14 +83,17 @@ public class AlertDispatcher extends IPanel {
 	/** Event label */
 	private final JLabel eventLbl = createValueLabel();
 	
-	/** Urgency label */
-	private final JLabel urgencyLbl = createValueLabel();
+	/** Combined urgency/severity/certainty label */
+	private final JLabel urgSevCertLbl = createValueLabel();
 	
-	/** Severity label */
-	private final JLabel serverityLbl = createValueLabel();
+	/** Headline label */
+	private final JLabel headlineLbl = createValueLabel();
 	
-	/** Certainty label */
-	private final JLabel certaintyLbl = createValueLabel();
+	/** Description label */
+	private final JLabel descriptionLbl = createValueLabel();
+	
+	/** Instruction label */
+	private final JLabel instructionLbl = createValueLabel();
 	
 	/** Status label */
 	private final JLabel statusLbl = createValueLabel();
@@ -106,10 +111,13 @@ public class AlertDispatcher extends IPanel {
 	private final JLabel areaDescLbl = createValueLabel();
 	
 	/** Available width for area description label */
-	private Integer areaDescLblWidth;
+	private Integer longLblWidth;
 	
 	/** Edit deployment button */
-	private JButton editBtn;
+	private JButton editDeployBtn;
+	
+	/** Discard edits button */
+	private JButton discardBtn;
 	
 	/** Cancel deployment button */
 	private JButton cancelBtn;
@@ -127,11 +135,18 @@ public class AlertDispatcher extends IPanel {
 		alertCache = session.getSonarState().getIpawsAlertCache();
 		alertSelMdl.addProxySelectionListener(alertSelLstnr);
 		areaDescKeyLbl = new ILabel("alert.area_desc");
-		editBtn = new JButton(editDeployment);
+		editDeployBtn = new JButton(editDeploy);
+		discardBtn = new JButton(discardEdits);
+		cancelBtn = new JButton(cancelAlert);
 		
-		// make both buttons the same size (it looks nicer...)
-		cancelBtn = new JButton(cancelDeployment);
-		editBtn.setPreferredSize(cancelBtn.getPreferredSize());
+		// make all buttons the same size (it looks nicer...)
+		editDeployBtn.setPreferredSize(discardBtn.getPreferredSize());
+		cancelBtn.setPreferredSize(discardBtn.getPreferredSize());
+		
+		// buttons are disabled by default
+		editDeployBtn.setEnabled(false);
+		discardBtn.setEnabled(false);
+		cancelBtn.setEnabled(false);
 		
 		dmsDispatcher = new AlertDmsDispatcher(session, manager);
 	}
@@ -141,18 +156,17 @@ public class AlertDispatcher extends IPanel {
 	public void initialize() {
 		super.initialize();
 		setTitle(I18N.get("alert.selected"));
-		add(editBtn, Stretch.TALL);
+		add(editDeployBtn, Stretch.TALL);
 		add("alert.id");
 		add(idLbl, Stretch.LAST);
-		add(cancelBtn, Stretch.TALL);
+		add(discardBtn, Stretch.TALL);
 		add("alert.event");
 		add(eventLbl, Stretch.LAST);
-		add("alert.urgency");
-		add(urgencyLbl, Stretch.LAST);
-		add("alert.severity");
-		add(serverityLbl, Stretch.LAST);
-		add("alert.certainty");
-		add(certaintyLbl, Stretch.LAST);
+		add(cancelBtn, Stretch.TALL);
+		add(new JLabel(I18N.get("alert.urgency") + "/" +
+				I18N.get("alert.severity") + "/" +
+				I18N.get("alert.certainty")), Stretch.NONE);
+		add(urgSevCertLbl, Stretch.LAST);
 		add("alert.status");
 		add(statusLbl, Stretch.LAST);
 		add("alert.onset");
@@ -161,6 +175,12 @@ public class AlertDispatcher extends IPanel {
 		add(expiresLbl, Stretch.LAST);
 		add(areaDescKeyLbl, Stretch.NONE);
 		add(areaDescLbl, Stretch.LAST);
+		add("alert.headline");
+		add(headlineLbl, Stretch.LAST);
+		add("alert.description");
+		add(descriptionLbl, Stretch.LAST);
+		add("alert.instruction");
+		add(instructionLbl, Stretch.LAST);
 		
 		dmsDispatcher.initialize();
 		add(dmsDispatcher, Stretch.DOUBLE);
@@ -168,26 +188,42 @@ public class AlertDispatcher extends IPanel {
 		alertSelMdl.addProxySelectionListener(alertSelLstnr);
 	}
 	
-	/** Action to edit a current deployment (opens the deploy dialog) */
-	private IAction editDeployment = new IAction("alert.deploy.edit") {
+	/** Action to edit or deploy an alert. */
+	private IAction editDeploy = new IAction("alert.deploy.edit") {
 		@Override
 		protected void doActionPerformed(ActionEvent ev) throws Exception {
-			System.out.println("Editing...");
-			// TODO
+			dmsDispatcher.processEditDeploy();
+			setEditDeployBtnText();
+			
+			// enable the discard button if in edit mode
+			discardBtn.setEnabled(manager.getEditing());
 		}
 		
 	};
 	
-	/** Action to cancel a current deployment (removes alert messages from
-	 *  signs).
-	 */
-	private IAction cancelDeployment = new IAction("alert.deploy.cancel") {
+	private void setEditDeployBtnText() {
+		if (manager.getEditing())
+			editDeployBtn.setText(I18N.get("alert.deploy.deploy"));
+		else
+			editDeployBtn.setText(I18N.get("alert.deploy.edit"));
+	}
+	
+	/** Action to cancel editing an alert deployment. */
+	private IAction discardEdits = new IAction("alert.deploy.discard_edit") {
 		@Override
 		protected void doActionPerformed(ActionEvent ev) throws Exception {
-			System.out.println("Canceling...");
-			// TODO
+			dmsDispatcher.cancelEdit();
+			setEditDeployBtnText();
+			discardBtn.setEnabled(manager.getEditing());
 		}
-		
+	};
+	
+	/** Action to cancel an alert deployment. */
+	private IAction cancelAlert = new IAction("alert.deploy.cancel_alert") {
+		@Override
+		protected void doActionPerformed(ActionEvent ev) throws Exception {
+			dmsDispatcher.cancelAlert();
+		}
 	};
 	
 	/** Set the selected alert in the list (for calling from other code). */
@@ -203,8 +239,10 @@ public class AlertDispatcher extends IPanel {
 		else {
 			// we should only have one alert (multiple selection is disabled)
 			for (IpawsAlertDeployer iad: sel) {
-				setSelectedAlert(iad);
-				break;
+				if (iad != null) {
+					setSelectedAlert(iad);
+					break;
+				}
 			}
 		}
 	}
@@ -215,16 +253,33 @@ public class AlertDispatcher extends IPanel {
 		selectedAlertDepl = iad;
 		selectedAlert = alertCache.lookupObject(
 				selectedAlertDepl.getAlertId());
+		manager.setSelectedAlert(selectedAlertDepl);
 		
 		// fill out the value labels
-		idLbl.setText(selectedAlert.getIdentifier());
+		// FIXME this way of wrapping is kind of hacky
+		idLbl.setText("<html><div style=\"width:200px;\">" +
+				selectedAlert.getIdentifier() + "</div></html>");
+		idLbl.setText("<html><div style=\"width:200px;\">" +
+				selectedAlert.getIdentifier() + "</div></html>");
 		eventLbl.setText(selectedAlert.getEvent());
-		urgencyLbl.setText(selectedAlert.getUrgency());
-		serverityLbl.setText(selectedAlert.getSeverity());
-		certaintyLbl.setText(selectedAlert.getCertainty());
+		headlineLbl.setText("<html><div style=\"width:200px;\">" +
+				selectedAlert.getHeadline() + "</div></html>");
+		urgSevCertLbl.setText(selectedAlert.getUrgency() + "/" + 
+			selectedAlert.getSeverity() + "/" + selectedAlert.getCertainty());
+		descriptionLbl.setText("<html><div style=\"width:200px;\">" +
+			selectedAlert.getAlertDescription() + "</div></html>");
+		instructionLbl.setText("<html><div style=\"width:200px;\">" +
+			selectedAlert.getInstruction() + "</div></html>");
 		
-		// TODO need to keep track of deployment status
-		statusLbl.setText("Deployed");
+		// add the current deployment status
+		String status = "";
+		if (selectedAlertDepl.getDeployed() == null)
+			status = I18N.get("alert.status.pending");
+		else if (selectedAlertDepl.getDeployed().equals(Boolean.TRUE))
+			status = I18N.get("alert.status.deployed");
+		else if (selectedAlertDepl.getDeployed().equals(Boolean.FALSE))
+			status = I18N.get("alert.status.not_deployed");
+		statusLbl.setText(status);
 		
 		onsetLbl.setText(selectedAlertDepl.getAlertStart().toString());
 		expiresLbl.setText(selectedAlertDepl.getAlertEnd().toString());
@@ -236,23 +291,18 @@ public class AlertDispatcher extends IPanel {
 		JSONObject jo = new JSONObject(area);
 		String areaDesc = jo.has("areaDesc") ? jo.getString("areaDesc") : "";
 		
-		// make the area description wrap (since it might be long)
-		areaDescLbl.setText(areaDesc);
-		if (areaDescLblWidth == null) {
-			areaDescLblWidth = getPreferredSize().width
-					- areaDescKeyLbl.getPreferredSize().width - 50;
-		}
-		areaDescLbl.setText("<html>" + areaDesc +"</html>");
-		Dimension d = areaDescLbl.getPreferredSize();
-		if (d.width > areaDescLblWidth) {
-			double lines = Math.ceil((double) d.width / areaDescLblWidth);
-			d.width = areaDescLblWidth;
-			d.height *= lines;
-		}
-		areaDescLbl.setPreferredSize(d);
+		// make long labels wrap
+		areaDescLbl.setText("<html><div style=\"width:200px;\">" +
+				areaDesc + "</div></html>");
 		
 		// set the alert in the DMS dispatcher so sign list updates
 		dmsDispatcher.setSelectedAlert(selectedAlertDepl, selectedAlert);
+		
+		// set the button text and disable buttons if alert is in past
+		setEditDeployBtnText();
+		boolean npast = !manager.checkStyle(ItemStyle.PAST, selectedAlertDepl);
+		editDeployBtn.setEnabled(npast);
+		cancelBtn.setEnabled(npast);
 	}
 	
 	/** Clear the selected alert. */
@@ -260,16 +310,32 @@ public class AlertDispatcher extends IPanel {
 		// null the selected alert and deployer
 		selectedAlertDepl = null;
 		selectedAlert = null;
+		manager.setSelectedAlert(null);
+		
+		// make sure editing is off and tell the DMS dispatcher
+		manager.setEditing(false);
+		dmsDispatcher.clearSelectedAlert();
+		
+		// disable the buttons
+		editDeployBtn.setEnabled(false);
+		discardBtn.setEnabled(false);
+		cancelBtn.setEnabled(false);
 		
 		// clear the value labels
 		idLbl.setText("");
 		eventLbl.setText("");
-		urgencyLbl.setText("");
-		serverityLbl.setText("");
-		certaintyLbl.setText("");
+		urgSevCertLbl.setText("");
+		headlineLbl.setText("");
+		descriptionLbl.setText("");
+		instructionLbl.setText("");
 		statusLbl.setText("");
 		onsetLbl.setText("");
 		expiresLbl.setText("");
 		areaDescLbl.setText("");
+	}
+	
+	/** Get the AlertDmsDispatcher */
+	public AlertDmsDispatcher getDmsDispatcher() {
+		return dmsDispatcher;
 	}
 }
