@@ -278,8 +278,14 @@ public class IpawsReader {
 		
 		for (String key: kvPairs.keySet()) {
 			ArrayList<String> vals = kvPairs.get(key);
-			String value = vals.size() == 1 ? vals.get(0) : vals.toString();
-			sb.append(Json.str(key, value));
+			
+			// FIXME the && !"UGC".equals(key) is a hack to make sure we
+			// always get UGC codes as an array (it works well enough though)
+			if (vals.size() > 1 || "UGC".equals(key)) {
+				String[] valsArr = vals.toArray(new String[0]);
+				sb.append(Json.arr(key, valsArr));
+			} else
+				sb.append(Json.str(key, vals.get(0)));
 		}
 		
 		// remove trailing comma
@@ -305,8 +311,12 @@ public class IpawsReader {
 	            // polygons (it might just merge them)
 	            String [] element_list = {"areaDesc","polygon",
 	            		"circle","geocode","altitude","ceiling"};
-	            for (String child_element: element_list)
-	            	appendElementJson(child_element, areaElement, sb);
+	            for (String ce: element_list) {
+	            	if ("geocode".equals(ce))
+	            		appendElementJson(ce, areaElement, sb, true);
+	            	else
+	            		appendElementJson(ce, areaElement, sb, false);
+	            }
 	        }
         }
 		
@@ -319,11 +329,14 @@ public class IpawsReader {
 
     
     private static void appendElementJson(String tag,
-    		Element element, StringBuilder sb) {
-        if (element.getElementsByTagName(tag).getLength() == 1)      
+    		Element element, StringBuilder sb, boolean forceKV) {
+        if (element.getElementsByTagName(tag).getLength() == 1 && !forceKV)      
         	sb.append(Json.str(tag, element.getElementsByTagName(tag)
         			.item(0).getTextContent()));
-        else if (element.getElementsByTagName(tag).getLength()  > 1)
+        // TODO this won't handle multiple <area> or <polygon> blocks
+        // correctly, but those seem to be rare (NWS doesn't seem to use them
+        // even though CAP/IPAWS allows them)
+        else if (element.getElementsByTagName(tag).getLength() > 1 || forceKV)
         	sb.append(Json.sub(tag, getValuePairJson(tag, element)));
     }
     
