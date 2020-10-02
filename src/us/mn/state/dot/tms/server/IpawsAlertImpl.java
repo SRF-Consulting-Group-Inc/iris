@@ -101,6 +101,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		map.put("parameters", parameters);
 		map.put("area", area);
 		map.put("geo_poly", geo_poly);
+		map.put("geo_loc", geo_loc);
 		map.put("purgeable", purgeable);
 		return map;
 	}
