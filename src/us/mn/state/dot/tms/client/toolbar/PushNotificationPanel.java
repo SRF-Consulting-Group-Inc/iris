@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 import java.util.Iterator;
 
 import javax.swing.JButton;
+import javax.swing.JInternalFrame;
 import javax.swing.Timer;
 
 import us.mn.state.dot.tms.PushNotification;
@@ -115,8 +116,6 @@ public class PushNotificationPanel extends ToolPanel {
 	 *  that requires the user's attention).
 	 */
 	public void startButtonBlink() {
-		System.out.println("Starting button blinking...");
-		
 		// fire immediately, then start the timer to toggle every 2 seconds
 		blinking = true;
 		bbOn = true;
@@ -128,8 +127,6 @@ public class PushNotificationPanel extends ToolPanel {
 	 *  another client addresses the alert).
 	 */
 	public void stopButtonBlink() {
-		System.out.println("Stopping button blinking...");
-		
 		// disable blinking, stop the timer and, clear the button color
 		blinking = false;
 		blinkTimer.stop();
