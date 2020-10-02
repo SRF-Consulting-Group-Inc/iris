@@ -15,6 +15,8 @@
 
 package us.mn.state.dot.tms.client.notification;
 
+import javax.swing.JInternalFrame;
+
 import us.mn.state.dot.tms.PushNotification;
 import us.mn.state.dot.tms.client.ScreenPane;
 import us.mn.state.dot.tms.client.Session;
@@ -40,5 +42,6 @@ public class PushNotificationForm extends ProxyTableForm<PushNotification> {
 	public PushNotificationForm(Session s, MapBean map, ScreenPane p) {
 		super(I18N.get("notification"), new PushNotificationProxyPanel(
 				new PushNotificationModel(s), map, p));
+		((PushNotificationProxyPanel) panel).setForm(this);
 	}
 }

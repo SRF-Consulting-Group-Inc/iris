@@ -43,6 +43,9 @@ import us.mn.state.dot.tms.client.proxy.ProxyTablePanel;
 public class PushNotificationProxyPanel
 				extends ProxyTablePanel<PushNotification> {
 	
+	/** Handle to the form */
+	private PushNotificationForm form;
+	
 	/** Handle to MapBean */
 	private final MapBean map;
 
@@ -58,11 +61,15 @@ public class PushNotificationProxyPanel
 		}
 	};
 	
-	public PushNotificationProxyPanel(
-			ProxyTableModel<PushNotification> m, MapBean map, ScreenPane p) {
+	public PushNotificationProxyPanel(ProxyTableModel<PushNotification> m,
+			MapBean map, ScreenPane p) {
 		super(m);
 		this.map = map;
 		pane = p;
+	}
+	
+	public void setForm(PushNotificationForm f) {
+		form = f;
 	}
 	
 	/** Create GUI jobs. */
@@ -140,6 +147,10 @@ public class PushNotificationProxyPanel
 					typeTab.setSelectedProxy(obj);
 			}
 		}
+		
+		// close the notification panel
+		if (form != null)
+			session.getDesktop().closeForm(form);
 	}
 	
 }

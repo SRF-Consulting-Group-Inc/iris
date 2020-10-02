@@ -129,7 +129,6 @@ public class PushNotificationModel extends ProxyTableModel<PushNotification> {
 	 */
 	@Override
 	protected boolean check(PushNotification pn) {
-		System.out.println("Checking notification " + pn.getName());
 		return PushNotificationHelper.check(session, pn, true);
 	}
 	

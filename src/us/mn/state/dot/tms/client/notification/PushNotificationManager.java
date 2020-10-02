@@ -97,10 +97,11 @@ public class PushNotificationManager extends ProxyManager<PushNotification> {
 		boolean stopBlink = true;
 		while (it.hasNext()) {
 			PushNotification n = it.next();
-			System.out.println("Checking notification " + n.getName() +
-					": priv = " + PushNotificationHelper.
-					checkPrivileges(session, n) + " | addr = " +
-					PushNotificationHelper.checkAddressed(n, false));
+			
+			// FIXME not sure why these need to be called twice for this code
+			// to work
+			PushNotificationHelper.checkPrivileges(session, n);
+			PushNotificationHelper.checkAddressed(n, false);
 			if (PushNotificationHelper.checkPrivileges(session, n) &&
 					PushNotificationHelper.checkAddressed(n, false))
 				stopBlink = false;
