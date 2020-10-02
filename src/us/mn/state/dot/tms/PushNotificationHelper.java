@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Iterator;
 
+import us.mn.state.dot.sonar.SonarObject;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.utils.UniqueNameCreator;
 
@@ -53,6 +54,45 @@ public class PushNotificationHelper extends BaseHelper {
 	static public PushNotification lookup(String name) {
 		return (PushNotification) namespace.lookupObject(
 				PushNotification.SONAR_TYPE, name);
+	}
+	
+	/** Address all outstanding PushNotification objects associated with the
+	 *  given reference object.
+	 */
+	static public void addressAllRef(SonarObject refObject, Session s) {
+		if (refObject == null)
+			return;
+		Iterator<PushNotification> it = iterator();
+		boolean changed = false;
+		while (it.hasNext()) {
+			PushNotification pn = it.next();
+			if (refObject.getTypeName().equals(pn.getRefObjectType())
+					&& refObject.getName().equals(pn.getRefObjectName())
+					&& pn.getAddressedTime() == null) {
+				pn.setAddressedBy(s.getUser().getName());
+				pn.setAddressedTime(new Date());
+				changed = true;
+			}
+		}
+		if (changed)
+			s.getPushNotificationManager().checkStopBlinkBG();
+	}
+	
+	/** Find a PushNotification object associated with the given reference
+	 *  object. Only returns one object.
+	 */
+	static public PushNotification lookup(SonarObject refObject) {
+		if (refObject == null)
+			return null;
+		Iterator<PushNotification> it = iterator();
+		while (it.hasNext()) {
+			PushNotification pn = it.next();
+			if (refObject.getTypeName().equals(pn.getRefObjectType())
+					&& refObject.getName().equals(pn.getRefObjectName())) {
+				return pn;
+			}
+		}
+		return null;
 	}
 	
 	/** Get an PushNotification object iterator */
