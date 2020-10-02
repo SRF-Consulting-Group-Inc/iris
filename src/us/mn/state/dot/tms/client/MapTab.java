@@ -89,6 +89,11 @@ abstract public class MapTab<T extends SonarObject> extends JPanel {
 	/** Initialize the map tab */
 	abstract public void initialize();
 
+	/** Perform any operations that need to happen after the tab is added to
+	 *  the ScreenPane. By default this does nothing.
+	 */
+	public void postInit() { }
+	
 	/** Perform any clean up necessary */
 	public void dispose() {
 		ProxySelectionModel<T> mdl = getSelectionModel();
@@ -98,7 +103,7 @@ abstract public class MapTab<T extends SonarObject> extends JPanel {
 	}
 
 	/** Side panel for this tab */
-	private SidePanel side_pnl;
+	protected SidePanel side_pnl;
 
 	/** Set the side panel */
 	public void setSidePanel(SidePanel p) {

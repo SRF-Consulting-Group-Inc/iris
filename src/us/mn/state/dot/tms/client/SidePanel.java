@@ -131,6 +131,7 @@ public class SidePanel extends JPanel {
 			if (tab_pane.getTabCount() == 1)
 				setSelectedLayer(pls);
 		}
+		mt.postInit();
 	}
 
 	/** Get the home proxy layer state for a map tab */
