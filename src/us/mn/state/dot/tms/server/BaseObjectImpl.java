@@ -347,6 +347,15 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		return (so instanceof IpawsAlertDeployerImpl)
 				? (IpawsAlertDeployerImpl)so : null;
 	}
+	
+	/** Lookup an IPAWS Alert Config */
+	static protected IpawsAlertConfigImpl
+	lookupIpawsAlertConfig(String name) {
+		SonarObject so = lookupObject(
+				IpawsAlertConfigImpl.SONAR_TYPE, name);
+		return (so instanceof IpawsAlertConfigImpl)
+				? (IpawsAlertConfigImpl) so : null;
+	}
 
 	/** Get the primary key name */
 	@Override
