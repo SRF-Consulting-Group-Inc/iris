@@ -42,7 +42,7 @@ public class AlertConfigModel extends ProxyTableModel<IpawsAlertConfig> {
 	/** Create a proxy descriptor */
 	static public ProxyDescriptor<IpawsAlertConfig> descriptor(Session s) {
 		return new ProxyDescriptor<IpawsAlertConfig>(
-				s.getSonarState().getIpawsConfigCache(), true);
+				s.getSonarState().getIpawsConfigCache(), false, true, true);
 	}
 	
 	/** List of sign groups */
@@ -110,6 +110,22 @@ public class AlertConfigModel extends ProxyTableModel<IpawsAlertConfig> {
 						new DefaultComboBoxModel<String>(
 								qml.toArray(new String[0])));
 				return new DefaultCellEditor(cbx);
+			}
+		});
+		cols.add(new ProxyColumn<IpawsAlertConfig>(
+				"alert.config.after_alert_time", 100) {
+			public Object getValueAt(IpawsAlertConfig iac) {
+				return iac.getAfterAlertTime();
+			}
+			public boolean isEditable(IpawsAlertConfig iac) {
+				return canWrite(iac);
+			}
+			public void setValueAt(IpawsAlertConfig iac, Object value) {
+				try {
+					iac.setAfterAlertTime(Integer.valueOf(value.toString()));
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 		return cols;
