@@ -52,6 +52,12 @@ public interface IpawsAlertDeployer extends SonarObject {
 
 	/** Get the Alert ID. */
 	String getAlertId();
+	
+	/** Set the deployer GeoLoc. */
+	void setGeoLoc(GeoLoc gl);
+	
+	/** Get the deployer GeoLoc. */
+	GeoLoc getGeoLoc();
 
 	/** Set the alert start time */
 	void setAlertStart(Date t);
@@ -64,6 +70,12 @@ public interface IpawsAlertDeployer extends SonarObject {
 	
 	/** Get the alert end time */
 	Date getAlertEnd();
+	
+	/** Set the config used for this deployment */
+	void setConfig(String c);
+	
+	/** Get the config used for this deployment */
+	String getConfig();	
 	
 	/** Set the sign group used for this deployment */
 	void setSignGroup(String sg);
@@ -139,22 +151,25 @@ public interface IpawsAlertDeployer extends SonarObject {
 	/** Get the approving user. */
 	String getApprovedBy();
 	
-	/** Set the deployed state of this alert (whether it was ever deployed).
-	 *  This value is null if no action has been taken (i.e. approval is
-	 *  required but has not yet been given).
+	/** Set the deployed state of this alert (whether it is currently
+	 *  deployed). This value is null if no action has been taken (i.e.
+	 *  approval is required but has not yet been given). Changing this to
+	 *  true triggers deployments or updates, and changing it to false
+	 *  triggers canceling of an alert deployment.
 	 */
 	void setDeployed(Boolean d);
 	
-	/** Get the deployed state of this alert (whether it was ever deployed). */
+	/** Get the deployed state of this alert (whether it is currently
+	 *  deployed). */
 	Boolean getDeployed();
 
-	/** Set the state of this alert (whether it is currently deployed or not).*/
-	void setActive(boolean a);
+	/** Set whether this alert deployer was ever deployed or not. Note that
+	 *  this will be true if an alert message is successfully sent to at least
+	 *  one sign. */
+	void setWasDeployed(boolean wd);
 	
-	/** Get the state of this alert (whether it is currently deployed or not).*/
-	boolean getActive();
-	
-	// TODO not sure about this one...
+	/** Get whether this alert deployer was ever deployed or not. */
+	boolean getWasDeployed();
 	
 	/** Set the alert deployer that this replaces (if any). Note that updates
 	 *  to alerts trigger creation of a new deployer (not an update).
