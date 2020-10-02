@@ -127,7 +127,7 @@ public class ProxyLayerState<T extends SonarObject> extends LayerState {
 
 	/** Get the current map scale */
 	@Override
-	protected float getScale() {
+	public float getScale() {
 		return adjustScale(super.getScale());
 	}
 

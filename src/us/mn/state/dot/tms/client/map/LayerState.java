@@ -226,7 +226,7 @@ abstract public class LayerState {
 	}
 
 	/** Get the current map scale */
-	protected float getScale() {
+	public float getScale() {
 		return (float) map.getScale();
 	}
 
