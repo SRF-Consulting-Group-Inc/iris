@@ -49,6 +49,28 @@ public class Json {
 			return "";
 	}
 	
+	/** Make a JSON key/array pair for a string type */
+	static public String arr(String key, Object[] values) {
+		if (values != null && values.length > 0) {
+			StringBuilder sb = new StringBuilder();
+			sb.append('"');
+			sb.append(key);
+			sb.append("\":");
+			sb.append('[');
+			for (Object v: values) {
+				sb.append('"');
+				sb.append(v);
+				sb.append("\",");
+			}
+			// remove trailing comma and add closing bracket
+			if (sb.charAt(sb.length() - 1) == ',')
+				sb.setLength(sb.length() - 1);
+			sb.append("],");
+			return sb.toString();
+		} else
+			return "";
+	}
+	
 	/** Make a JSON key/sub object for a string type */
 	static public String sub(String key, Object value) {
 		if (value != null) {
