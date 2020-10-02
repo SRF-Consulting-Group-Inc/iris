@@ -56,7 +56,7 @@ import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertHelper;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.server.IpawsAlertImpl;
-import us.mn.state.dot.tms.server.comm.ntcip.mib1204.Json;
+import us.mn.state.dot.tms.utils.Json;
 
 /**
  * Integrated Public Alert and Warning System (IPAWS) alert reader. Reads and
