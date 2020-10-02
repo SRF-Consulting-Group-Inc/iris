@@ -47,15 +47,13 @@ public interface IpawsAlertConfig extends SonarObject {
 	/** Set the quick message (template) */
 	String getQuickMessage();
 	
-	/** Set the applicable response type(s) (if any) */
-	void setResponseTypes(String[] rt);
+	/** Set amount of time (in minutes) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	void setAfterAlertTime(int mins);
 	
-	/** Get the applicable response type(s) (if any) */
-	String[] getResponseTypes();
-	
-	/** Set the applicable urgency value(s) (if any) */
-	void setUrgencyValues(String[] urg);
-	
-	/** Get the applicable urgency value(s) (if any) */
-	String[] getUrgencyValues();
+	/** Get amount of time (in minutes) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	int getAfterAlertTime();
 }

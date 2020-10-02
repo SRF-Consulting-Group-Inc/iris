@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import us.mn.state.dot.tms.IpawsAlertConfig;
 import us.mn.state.dot.tms.TMSException;
@@ -38,14 +39,18 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 
 	/** Database table name */
 	static private final String TABLE = "iris.ipaws_alert_config";
+
+	/** Lookup the IpawsAlertConfigImpl object with the given name. */
+	public static IpawsAlertConfigImpl lookupConfigImpl(String name) {
+		return lookupIpawsAlertConfig(name);
+	}
 	
 	private IpawsAlertConfigImpl(ResultSet row) throws SQLException {
 		this(row.getString(1),		// name
 			row.getString(2),		// event
 			row.getString(3),		// sign group
 			row.getString(4),		// quick message
-			getStringArray(row, 5),	// response types
-			getStringArray(row, 6)	// urgency values
+			row.getInt(5)			// after alert time
 		);
 	}
 	
@@ -54,13 +59,12 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	}
 
 	public IpawsAlertConfigImpl(String n, String ev, String sg,
-			String qm, String[] rt, String[] urg) {
+			String qm, int mins) {
 		super(n);
 		event = ev;
 		sign_group = sg;
 		quick_message = qm;
-		response_types = rt;
-		urgency_values = urg;
+		after_alert_time = mins;
 	}
 	
 	/** Get the SONAR type name */
@@ -79,8 +83,8 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, IpawsAlertConfigImpl.class);
 		store.query("SELECT name, event, sign_group, quick_message, " +
-				"response_types, urgency_values " +
-				"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
+				"after_alert_time FROM iris." + SONAR_TYPE + ";",
+				new ResultFactory()
 		{
 			@Override
 			public void create(ResultSet row) throws Exception {
@@ -102,8 +106,7 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		map.put("event", event);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
-		map.put("response_types", arrayToString(response_types));
-		map.put("urgency_values", arrayToString(urgency_values));
+		map.put("after_alert_time", after_alert_time);
 		return map;
 	}
 
@@ -176,54 +179,49 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		return quick_message;
 	}
 	
-	/** Response types for which this config applies. If not set, all response
-	 *  types are considered valid.
+	/** Amount of time (in minutes) to display a post-alert message after an
+	 *  alert expires or an AllClear response type is sent via IPAWS. Default
+	 *  is 0.
 	 */
-	private String[] response_types;
+	private int after_alert_time = 0;
 
-	/** Set the applicable response type(s) (if any) */
+	/** Set amount of time (in minutes) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
 	@Override
-	public void setResponseTypes(String[] rt) {
-		response_types = rt;
+	public void setAfterAlertTime(int mins) {
+		after_alert_time = mins;
 	}
 
-	/** Set the applicable response type(s) (if any) */
-	public void doSetResponseTypes(String[] rt) throws TMSException {
-		if (rt != response_types) {
-			store.update(this, "response_types", rt);
-			setResponseTypes(rt);
+	/** Set amount of time (in minutes) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	public void doSetAfterAlertTime(int mins) throws TMSException {
+		if (mins != after_alert_time) {
+			store.update(this, "after_alert_time", mins);
+			setAfterAlertTime(mins);
 		}
 	}
 
-	/** Get the applicable response type(s) (if any) */
-	@Override
-	public String[] getResponseTypes() {
-		return response_types;
-	}
-
-	/** Urgency values for which this config applies. If not set, all urgency
-	 *  values are considered valid.
+	/** Get amount of time (in minutes) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
 	 */
-	private String[] urgency_values;
+	@Override
+	public int getAfterAlertTime() {
+		return after_alert_time;
+	}
 	
-	/** Set the applicable urgency value(s) (if any) */
-	@Override
-	public void setUrgencyValues(String[] urg) {
-		urgency_values = urg;
-	}
-
-	/** Set the applicable urgency value(s) (if any) */
-	public void doSetUrgencyValues(String[] urg) throws TMSException {
-		if (urg != urgency_values) {
-			store.update(this, "urgency_values", urg);
-			setUrgencyValues(urg);
+	/** Check if the current time is past the allowed after alert time given
+	 *  the time provided (which should be an alert end time).
+	 */
+	public boolean isPastAfterAlertTime(Date alertEnd) {
+		Date now = new Date();
+		if (now.after(alertEnd)) {
+			long t = now.getTime() - alertEnd.getTime();
+			int mins = (int) TimeUnit.MINUTES.convert(
+					t, TimeUnit.MILLISECONDS);
+			return mins >= after_alert_time;
 		}
+		return false;
 	}
-
-	/** Get the applicable urgency value(s) (if any) */
-	@Override
-	public String[] getUrgencyValues() {
-		return urgency_values;
-	}
-
 }
