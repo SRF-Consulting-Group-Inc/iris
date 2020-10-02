@@ -322,7 +322,7 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 	}
 
 	/** Update the count labels for each style status */
-	private void updateCounts() {
+	public void updateCounts() {
 		if (startButtonUpdate()) {
 			IWorker<Void> worker = new IWorker<Void>() {
 				@Override
@@ -407,7 +407,7 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 	}
 
 	/** Set the selected style */
-	private void setStyle(ItemStyle i_style) {
+	public void setStyle(ItemStyle i_style) {
 		for (StyleButton btn : buttons) {
 			if (i_style == btn.i_style) {
 				btn.setSelected(true);
