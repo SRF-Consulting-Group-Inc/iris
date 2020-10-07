@@ -235,6 +235,23 @@ public class AlertDmsDispatcher extends IPanel {
 	/** Drop down for message priority */
 	private JComboBox<DmsMsgPriority> msgPriorityCBox;
 	
+	/** i in circle character appended to pre/post alert time field labels
+	 *  since they have tooltips
+	 */
+	private static final char TOOLTIP_ICON_CHAR = '\u24D8';
+	
+	/** Pre-alert time label */
+	private JLabel preAlertTimeLbl;
+	
+	/** Pre-alert time text box */
+	private JTextField preAlertTimeBx;
+	
+	/** Post-alert time label */
+	private JLabel postAlertTimeLbl;
+	
+	/** Post-alert time text box */
+	private JTextField postAlertTimeBx;
+	
 	/** Tab pane containing DMS renderings */
 	private JTabbedPane dmsPane;
 	
@@ -322,6 +339,20 @@ public class AlertDmsDispatcher extends IPanel {
 		msgPriorityCBox.setSelectedIndex(-1);
 		msgPriorityCBox.setEnabled(false);
 		
+		// pre/post alert time boxes
+		preAlertTimeLbl = new JLabel(I18N.get("alert.config.pre_alert_time")
+				+ TOOLTIP_ICON_CHAR);
+		preAlertTimeLbl.setToolTipText(
+				I18N.get("alert.pre_alert_time.tooltip"));
+		preAlertTimeBx = new JTextField(2);
+		postAlertTimeLbl = new JLabel(I18N.get(
+				"alert.config.post_alert_time") + TOOLTIP_ICON_CHAR);
+		postAlertTimeLbl.setToolTipText(
+				I18N.get("alert.post_alert_time.tooltip"));
+		postAlertTimeBx = new JTextField(2);
+		preAlertTimeBx.setEnabled(false);
+		postAlertTimeBx.setEnabled(false);
+		
 		// setup image panels for rendering DMS
 		dmsPane = new JTabbedPane();
 		currentMsgPnl = new DmsImagePanel(DMS_PNL_W, DMS_PNL_H, true);
@@ -354,6 +385,10 @@ public class AlertDmsDispatcher extends IPanel {
 		p2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		p2.add(msgPriorityLbl);
 		p2.add(msgPriorityCBox);
+		p2.add(preAlertTimeLbl);
+		p2.add(preAlertTimeBx);
+		p2.add(postAlertTimeLbl);
+		p2.add(postAlertTimeBx);
 		p.add(p2);
 		setRowCol(row+1, 0);
 		add(p, Stretch.DOUBLE);
@@ -424,6 +459,29 @@ public class AlertDmsDispatcher extends IPanel {
 			}
 			String[] dms = selectedDms.toArray(new String[0]);
 			selectedAlertDepl.setDeployedDms(dms);
+			
+			// try to update MULTI and pre/post alert times
+			String newMulti = multiBox.getText();
+			if (newMulti != null && !newMulti.isEmpty())
+				selectedAlertDepl.setDeployedMulti(multiBox.getText());
+			int preAlertTime = -1;
+			try {
+				preAlertTime = Integer.valueOf(preAlertTimeBx.getText());
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			}
+			if (preAlertTime >= 0)
+				selectedAlertDepl.setPreAlertTime(preAlertTime);
+			int postAlertTime = -1;
+			try {
+				postAlertTime = Integer.valueOf(postAlertTimeBx.getText());
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			}
+			if (postAlertTime >= 0)
+				selectedAlertDepl.setPostAlertTime(postAlertTime);
+			
+			// update approval time/user
 			selectedAlertDepl.setApprovedTime(new Date());
 			selectedAlertDepl.setApprovedBy(session.getUser().getName());
 			
@@ -443,8 +501,12 @@ public class AlertDmsDispatcher extends IPanel {
 	/** Cancel the selected alert (removing it from signs) */
 	public void cancelAlert() {
 		// set deployed to false to trigger the cancel
-		if (selectedAlertDepl != null)
+		if (selectedAlertDepl != null) {
 			selectedAlertDepl.setDeployed(false);
+			// check if there are any notifications that haven't been addressed
+			// and address them
+			PushNotificationHelper.addressAllRef(selectedAlertDepl, session);
+		}
 		manager.updateStyleCounts();
 	}
 	
@@ -610,6 +672,12 @@ public class AlertDmsDispatcher extends IPanel {
 				msgPriorityCBox.setSelectedItem(mp);
 			}
 			
+			// set the pre/post alert times
+			preAlertTimeBx.setText(String.valueOf(
+					selectedAlertDepl.getPreAlertTime()));
+			postAlertTimeBx.setText(String.valueOf(
+					selectedAlertDepl.getPostAlertTime()));
+			
 			// if this alert is in the past or editing is off, disable the
 			// editing features (we still show them for information)
 			allowEdit = manager.getEditing() && !manager.checkStyle(
@@ -619,11 +687,15 @@ public class AlertDmsDispatcher extends IPanel {
 			showAllDmsChk.setText(I18N.get("alert.dms.show_all"));
 			multiBox.setText("");
 			msgPriorityCBox.setSelectedIndex(-1);
+			preAlertTimeBx.setText("");
+			postAlertTimeBx.setText("");
 		}
 		showAllDmsChk.setEnabled(allowEdit);
 		multiBox.setEnabled(allowEdit);
 		previewBtn.setEnabled(allowEdit);
 		msgPriorityCBox.setEnabled(allowEdit);
+		preAlertTimeBx.setEnabled(allowEdit);
+		postAlertTimeBx.setEnabled(allowEdit);
 	}
 	
 	/** Set the selected DMS */

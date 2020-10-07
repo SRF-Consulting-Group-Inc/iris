@@ -47,13 +47,23 @@ public interface IpawsAlertConfig extends SonarObject {
 	/** Set the quick message (template) */
 	String getQuickMessage();
 	
-	/** Set amount of time (in minutes) to display a post-alert message after
-	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
 	 */
-	void setAfterAlertTime(int mins);
+	void setPreAlertTime(int hours);
+
+	/** Get amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
+	 */
+	int getPreAlertTime();
 	
-	/** Get amount of time (in minutes) to display a post-alert message after
+	/** Set amount of time (in hours) to display a post-alert message after
 	 *  an alert expires or an AllClear response type is sent via IPAWS.
 	 */
-	int getAfterAlertTime();
+	void setPostAlertTime(int hours);
+	
+	/** Get amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	int getPostAlertTime();
 }

@@ -27,6 +27,7 @@ import org.json.JSONObject;
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertDeployer;
+import us.mn.state.dot.tms.IpawsAlertDeployerHelper;
 import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxySelectionListener;
@@ -275,17 +276,20 @@ public class AlertDispatcher extends IPanel {
 		String status = "";
 		if (selectedAlertDepl.getDeployed() == null)
 			status = I18N.get("alert.status.pending");
-		else if (selectedAlertDepl.getDeployed().equals(Boolean.TRUE))
-			status = I18N.get("alert.status.deployed");
-		else if (selectedAlertDepl.getDeployed().equals(Boolean.FALSE))
+		else if (selectedAlertDepl.getDeployed().equals(Boolean.TRUE)) {
+			if (selectedAlertDepl.getActive())
+				// if deployed and active, say "deployed"
+				status = I18N.get("alert.status.deployed");
+			else
+				// if deployed and not active, say "scheduled"
+				status = I18N.get("alert.status.scheduled");
+		} else if (selectedAlertDepl.getDeployed().equals(Boolean.FALSE))
 			status = I18N.get("alert.status.not_deployed");
 		statusLbl.setText(status);
 		
 		onsetLbl.setText(selectedAlertDepl.getAlertStart().toString());
 		expiresLbl.setText(selectedAlertDepl.getAlertEnd().toString());
 		
-		// TODO put this in the helper class or something (we do something
-		// similar in IpawsProcJob.getGeogPoly)
 		// get a JSON object from the area string (which is in JSON syntax)
 		String area = selectedAlert.getArea();
 		JSONObject jo = new JSONObject(area);
@@ -300,7 +304,8 @@ public class AlertDispatcher extends IPanel {
 		
 		// set the button text and disable buttons if alert is in past
 		setEditDeployBtnText();
-		boolean npast = !manager.checkStyle(ItemStyle.PAST, selectedAlertDepl);
+		boolean npast = !IpawsAlertDeployerHelper.
+				isPastPostAlertTime(selectedAlertDepl);
 		editDeployBtn.setEnabled(npast);
 		cancelBtn.setEnabled(npast);
 	}

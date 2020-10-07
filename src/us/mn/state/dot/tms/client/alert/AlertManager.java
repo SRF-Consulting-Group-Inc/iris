@@ -128,6 +128,22 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 		return showAllDms;
 	}
 	
+	/** Proxy listener for SONAR updates */
+	private final SwingProxyAdapter<IpawsAlertDeployer> listener = 
+			new SwingProxyAdapter<IpawsAlertDeployer>() {
+		@Override
+		protected void proxyAddedSwing(IpawsAlertDeployer iad) {
+			if (tab != null)
+				tab.updateStyleCounts();
+		}
+		
+		@Override
+		protected void proxyChangedSwing(IpawsAlertDeployer iad, String attr) {
+			if (tab != null)
+				tab.updateStyleCounts();
+		}
+	};
+	
 	/** Create a proxy descriptor. */
 	static private ProxyDescriptor<IpawsAlertDeployer> descriptor(Session s) {
 		return new ProxyDescriptor<IpawsAlertDeployer>(
@@ -136,10 +152,10 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	
 	public AlertManager(Session s, GeoLocManager lm) {
 		super(s, lm, descriptor(s), 10);
-		// TODO may change things about this
 		
 		// add the listener to the cache
 		adcache = s.getSonarState().getIpawsDeployerCache();
+		adcache.addProxyListener(listener);
 		acache = s.getSonarState().getIpawsAlertCache();
 	}
 	
@@ -219,28 +235,28 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	@Override
 	public boolean checkStyle(ItemStyle is, IpawsAlertDeployer proxy) {
 		Integer t = checkAlertTimes(proxy);
+		boolean past = IpawsAlertDeployerHelper.isPastPostAlertTime(proxy);
+//		if (proxy.getName().equals("ipaws_dplr_4"))
+//			System.out.println("past = " + past);
 		if (t == null)
 			// problem with the dates
 			return false;
 		switch (is) {
 		case PENDING:
-			// alert is pending if we're in manual mode or auto mode pre-
-			// timeout and the alert has not been approved yet
-			boolean autoMode = SystemAttrEnum.
-					IPAWS_DEPLOY_AUTO_MODE.getBoolean();
-			int timeout = SystemAttrEnum.
-					IPAWS_DEPLOY_AUTO_TIMEOUT_SECS.getInt();
-			long timeSinceGen = IpawsAlertDeployerHelper.
-					getTimeSinceGenerated(proxy);
-			return t <= 0 && proxy.getDeployed() == null &&
-					(!autoMode || (timeSinceGen <= timeout));
+			return proxy.getDeployed() == null && !past;
+		case SCHEDULED:
+			// scheduled alerts are deployed (i.e. approved) but not active
+			return Boolean.TRUE.equals(proxy.getDeployed())
+				&& !proxy.getActive() && !past;
 		case ACTIVE:
-			return t <= 0 && !checkStyle(ItemStyle.PENDING, proxy)
-				&& !checkStyle(ItemStyle.INACTIVE, proxy);
+			return Boolean.TRUE.equals(proxy.getDeployed())
+				&& proxy.getActive() && !past;
 		case INACTIVE:
-			return t <= 0 && Boolean.FALSE.equals(proxy.getDeployed());
+			return Boolean.FALSE.equals(proxy.getDeployed())
+				&& !proxy.getActive() && !past;
 		case PAST:
-			return t > 0;
+			return Boolean.FALSE.equals(proxy.getDeployed())
+				&& !proxy.getActive() && past;
 		case ALL:
 			return true;
 		default:
@@ -249,7 +265,7 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	}
 	
 	/** Check if a style is visible. All alert styles are visible (only
-	 *  selected alerts are drawn). TODO may need to change this.
+	 *  selected alerts are drawn).
 	 */
 	@Override
 	protected boolean isStyleVisible(IpawsAlertDeployer proxy) {
@@ -277,16 +293,12 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 					&& now.before(iad.getAlertEnd()))
 				return 0;
 			else if (now.after(iad.getAlertEnd())) {
-				// if after end time, check config
-				IpawsAlertConfig iac = IpawsAlertConfigHelper.
-						lookup(iad.getConfig());
-				if (iac != null) {
-					long t = now.getTime() - iad.getAlertEnd().getTime();
-					int mins = (int) TimeUnit.MINUTES.convert(
-							t, TimeUnit.MILLISECONDS);
-					if (mins < iac.getAfterAlertTime())
-						return 0;
-				}
+				// if after end time, check post alert time
+				long t = now.getTime() - iad.getAlertEnd().getTime();
+				int mins = (int) TimeUnit.HOURS.convert(
+						t, TimeUnit.MILLISECONDS);
+				if (mins < iad.getPostAlertTime())
+					return 0;
 				return 1;
 			}
 			return 1;
@@ -364,16 +376,3 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 		tab.getDmsDispatcher().selectDmsInTable(d);
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

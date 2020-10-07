@@ -88,6 +88,30 @@ public interface IpawsAlertDeployer extends SonarObject {
 	
 	/** Get the quick message (template) used for this deployment */
 	String getQuickMessage();
+
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active. First set from the config, then can be
+	 *  changed for each alert.
+	 */
+	void setPreAlertTime(int hours);
+
+	/** Get amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active. First set from the config, then can be
+	 *  changed for each alert.
+	 */
+	int getPreAlertTime();
+	
+	/** Set amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS. First
+	 *  set from the config, then can be changed for each alert.
+	 */
+	void setPostAlertTime(int hours);
+	
+	/** Get amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS. First
+	 *  set from the config, then can be changed for each alert.
+	 */
+	int getPostAlertTime();
 	
 	/** Set the list of DMS (represented as a string array) automatically 
 	 *  selected for deploying alert messages.
@@ -170,6 +194,20 @@ public interface IpawsAlertDeployer extends SonarObject {
 	
 	/** Get whether this alert deployer was ever deployed or not. */
 	boolean getWasDeployed();
+	
+	/** Set whether this alert deployment is currently active (i.e. visible on
+	 *  DMS). Alerts can be deployed but not active if they have been approved
+	 *  for deployment but the pre-alert time value indicates that they should
+	 *  not be deployed yet.
+	 */
+	void setActive(boolean a);
+
+	/** Get whether this alert deployment is currently active (i.e. visible on
+	 *  DMS). Alerts can be deployed but not active if they have been approved
+	 *  for deployment but the pre-alert time value indicates that they should
+	 *  not be deployed yet.
+	 */
+	boolean getActive();
 	
 	/** Set the alert deployer that this replaces (if any). Note that updates
 	 *  to alerts trigger creation of a new deployer (not an update).

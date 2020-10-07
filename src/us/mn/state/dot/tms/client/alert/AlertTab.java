@@ -72,7 +72,7 @@ public class AlertTab extends MapTab<IpawsAlertDeployer> {
 	
 	protected AlertTab(Session session, AlertManager man) {
 		super(man);
-		summary = man.createStyleSummary(false, 1);
+		summary = man.createStyleSummary(false, 2);
 		dispatcher = new AlertDispatcher(session, man);
 		addComponentListener(resizeHandler);
 	}

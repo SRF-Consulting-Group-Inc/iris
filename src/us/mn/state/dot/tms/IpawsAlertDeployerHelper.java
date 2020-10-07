@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,9 +113,10 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 		return getDeployerList(alertId, configName, false);
 	}
 	
-	/** Get a list of all active deployers associated with the alert ID and
+	/** Get a list of all "deployed" deployers associated with the alert ID and
 	 *  config provided. If configName is null, all matching active alerts are
-	 *  returned. Objects are sorted from newest to oldest.
+	 *  returned. Objects are sorted from newest to oldest unless ascending
+	 *  is false.
 	 */
 	static public ArrayList<IpawsAlertDeployer>
 			getDeployerList(String alertId, String configName,
@@ -129,6 +131,36 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 			if (iad.getAlertId().equals(alertId) && (configName == null
 					|| configName.equals(iad.getConfig()))
 					&& Boolean.TRUE.equals(iad.getDeployed()))
+				deployers.add(iad);
+		}
+		
+		// sort the list using a custom comparator
+		deployers.sort(new DeployerGenTimeComparator(ascending));
+		return deployers;
+	}
+	
+	/** Get a list of deployers associated with the given deployer (i.e. with
+	 *  the same alert ID and alert config replacing the given deployer). If
+	 *  allowPending is true, this includes any pending alerts (i.e. with
+	 *  deployed = null), otherwise it only includes active alerts (deployed
+	 *  = true). Objects are sorted from newest to oldest unless ascending is
+	 *  false.
+	 */
+	static public ArrayList<IpawsAlertDeployer> getDeployerList(
+			IpawsAlertDeployer iadOld, boolean allowPending,
+			boolean ascending) {
+		ArrayList<IpawsAlertDeployer> deployers =
+				new ArrayList<IpawsAlertDeployer>();
+		
+		// find all deployers associated with this alert
+		Iterator<IpawsAlertDeployer> it = iterator();
+		while (it.hasNext()) {
+			IpawsAlertDeployer iad = it.next();
+			if (iad.getAlertId().equals(iadOld.getAlertId())
+					&& iad.getConfig().equals(iadOld.getConfig())
+					&& iadOld.getName().equals(iad.getReplaces())
+					&& (Boolean.TRUE.equals(iad.getDeployed())
+						|| (iad.getDeployed() == null && allowPending)))
 				deployers.add(iad);
 		}
 		
@@ -184,4 +216,19 @@ public class IpawsAlertDeployerHelper extends BaseHelper {
 				ZoneId.systemDefault()).toLocalDateTime();
 		return Duration.between(at, LocalDateTime.now()).getSeconds();
 	}
+	
+	/** Check if the current time is past the allowed post alert time given
+	 *  the deployer's alert end time.
+	 */
+	static public boolean isPastPostAlertTime(IpawsAlertDeployer iad) {
+		Date now = new Date();
+		if (now.after(iad.getAlertEnd())) {
+			long t = now.getTime() - iad.getAlertEnd().getTime();
+			int units = (int) TimeUnit.HOURS.convert(
+					t, TimeUnit.MILLISECONDS);
+			return units >= iad.getPostAlertTime();
+		}
+		return false;
+	}
+	
 }

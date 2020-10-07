@@ -212,4 +212,10 @@ public interface IpawsAlert extends SonarObject {
 	
 	/** Return if this alert is purgeable (irrelevant to us) */
 	Boolean getPurgeable();
+	
+	/** Set the last processing time of the alert */
+	void setLastProcessed(Date pt);
+	
+	/** Get the last processing time of the alert */
+	Date getLastProcessed();
 }

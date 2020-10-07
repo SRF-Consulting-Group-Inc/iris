@@ -97,10 +97,18 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 	static private final Color ACTIVE_ALERT_FILL = new Color(255,0,0,40);
 	
 	/** Pending alert area outline color */
-	static private final Color PENDING_ALERT_COLOR = Color.ORANGE;
+	static private final Color PENDING_ALERT_COLOR = Color.MAGENTA;
 	
 	/** Pending alert area fill color */
-	static private final Color PENDING_ALERT_FILL = new Color(255, 128, 0, 40);
+	static private final Color PENDING_ALERT_FILL =
+			new Color(205, 51, 139, 40);
+	
+	/** Scheduled alert area outline color */
+	static private final Color SCHEDULED_ALERT_COLOR = Color.ORANGE;
+	
+	/** Scheduled alert area fill color */
+	static private final Color SCHEDULED_ALERT_FILL =
+			new Color(255, 128, 0, 40);
 	
 	/** Past alert area outline color */
 	static private final Color PAST_ALERT_COLOR = Color.DARK_GRAY;
@@ -109,7 +117,6 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 	static private final Color PAST_ALERT_FILL = new Color(105,105,105,40);
 	
 	public AlertTheme(AlertManager m, Session s) {
-		// TODO for now we're stealing the incident marker
 		super(m, new AlertMarker());
 		
 		// get handles to things we will use when drawing DMS
@@ -123,6 +130,7 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 		glManager = session.getGeoLocManager();
 		
 		addStyle(ItemStyle.PENDING, PENDING_ALERT_COLOR);
+		addStyle(ItemStyle.SCHEDULED, SCHEDULED_ALERT_COLOR);
 		addStyle(ItemStyle.ACTIVE, ACTIVE_ALERT_COLOR);
 		addStyle(ItemStyle.INACTIVE, ProxyTheme.COLOR_INACTIVE);
 		addStyle(ItemStyle.PAST, PAST_ALERT_COLOR);
@@ -213,6 +221,11 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 			outline = PENDING_ALERT_COLOR;
 			fill = PENDING_ALERT_FILL;
 			alertState = ItemStyle.PENDING;
+		} else if (manager.checkStyle(ItemStyle.SCHEDULED, iad)) {
+			// pending alerts are orange
+			outline = SCHEDULED_ALERT_COLOR;
+			fill = SCHEDULED_ALERT_FILL;
+			alertState = ItemStyle.SCHEDULED;
 		} else if (manager.checkStyle(ItemStyle.PAST, iad) ||
 				manager.checkStyle(ItemStyle.INACTIVE, iad)) {
 			// past and inactive alerts are gray
@@ -241,8 +254,9 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 		float scale = (float) dManager.getLayerState().getScale();
 		dmsTheme.setScale(scale);
 		dmsSymbol = (VectorSymbol) dmsTheme.getSymbol();
-		if (alertState == ItemStyle.PENDING ||
-				(alertState == ItemStyle.ACTIVE && aManager.getEditing())) {
+		if (alertState == ItemStyle.PENDING || (aManager.getEditing() &&
+				(alertState == ItemStyle.ACTIVE
+				|| alertState == ItemStyle.SCHEDULED))) {
 			// draw all DMS in group (if requested), then optional DMS,
 			// then auto DMS (in that order so the styles look right)
 			if (aManager.getShowAllDms() && iad.getSignGroup() != null) {
@@ -258,7 +272,8 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 			
 			
 			
-		} else if (alertState == ItemStyle.ACTIVE) {
+		} else if (alertState == ItemStyle.ACTIVE
+				|| alertState == ItemStyle.SCHEDULED) {
 			// for active alerts not in edit mode, draw only deployed DMS
 			for (String dmsName: iad.getDeployedDms())
 				drawDms(g, dmsName, dmsDeployedStyle, t);

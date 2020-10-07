@@ -56,6 +56,7 @@ import us.mn.state.dot.tms.IpawsAlert;
 import us.mn.state.dot.tms.IpawsAlertHelper;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.server.IpawsAlertImpl;
+import us.mn.state.dot.tms.server.IpawsProcJob;
 import us.mn.state.dot.tms.utils.Json;
 
 /**
@@ -140,8 +141,7 @@ public class IpawsReader {
 	            }
          } catch(ParserConfigurationException | SAXException | ParseException
         		| TMSException | SonarException e) {
-        	System.out.println("Hit exception: " + e.getClass().getName());
-//        	e.printStackTrace();
+        	e.printStackTrace();
         	
         	// save the XML contents to a file
         	DateTimeFormatter dtf = DateTimeFormatter.ofPattern(
@@ -152,25 +152,16 @@ public class IpawsReader {
         	OutputStream xmlos = new FileOutputStream(fn);
         	baos.writeTo(xmlos);
         	
-        	// and the exception too (ipaws_alert_<date>_exc.log)
-        	String excfn = String.format(
-        			"/var/log/iris/IpawsAlert_err_%s_exc.log", dts);
-        	FileWriter fw = new FileWriter(excfn);
-        	PrintWriter pw = new PrintWriter(fw);
-        	e.printStackTrace(pw);
-        	pw.close();
-        	fw.close();
-        	System.out.println(String.format("See %s for details", excfn));
+        	// send an email alert
+        	IpawsProcJob.sendEmailAlert("Error encountered in IPAWS alert " +
+        		"parsing system. Check the server logs for details. " + 
+        		"The alert that produced the error was saved on the server " +
+        		"in the file:  " + fn);
         }
     }
     
     private static void getIpawsAlert(Node node)
     		throws ParseException, SonarException, TMSException {
-    	
-    	// TODO validate the X.509 certificate we receive to help avoid
-    	// potential attacks
-    	
-//    	System.out.println("In IpawsReader.getIpawsAlert");
         if (node.getNodeType() == Node.ELEMENT_NODE) {
             Element element = (Element) node;
             
@@ -182,11 +173,11 @@ public class IpawsReader {
             
             // if it doesn't, create a new one
             if (ia == null) {
-            	System.out.println("Creating new alert with name: " + name);
+            	IpawsProcJob.logError("Creating new alert with name: " + name);
             	ia = new IpawsAlertImpl(name);
             	ia.notifyCreate();
             } else
-            	System.out.println("Updating alert with name: " + name);
+            	IpawsProcJob.logError("Updating alert with name: " + name);
             
             // either way set all the values
             ia.doSetIdentifier(getTagValue("identifier", element));
@@ -307,8 +298,6 @@ public class IpawsReader {
 	        for (int i = 0; i < areaNodeList.getLength(); i++) {
 	            Element areaElement = (Element) areaNodeList.item(i);
 	            
-	            // TODO verify this works as expected when there are multiple
-	            // polygons (it might just merge them)
 	            String [] element_list = {"areaDesc","polygon",
 	            		"circle","geocode","altitude","ceiling"};
 	            for (String ce: element_list) {

@@ -113,16 +113,32 @@ public class AlertConfigModel extends ProxyTableModel<IpawsAlertConfig> {
 			}
 		});
 		cols.add(new ProxyColumn<IpawsAlertConfig>(
-				"alert.config.after_alert_time", 100) {
+				"alert.config.pre_alert_time", 100) {
 			public Object getValueAt(IpawsAlertConfig iac) {
-				return iac.getAfterAlertTime();
+				return iac.getPreAlertTime();
 			}
 			public boolean isEditable(IpawsAlertConfig iac) {
 				return canWrite(iac);
 			}
 			public void setValueAt(IpawsAlertConfig iac, Object value) {
 				try {
-					iac.setAfterAlertTime(Integer.valueOf(value.toString()));
+					iac.setPreAlertTime(Integer.valueOf(value.toString()));
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		cols.add(new ProxyColumn<IpawsAlertConfig>(
+				"alert.config.post_alert_time", 100) {
+			public Object getValueAt(IpawsAlertConfig iac) {
+				return iac.getPostAlertTime();
+			}
+			public boolean isEditable(IpawsAlertConfig iac) {
+				return canWrite(iac);
+			}
+			public void setValueAt(IpawsAlertConfig iac, Object value) {
+				try {
+					iac.setPostAlertTime(Integer.valueOf(value.toString()));
 				} catch (NumberFormatException e) {
 					e.printStackTrace();
 				}

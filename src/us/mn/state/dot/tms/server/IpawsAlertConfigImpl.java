@@ -50,7 +50,8 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 			row.getString(2),		// event
 			row.getString(3),		// sign group
 			row.getString(4),		// quick message
-			row.getInt(5)			// after alert time
+			row.getInt(5),			// pre alert time
+			row.getInt(6)			// post alert time
 		);
 	}
 	
@@ -59,12 +60,13 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	}
 
 	public IpawsAlertConfigImpl(String n, String ev, String sg,
-			String qm, int mins) {
+			String qm, int preh, int posth) {
 		super(n);
 		event = ev;
 		sign_group = sg;
 		quick_message = qm;
-		after_alert_time = mins;
+		pre_alert_time = preh;
+		post_alert_time = posth;
 	}
 	
 	/** Get the SONAR type name */
@@ -83,8 +85,8 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, IpawsAlertConfigImpl.class);
 		store.query("SELECT name, event, sign_group, quick_message, " +
-				"after_alert_time FROM iris." + SONAR_TYPE + ";",
-				new ResultFactory()
+				"pre_alert_time, post_alert_time FROM iris." +
+				SONAR_TYPE + ";", new ResultFactory()
 		{
 			@Override
 			public void create(ResultSet row) throws Exception {
@@ -106,7 +108,8 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		map.put("event", event);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
-		map.put("after_alert_time", after_alert_time);
+		map.put("pre_alert_time", post_alert_time);
+		map.put("post_alert_time", post_alert_time);
 		return map;
 	}
 
@@ -179,49 +182,66 @@ public class IpawsAlertConfigImpl extends BaseObjectImpl
 		return quick_message;
 	}
 	
-	/** Amount of time (in minutes) to display a post-alert message after an
+	/** Amount of time (in hours) to display a pre-alert message before an
+	 *  alert becomes active.
+	 */
+	private int pre_alert_time = 6;
+	
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
+	 */
+	@Override
+	public void setPreAlertTime(int hours) {
+		pre_alert_time = hours;
+	}
+	
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
+	 */
+	public void doSetPreAlertTime(int hours) throws TMSException {
+		if (hours != pre_alert_time) {
+			store.update(this, "pre_alert_time", hours);
+			setPreAlertTime(hours);
+		}
+	}
+	
+	/** Get amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
+	 */
+	@Override
+	public int getPreAlertTime() {
+		return pre_alert_time;
+	}
+	
+	/** Amount of time (in hours) to display a post-alert message after an
 	 *  alert expires or an AllClear response type is sent via IPAWS. Default
 	 *  is 0.
 	 */
-	private int after_alert_time = 0;
+	private int post_alert_time = 0;
 
-	/** Set amount of time (in minutes) to display a post-alert message after
+	/** Set amount of time (in hours) to display a post-alert message after
 	 *  an alert expires or an AllClear response type is sent via IPAWS.
 	 */
 	@Override
-	public void setAfterAlertTime(int mins) {
-		after_alert_time = mins;
+	public void setPostAlertTime(int hours) {
+		post_alert_time = hours;
 	}
 
-	/** Set amount of time (in minutes) to display a post-alert message after
+	/** Set amount of time (in hours) to display a post-alert message after
 	 *  an alert expires or an AllClear response type is sent via IPAWS.
 	 */
-	public void doSetAfterAlertTime(int mins) throws TMSException {
-		if (mins != after_alert_time) {
-			store.update(this, "after_alert_time", mins);
-			setAfterAlertTime(mins);
+	public void doSetPostAlertTime(int hours) throws TMSException {
+		if (hours != post_alert_time) {
+			store.update(this, "post_alert_time", hours);
+			setPostAlertTime(hours);
 		}
 	}
 
-	/** Get amount of time (in minutes) to display a post-alert message after
+	/** Get amount of time (in hours) to display a post-alert message after
 	 *  an alert expires or an AllClear response type is sent via IPAWS.
 	 */
 	@Override
-	public int getAfterAlertTime() {
-		return after_alert_time;
-	}
-	
-	/** Check if the current time is past the allowed after alert time given
-	 *  the time provided (which should be an alert end time).
-	 */
-	public boolean isPastAfterAlertTime(Date alertEnd) {
-		Date now = new Date();
-		if (now.after(alertEnd)) {
-			long t = now.getTime() - alertEnd.getTime();
-			int mins = (int) TimeUnit.MINUTES.convert(
-					t, TimeUnit.MILLISECONDS);
-			return mins >= after_alert_time;
-		}
-		return false;
+	public int getPostAlertTime() {
+		return post_alert_time;
 	}
 }

@@ -59,18 +59,12 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		return UNC.createUniqueName();
 	}
 	
-//	/** Lookup an IpawsAlertDeployerImpl given and IpawsAlert identifier/name.
-//	 *  Returns the most recent deployer for the alert.
-//	 */
-//	static public IpawsAlertDeployerImpl lookupFromAlert(String name) {
-//		// ask the helper to find the IpawsAlertDeployer object for this alert
-//		IpawsAlertDeployer ian =
-//				IpawsAlertDeployerHelper.lookupDeployerFromAlert(name);
-//		if (ian != null)
-//			// lookup the IpawsAlertDeployerImpl object using the name
-//			return lookupIpawsAlertDeployer(ian.getName());
-//		return null;
-//	}
+	/** Time units to use for calculating pre/post alert deployment times.
+	 *  This is provided for convenience when testing, where changing to
+	 *  TimeUnit.MINUTES will generally allow for easier testing than the
+	 *  value of TimeUnit.HOURS that is used in production.
+	 */
+	static private TimeUnit prePostTimeUnits = TimeUnit.HOURS;
 	
 	/** Lookup an IpawsAlertDeployerImpl given and IpawsAlert identifier/name
 	 *  and an IpawsAlertConfig name. Returns the most recent active deployer
@@ -90,11 +84,12 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Load all the IPAWS alert deployers */
 	static public void loadAll() throws TMSException {
 		namespace.registerType(SONAR_TYPE, IpawsAlertDeployerImpl.class);
-		store.query("SELECT name, gen_time, approved_time, alert_id, geo_loc,"+
-			" alert_start, alert_end, config, sign_group, quick_message, " +
-			"auto_dms, optional_dms, deployed_dms, area_threshold, " + 
-			"auto_multi, deployed_multi, msg_priority, approved_by, " + 
-			"deployed, was_deployed, replaces FROM event." + SONAR_TYPE + ";",
+		store.query("SELECT name, gen_time, approved_time, alert_id, " + 
+			"geo_loc, alert_start, alert_end, config, sign_group, " +
+			"quick_message, pre_alert_time, post_alert_time, auto_dms, " + 
+			"optional_dms, deployed_dms, area_threshold, auto_multi, " +
+			"deployed_multi, msg_priority, approved_by, deployed, " +
+			"was_deployed, active, replaces FROM event." + SONAR_TYPE + ";",
 			new ResultFactory()
 		{
 			@Override
@@ -102,7 +97,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				try {
 					namespace.addObject(new IpawsAlertDeployerImpl(row));
 				} catch (Exception e) {
-					System.out.println("Error adding: " + row.getString(1));
+					IpawsProcJob.logError("Error adding: " + row.getString(1));
 					e.printStackTrace();
 				}
 			}
@@ -123,6 +118,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		map.put("config", config);
 		map.put("sign_group", sign_group);
 		map.put("quick_message", quick_message);
+		map.put("pre_alert_time", pre_alert_time);
+		map.put("post_alert_time", post_alert_time);
 		map.put("auto_dms", arrayToString(auto_dms));
 		map.put("optional_dms", arrayToString(optional_dms));
 		map.put("deployed_dms", arrayToString(deployed_dms));
@@ -132,6 +129,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		map.put("approved_by", approved_by);
 		map.put("deployed", deployed);
 		map.put("was_deployed", was_deployed);
+		map.put("active", active);
 		map.put("replaces", replaces);
 		return map;
 	}
@@ -159,17 +157,20 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 			row.getString(8),			// config
 			row.getString(9),			// sign group
 			row.getString(10),			// quick message
-			getStringArray(row, 11),	// auto DMS list
-			getStringArray(row, 12),	// optional DMS list
-			getStringArray(row, 13),	// deployed DMS list
-			row.getDouble(14),			// area threshold
-			row.getString(15),			// auto MULTI
-			row.getString(16),			// deployed MULTI
-			row.getInt(17),				// message priority
-			row.getString(18),			// approving user
-			row.getBoolean(19),			// deployed
-			row.getBoolean(20),			// active
-			row.getString(21)			// replaces
+			row.getInt(11),				// pre-alert time
+			row.getInt(12),				// post-alert time
+			getStringArray(row, 13),	// auto DMS list
+			getStringArray(row, 14),	// optional DMS list
+			getStringArray(row, 15),	// deployed DMS list
+			row.getDouble(16),			// area threshold
+			row.getString(17),			// auto MULTI
+			row.getString(18),			// deployed MULTI
+			row.getInt(19),				// message priority
+			row.getString(20),			// approving user
+			row.getBoolean(21),			// deployed
+			row.getBoolean(22),			// was_deployed
+			row.getBoolean(23),			// active
+			row.getString(24)			// replaces
 		 );
 	}
 	
@@ -198,7 +199,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	
 	public IpawsAlertDeployerImpl(String n, String aid, GeoLoc gl,
 			Date as, Date ae, String c, String sg, String[] adms,
-			String[] ddms, String qm, String m, int mp, String r) {
+			String[] ddms, String qm, String m, int mp, int preh,
+			int posth, String r) {
 		super(n);
 		alert_id = aid;
 		geo_loc = gl;
@@ -211,14 +213,17 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		quick_message = qm;
 		auto_multi = m;
 		msg_priority = mp;
+		pre_alert_time = preh;
+		post_alert_time = posth;
 		replaces = r;
 		gen_time = new Date();
 	}
 	
 	public IpawsAlertDeployerImpl(String n, Date gt, Date at, String aid,
 			String gl, Date as, Date ae, String c, String sg, String qm,
-			String[] adms, String[] odms, String[] ddms, Double t, String am,
-			String dm, int mp, String u, Boolean d, Boolean wd, String r) {
+			int preh, int posth, String[] adms, String[] odms, String[] ddms,
+			Double t, String am, String dm, int mp, String u, Boolean d,
+			Boolean wd, boolean a, String r) {
 		super(n);
 		gen_time = gt;
 		approved_time = at;
@@ -229,6 +234,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		config = c;
 		sign_group = sg;
 		quick_message = qm;
+		pre_alert_time = preh;
+		post_alert_time = posth;
 		auto_dms = adms;
 		optional_dms = odms;
 		deployed_dms = ddms;
@@ -238,6 +245,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		approved_by = u;
 		deployed = d;
 		was_deployed = wd;
+		active = a;
 		replaces = r;
 	}
 
@@ -461,7 +469,128 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	public String getQuickMessage() {
 		return quick_message;
 	}
+	
+	/** Amount of time (in hours) to display a pre-alert message before an
+	 *  alert becomes active. First set from the config, then can be
+	 *  changed for each alert.
+	 */
+	private int pre_alert_time;
+	
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active. First set from the config, then can be
+	 *  changed for each alert.
+	 */
+	@Override
+	public void setPreAlertTime(int hours) {
+		pre_alert_time = hours;
+	}
+	
+	/** Set amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active. First set from the config, then can be
+	 *  changed for each alert.
+	 */
+	public void doSetPreAlertTime(int hours) throws TMSException {
+		if (hours != pre_alert_time) {
+			store.update(this, "pre_alert_time", hours);
+			setPreAlertTime(hours);
+		}
+	}
+	
+	/** Get amount of time (in hours) to display a pre-alert message before
+	 *  the alert becomes active.
+	 */
+	@Override
+	public int getPreAlertTime() {
+		return pre_alert_time;
+	}
 
+	/** Check if the current time is past the allowed pre alert time given
+	 *  the deployer's alert start time. If this returns true, it generally
+	 *  means the deployment should be started (assuming it is inactive).
+	 */
+	public boolean isPastPreAlertTime() {
+		return isPastPreAlertTime(alert_start);
+	}
+
+	/** Check if the current time is past the allowed pre alert time given
+	 *  the time provided (which should be an alert start time). Using this is
+	 *  advised when processing updates to handle changes to an alert's
+	 *  onset time. If this returns true, it generally means the deployment
+	 *  should be started (assuming it is active).
+	 */
+	public boolean isPastPreAlertTime(Date alertStart) {
+		Date now = new Date();
+		
+		if (now.before(alertStart)) {
+			long t = alertStart.getTime() - now.getTime();
+			int units = (int) prePostTimeUnits.convert(
+					t, TimeUnit.MILLISECONDS);
+			return units < pre_alert_time;
+		}
+		// if after the alert start, we must be past the pre-alert time
+		return true;
+	}
+	
+	/** Check if the current time is past the pre-alert time given t  */
+	
+	/** Amount of time (in hours) to display a post-alert message after an
+	 *  alert expires or an AllClear response type is sent via IPAWS. First
+	 *  set from the config, then can be changed for each alert.
+	 */
+	private int post_alert_time;
+
+	/** Set amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS. First
+	 *  set from the config, then can be changed for each alert.
+	 */
+	@Override
+	public void setPostAlertTime(int hours) {
+		post_alert_time = hours;
+	}
+
+	/** Set amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	public void doSetPostAlertTime(int hours) throws TMSException {
+		if (hours != post_alert_time) {
+			store.update(this, "post_alert_time", hours);
+			setPostAlertTime(hours);
+		}
+	}
+
+	/** Get amount of time (in hours) to display a post-alert message after
+	 *  an alert expires or an AllClear response type is sent via IPAWS.
+	 */
+	@Override
+	public int getPostAlertTime() {
+		return post_alert_time;
+	}
+
+	/** Check if the current time is past the allowed post alert time given
+	 *  the deployer's alert end time. If this returns true, it generally
+	 *  means the deployment should be canceled.
+	 */
+	public boolean isPastPostAlertTime() {
+		return isPastPostAlertTime(alert_end);
+	}
+
+	/** Check if the current time is past the allowed post alert time given
+	 *  the time provided (which should be an alert end time). Using this is
+	 *  advised when processing updates to handle changes to an alert's
+	 *  expiration time. If this returns true, it generally means the
+	 *  deployment should be canceled.
+	 */
+	public boolean isPastPostAlertTime(Date alertEnd) {
+		Date now = new Date();
+		if (now.after(alertEnd)) {
+			long t = now.getTime() - alertEnd.getTime();
+			int units = (int) prePostTimeUnits.convert(
+					t, TimeUnit.MILLISECONDS);
+			return units >= post_alert_time;
+		}
+		return false;
+	}
+	
 	/** List of DMS automatically selected for this alert. */
 	private String[] auto_dms;
 	
@@ -738,13 +867,13 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public void doSetDeployed(Boolean d) throws TMSException {
 		if (d != null) {	// don't allow setting back to null
-			System.out.println("Setting deployed on deployer " +
+			IpawsProcJob.logError("Setting deployed on deployer " +
 						name + " to " + d);
-			if (d == true)
+			if (Boolean.TRUE.equals(d))
 				// call with flag if it's already deployed (then it's an
 				// update)
-				deployAlert(Boolean.TRUE.equals(deployed));
-			else if (d == false)
+				d = checkDeployCancel(Boolean.TRUE.equals(deployed));
+			else
 				cancelAlert();
 			
 			store.update(this, "deployed", d);
@@ -752,12 +881,53 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		}
 	}
 	
+	/** Set the deployed state of the alert without triggering any changes
+	 *  in the actual state of the deployment.
+	 */
+	public void doSetDeployedSilent(Boolean d) throws TMSException {
+		if (d != null) {
+			store.update(this, "deployed", d);
+			setDeployed(d);
+		}
+	}
+	
+	/** Check the alert against the pre-/post-alert times and either repost
+	 *  or cancel the alert as needed. Returns false if the alert was canceled
+	 *  and true otherwise.
+	 */
+	public boolean checkDeployCancel(boolean update) throws TMSException {
+		// check if we are after the pre-alert time and before the
+		// post-alert time
+		boolean pastPre = isPastPreAlertTime();
+		boolean pastPost = isPastPostAlertTime();
+		if (pastPre && !pastPost)
+			deployAlert(update);
+		else if (pastPre && pastPost) {
+			// if past post-alert time but we were told to deploy, we
+			// need to cancel
+			cancelAlert();
+			return false;
+		} else if (!pastPre) {
+			// if before the pre-alert time, we're waiting
+			int millis = (int) TimeUnit.MILLISECONDS.convert(
+					pre_alert_time, prePostTimeUnits);
+			Date start = new Date(alert_start.getTime() - millis);
+			IpawsProcJob.logError("Waiting until " + start +
+					" for alert to start...");
+		}
+		return true;
+	}
+	
 	/** Set the deployed state of this alert (whether it was ever deployed),
 	 *  notifying clients if it has changed.
 	 */
 	public void setDeployedNotify(Boolean d) throws TMSException {
+		Boolean dlast = deployed;
 		doSetDeployed(d);
-		notifyAttribute("deployed");
+		
+		// NOTE we do this test here because doSetDeployed does stuff...
+		if (!objectEquals(dlast, d))
+			notifyAttribute("deployed");
 	}
 	
 	/** Get the deployed state of this alert (whether it was ever deployed). */
@@ -766,7 +936,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		return deployed;
 	}
 	
-	/** State of this alert (whether it is currently deployed or not). */
+	/** Whether this alert deployer was ever deployed or not. */
 	private boolean was_deployed;
 	
 	/** Set whether this alert deployer was ever deployed or not. */
@@ -783,10 +953,67 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		}
 	}
 	
+	/** Set whether this alert deployer was ever deployed or not, notifying
+	 *  clients if it has changed.
+	 */
+	public void setWasDeployedNotify(boolean wd) throws TMSException {
+		if (wd != was_deployed) {
+			doSetWasDeployed(wd);
+			notifyAttribute("wasDeployed");
+		}
+	}
+	
 	/** Get whether this alert deployer was ever deployed or not. */
 	@Override
 	public boolean getWasDeployed() {
 		return was_deployed;
+	}
+	
+	/** Whether this alert deployer is currently active (i.e. visible on DMS).
+	 *  Alerts can be deployed but not active if they have been approved for
+	 *  deployment but the pre-alert time value indicates that they should not
+	 *  be deployed yet.
+	 */
+	private boolean active;
+	
+	/** Set whether this alert deployment is currently active (i.e. visible on
+	 *  DMS). Alerts can be deployed but not active if they have been approved
+	 *  for deployment but the pre-alert time value indicates that they should
+	 *  not be deployed yet.
+	 */
+	@Override
+	public void setActive(boolean a) {
+		active = a;
+	}
+	
+	/** Set whether this alert deployment is currently active (i.e. visible on
+	 *  DMS). Alerts can be deployed but not active if they have been approved
+	 *  for deployment but the pre-alert time value indicates that they should
+	 *  not be deployed yet.
+	 */
+	public void doSetActive(boolean a) throws TMSException {
+		if (a != active) {
+			store.update(this, "active", a);
+			setActive(a);
+		}
+	}
+	
+	/** Set whether this alert deployment is currently active (i.e. visible on
+	 *  DMS), notifying clients if it has changed.
+	 */
+	public void setActiveNotify(boolean a) throws TMSException {
+		doSetActive(a);
+		notifyAttribute("active");
+	}
+	
+	/** Get whether this alert deployment is currently active (i.e. visible on
+	 *  DMS). Alerts can be deployed but not active if they have been approved
+	 *  for deployment but the pre-alert time value indicates that they should
+	 *  not be deployed yet.
+	 */
+	@Override
+	public boolean getActive() {
+		return active;
 	}
 	
 	/** Alert deployer that this replaces (if any). Note that updates to
@@ -825,15 +1052,22 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 		if (alert_start != null && alert_end != null) {
 			// check the time of the alert relative to now
 			Date now = new Date();
+			long dm = -1;
 			if (now.before(alert_start)) {
 				// use time between now and start
-				long dm = alert_start.getTime() - now.getTime();
-				return (int) dm / 1000;
+				dm = alert_start.getTime() - now.getTime();
 			} else if (now.after(alert_start) && now.before(alert_end)) {
 				// use time between now and end
-				long dm = alert_end.getTime() - now.getTime();
-				return (int) dm / 1000;
+				dm = alert_end.getTime() - now.getTime();
+			} else if (now.after(alert_end)) {
+				// use time between now and end + post_alert_time
+				long postMillis = TimeUnit.MILLISECONDS.convert(
+						post_alert_time, prePostTimeUnits);
+				Date msgEnd = new Date(alert_end.getTime() + postMillis);
+				dm = msgEnd.getTime() - now.getTime();
 			}
+			if (dm != -1)
+				return (int) dm / 1000;
 		}
 		// if alert is in past or duration could not be calculated 
 		return -1;
@@ -861,8 +1095,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				IpawsAlertDeployerImpl old =
 						lookupIpawsAlertDeployer(replaces);
 				if (old != null && Boolean.TRUE.equals(old.getDeployed())) {
-					System.out.println("Canceling old deployer " +
-							old.getName() + " for alert " + old.getAlertId());
+					IpawsProcJob.logError("Canceling old deployer " +
+						old.getName() + " for alert " + old.getAlertId());
 					old.setDeployedNotify(false);
 				}
 			}
@@ -876,8 +1110,9 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				// use the auto DMS if we don't have deployed DMS
 				setDeployedDmsNotify(auto_dms);
 			
-			System.out.println("Deploying alert " + alert_id + " with message "
-				+ deployed_multi + " and priority " + mp.toString() + " to " +
+			IpawsProcJob.logError("Deploying alert " + alert_id +
+				" with message " + deployed_multi + ", priority " +
+				mp.toString() + ", and duration " + duration + " to " +
 				deployed_dms.length + " DMS from deployer " + name + " ...");
 			
 			boolean wd = false;
@@ -911,8 +1146,11 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 					}
 				}
 			}
-			// record that the alert was deployed
-			doSetWasDeployed(true);
+			// record that the alert was deployed and is currently active
+			if (wd != was_deployed)
+				setWasDeployedNotify(wd);
+			if (wd != active)
+				setActiveNotify(wd);
 		}
 	}
 	
@@ -926,8 +1164,9 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Cancel an alert on the specified list of DMS. */
 	private void cancelAlert(String[] dmsList) throws TMSException {
 		if (dmsList != null && dmsList.length > 0) {
-			System.out.println("Canceling deployment " + name + " of alert " +
-					alert_id + " on " + dmsList.length + " DMS...");
+			IpawsProcJob.logError("Canceling deployment " + name
+					+ " of alert " + alert_id + " on " + dmsList.length +
+					" DMS...");
 			for (String dmsName: dmsList) {
 				DMSImpl dms = lookupDMS(dmsName);
 				if (dms != null) {
@@ -958,30 +1197,8 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 					}
 				}
 			}
+			// record that the alert is now inactive
+			setActiveNotify(false);
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -88,7 +88,8 @@ CREATE TABLE event.ipaws
     area jsonb,
     geo_poly geography(multipolygon),
 	geo_loc varchar(20),
-    purgeable boolean
+    purgeable boolean,
+	last_processed timestamp with time zone
 );
 	
 INSERT INTO iris.sonar_type (name) VALUES ('ipaws');
@@ -105,6 +106,8 @@ CREATE TABLE event.ipaws_alert_deployer (
 	config varchar(24),
 	sign_group varchar(20),
 	quick_message varchar(20),
+	pre_alert_time integer,
+	post_alert_time integer,
 	auto_dms text[],
 	optional_dms text[],
 	deployed_dms text[],
@@ -115,6 +118,7 @@ CREATE TABLE event.ipaws_alert_deployer (
 	approved_by varchar(15),
 	deployed boolean,
 	was_deployed boolean,
+	active boolean DEFAULT false,
 	replaces varchar(24)
 );
 
@@ -133,7 +137,8 @@ CREATE TABLE iris.ipaws_alert_config (
 	event text,
 	sign_group varchar(20),
 	quick_message varchar(20),
-	after_alert_time integer DEFAULT 0
+	pre_alert_time integer DEFAULT 6,
+	post_alert_time integer DEFAULT 0
 );
 
 ALTER TABLE iris.ipaws_alert_config

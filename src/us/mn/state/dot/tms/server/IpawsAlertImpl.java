@@ -55,7 +55,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			"certainty, audience, effective_date, onset_date, " +
 			"expiration_date, sender_name, headline, alert_description, " + 
 			"instruction, parameters, area, ST_AsText(geo_poly), geo_loc, " +
-			"purgeable FROM event." + SONAR_TYPE + ";", new ResultFactory()
+			"purgeable, last_processed FROM event." + SONAR_TYPE + ";",
+			new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
 				try {
@@ -103,6 +104,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		map.put("geo_poly", geo_poly);
 		map.put("geo_loc", geo_loc);
 		map.put("purgeable", purgeable);
+		map.put("last_processed", last_processed);
 		return map;
 	}
 
@@ -149,7 +151,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			row.getString(27),			// area
 			row.getString(28),			// geo_poly
 			row.getString(29),			// geo_loc
-			getBoolean(row, 30) 		// purgeable flag
+			getBoolean(row, 30), 		// purgeable flag
+			row.getTimestamp(31)		// last processed
 		);
 	}
 
@@ -189,7 +192,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			String[] inc, String[] ct, String ev, String[] rt, String u, 
 			String sv, String cy, String au, Date efd, Date od, Date exd, 
 			String sn, String hl, String ades, String in, String par, 
-			String ar, String gp, String gl, Boolean p) 
+			String ar, String gp, String gl, Boolean p, Date pt) 
 	{
 		super(n);
 		identifier = i;
@@ -229,6 +232,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		}
 		geo_loc = lookupGeoLoc(gl);
 		purgeable = p;
+		last_processed = pt;
 	}
 
 	/** Notify SONAR clients of a change to an attribute. Clears the purgeable
@@ -938,7 +942,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (!objectEquals(geo_poly, gp)) {
 			store.update(this, "geo_poly", gp);
 			setGeoPoly(gp);
-			notifyAttribute("geoPoly");
+			notifyAttribute("geoPoly", false);
 		}
 	}
 	
@@ -959,7 +963,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			// NOTE need to use setGeoPoly first, then store.update
 			setGeoPoly(gpstr);
 			store.update(this, "geo_poly", geo_poly);
-			notifyAttribute("geoPoly");
+			notifyAttribute("geoPoly", false);
 		}
 	}
 
@@ -977,7 +981,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 		if (!objectEquals(geo_loc, gl)) {
 			store.update(this, "geo_loc", gl);
 			setGeoLoc(gl);
-			notifyAttribute("geoLoc");
+			notifyAttribute("geoLoc", false);
 		}
 		geo_loc = gl;
 	}
@@ -1003,6 +1007,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	 */
 	public void doSetPurgeable(Boolean p) throws TMSException {
 		if (!objectEquals(purgeable, p)) {
+			System.out.println("Setting purgeable flag of alert " +
+					name + " to " + p);
 			store.update(this, "purgeable", p);
 			setPurgeable(p);
 			notifyAttribute("purgeable", false);
@@ -1012,5 +1018,29 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	/** Return if this alert is purgeable (irrelevant to us) */
 	public Boolean getPurgeable() {
 		return purgeable;
+	}
+
+	/** Last processing time of the alert */
+	private Date last_processed;
+	
+	/** Set the last processing time of the alert */
+	@Override
+	public void setLastProcessed(Date pt) {
+		last_processed = pt;
+	}
+
+	/** Set the last processing time of the alert */
+	public void doSetLastProcessed(Date pt) throws TMSException {
+		if (!objectEquals(pt, last_processed)) {
+			store.update(this, "last_processed", pt);
+			setLastProcessed(pt);
+			notifyAttribute("lastProcessed", false);
+		}
+	}
+
+	/** Get the last processing time of the alert */
+	@Override
+	public Date getLastProcessed() {
+		return last_processed;
 	}
 }
