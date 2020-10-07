@@ -81,9 +81,7 @@ public class PushNotificationManager extends ProxyManager<PushNotification> {
 		 */
 		@Override
 		protected void proxyChangedSwing(PushNotification pn, String attr) {
-			if ("addressed_time".equals(attr)) {
-				checkStopBlink();
-			}
+			checkStopBlinkBG();
 		}
 	};
 	
@@ -117,6 +115,8 @@ public class PushNotificationManager extends ProxyManager<PushNotification> {
 		IWorker<Void> blinkWorker = new IWorker<Void>() {
 			@Override
 			protected Void doInBackground() throws Exception {
+				// wait for a second before checking
+				Thread.sleep(1000);
 				checkStopBlink();
 				return null;
 			}

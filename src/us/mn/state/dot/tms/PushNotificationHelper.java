@@ -78,6 +78,24 @@ public class PushNotificationHelper extends BaseHelper {
 			s.getPushNotificationManager().checkStopBlinkBG();
 	}
 	
+	/** Address all outstanding PushNotification objects. */
+	static public void addressAll(Session s) {
+		Iterator<PushNotification> it = iterator();
+		int n = 0;
+		while (it.hasNext()) {
+			PushNotification pn = it.next();
+			// make sure the user can see this notification and it hasn't been
+			// addressed
+			if (checkPrivileges(s, pn) && checkAddressed(pn, false)) {
+				pn.setAddressedBy(s.getUser().getName());
+				pn.setAddressedTime(new Date());
+				++n;
+			}
+		}
+		System.out.println("Addressed " + n + " notifications");
+		s.getPushNotificationManager().checkStopBlinkBG();
+	}
+	
 	/** Find a PushNotification object associated with the given reference
 	 *  object. Only returns one object.
 	 */
@@ -124,10 +142,10 @@ public class PushNotificationHelper extends BaseHelper {
 		return false;
 	}
 	
-	/** Check if this notification has been addressed. If pastOk is true, the
-	 *  the time since this notification has been addressed is checked against
-	 *  a system attribute, otherwise this only checks if the addressed_time
-	 *  attribute has been set (if so returning false).
+	/** Check if this notification has not yet been addressed. If pastOk is
+	 *  true, the the time since this notification has been addressed is
+	 *  checked against a system attribute, otherwise this only checks if the
+	 *  addressed_time attribute has been set (if so returning false).
 	 */
 	static public boolean checkAddressed(PushNotification pn, boolean pastOk) {
 		if (pn != null) {
