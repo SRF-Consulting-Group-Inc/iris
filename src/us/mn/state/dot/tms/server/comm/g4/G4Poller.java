@@ -1,7 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2012  Iteris Inc.
- * Copyright (C) 2012-2018  Minnesota Department of Transportation
+ * Copyright (C) 2012-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.server.comm.g4;
 
 import java.io.IOException;
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.SamplePoller;
 import us.mn.state.dot.tms.server.comm.ThreadedPoller;
@@ -35,8 +36,8 @@ public class G4Poller extends ThreadedPoller<G4Property>
 	static private final DebugLog G4_LOG = new DebugLog("g4");
 
 	/** Create a new G4 poller */
-	public G4Poller(String n) {
-		super(n, TCP, G4_LOG);
+	public G4Poller(CommLink link) {
+		super(link, TCP, G4_LOG);
 	}
 
 	/** Perform a controller reset */
@@ -56,7 +57,7 @@ public class G4Poller extends ThreadedPoller<G4Property>
  	 * @param p Sample period in seconds. */
 	@Override
 	public void querySamples(ControllerImpl c, int p) {
-		if (c.getPollPeriod() == p)
+		if (c.getPollPeriodSec() == p)
 			addOp(new OpQueryStats(c, p));
 	}
 }

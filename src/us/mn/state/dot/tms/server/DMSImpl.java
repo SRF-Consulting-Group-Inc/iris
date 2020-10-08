@@ -922,7 +922,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 
 	/** Get the duration of a DMS action */
 	private int getDurationMins() {
-		return getPollPeriod() * DURATION_PERIODS / 60;
+		return getPollPeriodSec() * DURATION_PERIODS / 60;
 	}
 
 	/** User selected sign message */
@@ -1517,15 +1517,17 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 
 	/** Perform a periodic poll */
 	@Override
-	public void periodicPoll() {
-		if (isLongPeriodModem())
+	public void periodicPoll(boolean is_long) {
+		if (is_long)
 			sendDeviceRequest(DeviceRequest.QUERY_STATUS);
-		sendDeviceRequest(DeviceRequest.QUERY_MESSAGE);
-		checkMsgExpiration();
-		updateSchedMsg();
-		LCSArrayImpl la = lookupLCSArray();
-		if (la != null)
-			la.periodicPoll();
+		else {
+			sendDeviceRequest(DeviceRequest.QUERY_MESSAGE);
+			checkMsgExpiration();
+			updateSchedMsg();
+			LCSArrayImpl la = lookupLCSArray();
+			if (la != null)
+				la.periodicPoll(is_long);
+		}
 	}
 
 	/** Check if current sign message has expired */

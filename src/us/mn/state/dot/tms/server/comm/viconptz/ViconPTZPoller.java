@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2017  Minnesota Department of Transportation
+ * Copyright (C) 2007-2020  Minnesota Department of Transportation
  * Copyright (C) 2014  AHMCT, University of California
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,7 @@
  */
 package us.mn.state.dot.tms.server.comm.viconptz;
 
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.server.CameraImpl;
 import us.mn.state.dot.tms.server.comm.BasePoller;
@@ -34,8 +35,8 @@ import static us.mn.state.dot.tms.utils.URIUtil.UDP;
 public class ViconPTZPoller extends BasePoller implements CameraPoller {
 
 	/** Create a new Vicon poller */
-	public ViconPTZPoller(String n) {
-		super(n, UDP);
+	public ViconPTZPoller(CommLink link) {
+		super(link, UDP, false);
 	}
 
 	/** Create an operation */

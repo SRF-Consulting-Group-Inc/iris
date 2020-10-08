@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.ipaws;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.ThreadedPoller;
 import static us.mn.state.dot.tms.utils.URIUtil.HTTPS;
@@ -40,8 +41,8 @@ public class IpawsPoller extends ThreadedPoller<IpawsProperty> {
 	}
 
 	/** Create a new poller */
-	public IpawsPoller(String n) {
-		super(n, HTTPS, IPAWS_LOG);
+	public IpawsPoller(CommLink link) {
+		super(link, HTTPS, IPAWS_LOG);
 	}
 
 	/** Query IPAWS for alert messages */

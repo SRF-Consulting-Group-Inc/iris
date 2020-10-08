@@ -41,9 +41,6 @@ System Attribute                 | Description
 `client_units_si`                | `true` for the client to display units using the International System of Units (SI) or `false` for customary (US) units
 `comm_event_enable`              | Enable logging communication events to database
 `comm_event_purge_days`          | Number of days after which communication events will be purged
-`comm_idle_disconnect_dms_sec`   | Number of seconds until an idle [DMS] commlink will be closed.  (0: indefinite)
-`comm_idle_disconnect_gps_sec`   | Number of seconds until an idle GPS commlink will be closed.  (0: indefinite)
-`comm_idle_disconnect_modem_sec` | Number of seconds until an idle modem commlink will be closed.  (0: indefinite)  Takes precedence for any device using a modem commlink
 `database_version`               | IRIS database version; developer attribute.  **Do not change**.
 `detector_auto_fail_enable`      | Enable "auto fail" of traffic detectors with suspicious data
 `detector_event_purge_days`      | Number of days after which detector events will be purged
@@ -78,8 +75,6 @@ System Attribute                 | Description
 `dms_reset_enable`               | Enable button to reset [DMS]
 `dms_send_confirmation_enable`   | Enable a confirmation dialog box when the [DMS] Send button is pressed
 `dms_update_font_table`          | Enable the updating of the [DMS] controller font table to match the font table in IRIS
-`dmsxml_modem_op_timeout_secs`   | Dial-up modem total operation timeout
-`dmsxml_op_timeout_secs`         | Wizard total operation timeout
 `dmsxml_reinit_detect`           | Enable [DMS] reinitialization detection for DMSXML controllers
 `email_rate_limit_hours`         | Hours to wait before sending duplicate emails
 `email_recipient_action_plan`    | Recipient of [action plan] emails

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2019  Minnesota Department of Transportation
+ * Copyright (C) 2000-2020  Minnesota Department of Transportation
  * Copyright (C) 2015-2017  SRF Consulting Group
  * Copyright (C) 2017       Iteris Inc.
  *
@@ -20,6 +20,7 @@ import java.net.URI;
 import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sonar.User;
 import us.mn.state.dot.tms.CommProtocol;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.EventType;
 import us.mn.state.dot.tms.GeoLoc;
@@ -66,16 +67,17 @@ public class NtcipPoller extends ThreadedPoller implements DMSPoller, GpsPoller,
 	private final CommProtocol protocol;
 
 	/** Create a new Ntcip poller */
-	public NtcipPoller(String n, CommProtocol cp) {
-		super(n, default_uri(cp), NTCIP_LOG,
-			SystemAttrEnum.COMM_IDLE_DISCONNECT_DMS_SEC);
+	public NtcipPoller(CommLink link, CommProtocol cp) {
+		super(link, default_uri(cp), NTCIP_LOG);
 		protocol = cp;
 	}
 
 	/** Create a comm thread */
 	@Override
-	protected NtcipThread createCommThread(String uri, int timeout) {
-		return new NtcipThread(this, queue, scheme, uri, timeout,
+	protected NtcipThread createCommThread(String uri, int timeout,
+		int nrd)
+	{
+		return new NtcipThread(this, queue, scheme, uri, timeout, nrd,
 			NTCIP_LOG, protocol);
 	}
 
@@ -206,7 +208,7 @@ public class NtcipPoller extends ThreadedPoller implements DMSPoller, GpsPoller,
 	@Override
 	public void querySamples(ControllerImpl c, int p) {
 		// Don't query samples on 5 minute poll
-		if (c.getPollPeriod() == p)
+		if (c.getPollPeriodSec() == p)
 			addOp(new OpQuerySamples(c, p));
 	}
 

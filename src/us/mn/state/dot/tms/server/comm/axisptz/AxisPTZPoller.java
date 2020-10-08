@@ -1,7 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2014-2015  AHMCT, University of California
- * Copyright (C) 2016  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 package us.mn.state.dot.tms.server.comm.axisptz;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.server.CameraImpl;
 import us.mn.state.dot.tms.server.comm.CameraPoller;
@@ -77,12 +78,9 @@ public class AxisPTZPoller extends TransientPoller<AxisProp>
 		}
 	}
 
-	/** Create a new Axis PTZ poller.
-	 *
-	 * @param n CommLink name.
-	 */
-	public AxisPTZPoller(String n) {
-		super(n, HTTP, AXIS_LOG);
+	/** Create a new Axis PTZ poller */
+	public AxisPTZPoller(CommLink link) {
+		super(link, HTTP, AXIS_LOG);
 	}
 
 	/** Send a PTZ camera move command */

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2008-2019  Minnesota Department of Transportation
+ * Copyright (C) 2008-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import us.mn.state.dot.tms.CommLink;
+import us.mn.state.dot.tms.CommLinkHelper;
 import us.mn.state.dot.tms.CommProtocol;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.ControllerHelper;
@@ -82,15 +83,8 @@ public class ControllerTableModel extends ProxyTableModel<Controller> {
 
 	/** Check if drop address is used for a controller */
 	static private boolean isDropUsed(Controller c) {
-		CommProtocol cp = getProtocol(c.getCommLink());
+		CommProtocol cp = CommLinkHelper.getProtocol(c.getCommLink());
 		return (cp == null) || cp.multidrop;
-	}
-
-	/** Get the selected comm protocol */
-	static private CommProtocol getProtocol(CommLink cl) {
-		return (cl != null)
-		      ? CommProtocol.fromOrdinal(cl.getProtocol())
-		      : null;
 	}
 
 	/** Create the columns in the model */
@@ -98,12 +92,12 @@ public class ControllerTableModel extends ProxyTableModel<Controller> {
 	protected ArrayList<ProxyColumn<Controller>> createColumns() {
 		ArrayList<ProxyColumn<Controller>> cols =
 			new ArrayList<ProxyColumn<Controller>>(8);
-		cols.add(new ProxyColumn<Controller>("comm.link", 100) {
+		cols.add(new ProxyColumn<Controller>("comm.link", 70) {
 			public Object getValueAt(Controller c) {
 				return c.getCommLink().getName();
 			}
 		});
-		cols.add(new ProxyColumn<Controller>("controller.drop", 54,
+		cols.add(new ProxyColumn<Controller>("controller.drop", 48,
 			Short.class)
 		{
 			public Object getValueAt(Controller c) {
@@ -151,7 +145,7 @@ public class ControllerTableModel extends ProxyTableModel<Controller> {
 				return new DefaultCellEditor(cbx);
 			}
 		});
-		cols.add(new ProxyColumn<Controller>("controller.comm", 44,
+		cols.add(new ProxyColumn<Controller>("controller.comm", 32,
 			CommState.class)
 		{
 			public Object getValueAt(Controller c) {
@@ -161,12 +155,12 @@ public class ControllerTableModel extends ProxyTableModel<Controller> {
 				return new CommCellRenderer();
 			}
 		});
-		cols.add(new ProxyColumn<Controller>("controller.status", 240) {
+		cols.add(new ProxyColumn<Controller>("controller.status", 200) {
 			public Object getValueAt(Controller c) {
 				return c.getStatus();
 			}
 		});
-		cols.add(new ProxyColumn<Controller>("controller.fail", 240,
+		cols.add(new ProxyColumn<Controller>("controller.fail", 180,
 			Long.class)
 		{
 			public Object getValueAt(Controller c) {
@@ -176,7 +170,7 @@ public class ControllerTableModel extends ProxyTableModel<Controller> {
 				return new TimeCellRenderer();
 			}
 		});
-		cols.add(new ProxyColumn<Controller>("controller.version", 120){
+		cols.add(new ProxyColumn<Controller>("controller.version", 140){
 			public Object getValueAt(Controller c) {
 				return c.getVersion();
 			}

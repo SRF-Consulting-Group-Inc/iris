@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2018  Minnesota Department of Transportation
+ * Copyright (C) 2000-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.server.comm.mndot;
 import java.io.IOException;
 import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sonar.User;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.CommProtocol;
 import us.mn.state.dot.tms.Controller;
 import us.mn.state.dot.tms.DeviceRequest;
@@ -54,8 +55,8 @@ public class MndotPoller extends ThreadedPoller<MndotProperty>
 
 	/** Create a new MnDOT 170 poller.
 	 * @param n Comm link name. */
-	public MndotPoller(String n, CommProtocol cp) {
-		super(n, TCP, MNDOT_LOG);
+	public MndotPoller(CommLink link, CommProtocol cp) {
+		super(link, TCP, MNDOT_LOG);
 		protocol = cp;
 	}
 

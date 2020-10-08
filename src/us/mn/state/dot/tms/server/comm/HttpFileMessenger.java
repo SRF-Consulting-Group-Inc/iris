@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2018  Minnesota Department of Transportation
+ * Copyright (C) 2007-2020  Minnesota Department of Transportation
+ * Copyright (C) 2020       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,17 +32,18 @@ import us.mn.state.dot.tms.utils.Base64;
  *
  * @author Douglas Lau
  * @author Michael Darter
+ * @author John L. Stanley - SRF Consulting
  */
-public class HttpFileMessenger extends Messenger {
+public class HttpFileMessenger extends BasicMessenger {
 
 	/** Create an HTTP file messenger.
 	 * @param u URI of remote host.
 	 * @param rt Receive timeout (ms). */
-	static protected HttpFileMessenger create(URI u, int rt)
+	static protected HttpFileMessenger create(URI u, int rt, int nrd)
 		throws IOException
 	{
 		assert "http".equals(u.getScheme());
-		return new HttpFileMessenger(u.toURL(), rt);
+		return new HttpFileMessenger(u.toURL(), rt, nrd);
 	}
 
 	/** URL to read */
@@ -61,26 +63,27 @@ public class HttpFileMessenger extends Messenger {
 	/** Create a new HTTP file messenger.
 	 * @param url The URL of the file to read.
 	 * @param rt Read timeout (ms). */
-	private HttpFileMessenger(URL url, int rt) {
+	private HttpFileMessenger(URL url, int rt, int nrd) {
+		super(nrd);
 		this.url = url;
 		timeout = rt;
 	}
 
 	/** Close the messenger */
 	@Override
-	public void close() {
+	protected void close2() {
 		// nothing to do
 	}
 
 	/** Get the input stream */
 	@Override
-	public InputStream getInputStream(String p) throws IOException {
+	protected InputStream getRawInputStream(String p) throws IOException {
 		return createInputStream(p, null);
 	}
 
 	/** Get an input stream for the specified controller */
 	@Override
-	public InputStream getInputStream(String p, ControllerImpl c)
+	protected InputStream getRawInputStream(String p, ControllerImpl c)
 		throws IOException
 	{
 		return createInputStream(p, c.getPassword());
@@ -111,7 +114,7 @@ public class HttpFileMessenger extends Messenger {
 
 	/** Get the output stream */
 	@Override
-	public OutputStream getOutputStream(ControllerImpl c) {
+	protected OutputStream getRawOutputStream(ControllerImpl c) {
 		// HTTP messengers don't have output streams
 		return null;
 	}

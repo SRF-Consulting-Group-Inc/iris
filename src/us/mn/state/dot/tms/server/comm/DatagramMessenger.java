@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2016  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
+ * Copyright (C) 2020       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,16 +32,18 @@ import us.mn.state.dot.tms.server.ControllerImpl;
  * response using a UDP socket connection.
  *
  * @author Douglas Lau
+ * @author John L. Stanley - SRF Consulting
  */
-public class DatagramMessenger extends Messenger {
+public class DatagramMessenger extends BasicMessenger {
 
 	/** Create a UDP datagram messenger.
 	 * @param u URI of remote host.
-	 * @param rt Receive timeout (ms). */
-	static protected DatagramMessenger create(URI u, int rt)
+	 * @param rt Receive timeout (ms).
+	 * @param nrd No-response disconnect (sec). */
+	static protected DatagramMessenger create(URI u, int rt, int nrd)
 		throws MessengerException, IOException
 	{
-		return new DatagramMessenger(createSocketAddress(u), rt);
+		return new DatagramMessenger(createSocketAddress(u), rt, nrd);
 	}
 
 	/** Local port to bind */
@@ -64,10 +67,12 @@ public class DatagramMessenger extends Messenger {
 	/** Create a new datagram messenger.
 	 * @param p Local port (null for any).
 	 * @param ra Remote socket address.
-	 * @param rt Read timeout (ms). */
-	private DatagramMessenger(Integer p, SocketAddress ra, int rt)
+	 * @param rt Read timeout (ms).
+	 * @param nrd No-response disconnect (sec). */
+	private DatagramMessenger(Integer p, SocketAddress ra, int rt, int nrd)
 		throws IOException
 	{
+		super(nrd);
 		port = p;
 		remote = ra;
 		timeout = rt;
@@ -81,8 +86,10 @@ public class DatagramMessenger extends Messenger {
 	/** Create a new datagram messenger.
 	 * @param ra Remote socket address.
 	 * @param rt Read timeout (ms). */
-	public DatagramMessenger(SocketAddress ra, int rt) throws IOException {
-		this(null, ra, rt);
+	public DatagramMessenger(SocketAddress ra, int rt, int nrd)
+		throws IOException
+	{
+		this(null, ra, rt, nrd);
 	}
 
 	/** Create the socket */
@@ -96,13 +103,13 @@ public class DatagramMessenger extends Messenger {
 	 * @param path Relative path name.
 	 * @return An input stream for reading from the messenger. */
 	@Override
-	public InputStream getInputStream(String path) {
+	protected InputStream getRawInputStream(String path) {
 		return input;
 	}
 
 	/** Get the output stream */
 	@Override
-	public OutputStream getOutputStream(ControllerImpl c) {
+	protected OutputStream getRawOutputStream(ControllerImpl c) {
 		return output;
 	}
 
@@ -116,7 +123,7 @@ public class DatagramMessenger extends Messenger {
 
 	/** Close the datagram messenger */
 	@Override
-	public void close() {
+	protected void close2() {
 		socket.disconnect();
 		socket.close();
 	}
@@ -179,7 +186,7 @@ public class DatagramMessenger extends Messenger {
 			}
 		}
 
-		/** Recvie and buffer a datagram */
+		/** Receive and buffer a datagram */
 		private void receivePacket() throws IOException {
 			packet.setLength(1024);
 			socket.receive(packet);

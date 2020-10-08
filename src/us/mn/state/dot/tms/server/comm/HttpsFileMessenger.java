@@ -33,16 +33,16 @@ import us.mn.state.dot.tms.utils.Base64;
  * @author Gordon Parikh
  * @author Douglas Lau
  */
-public class HttpsFileMessenger extends Messenger {
+public class HttpsFileMessenger extends BasicMessenger {
 
 	/** Create an HTTPS file messenger.
 	 * @param u URI of remote host.
 	 * @param rt Receive timeout (ms). */
-	static protected HttpsFileMessenger create(URI u, int rt)
+	static protected HttpsFileMessenger create(URI u, int rt, int nrd)
 		throws IOException
 	{
 		assert "https".equals(u.getScheme());
-		return new HttpsFileMessenger(u.toURL(), rt);
+		return new HttpsFileMessenger(u.toURL(), rt, nrd);
 	}
 
 	/** URL to read */
@@ -62,31 +62,32 @@ public class HttpsFileMessenger extends Messenger {
 	/** Create a new HTTPS file messenger.
 	 * @param url The URL of the file to read.
 	 * @param rt Read timeout (ms). */
-	private HttpsFileMessenger(URL url, int rt) {
+	private HttpsFileMessenger(URL url, int rt, int nrd) {
+		super(nrd);
 		this.url = url;
 		timeout = rt;
 	}
 
 	/** Close the messenger */
 	@Override
-	public void close() {
+	protected void close2() throws IOException {
 		// nothing to do
 	}
-
+	
 	/** Get the input stream */
 	@Override
-	public InputStream getInputStream(String p) throws IOException {
-		return createInputStream(p, null);
+	protected InputStream getRawInputStream(String path) throws IOException {
+		return createInputStream(path, null);
 	}
-
+	
 	/** Get an input stream for the specified controller */
 	@Override
-	public InputStream getInputStream(String p, ControllerImpl c)
+	protected InputStream getRawInputStream(String path, ControllerImpl c)
 		throws IOException
 	{
-		return createInputStream(p, c.getPassword());
+		return createInputStream(path, c.getPassword());
 	}
-
+	
 	/** Create an HTTPS input stream */
 	private InputStream createInputStream(String path, String upass)
 		throws IOException
@@ -112,7 +113,7 @@ public class HttpsFileMessenger extends Messenger {
 
 	/** Get the output stream */
 	@Override
-	public OutputStream getOutputStream(ControllerImpl c) {
+	public OutputStream getRawOutputStream(ControllerImpl c) {
 		// HTTPS messengers don't have output streams
 		return null;
 	}

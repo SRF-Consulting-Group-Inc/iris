@@ -3,7 +3,7 @@
  * Copyright (C) 2009-2020  Minnesota Department of Transportation
  * Copyright (C) 2012-2018  Iteris Inc.
  * Copyright (C) 2014       AHMCT, University of California
- * Copyright (C) 2015-2017  SRF Consulting Group
+ * Copyright (C) 2015-2020  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,9 +52,6 @@ public enum SystemAttrEnum {
 	CLIENT_UNITS_SI(true),
 	COMM_EVENT_ENABLE(true),
 	COMM_EVENT_PURGE_DAYS(14, 0),
-	COMM_IDLE_DISCONNECT_DMS_SEC(0, 0, 28800),      // 8-hours max
-	COMM_IDLE_DISCONNECT_GPS_SEC(5, 0, 28800),      // 8-hours max
-	COMM_IDLE_DISCONNECT_MODEM_SEC(20, 0, 28800),   // 8-hours max
 	DATABASE_VERSION(String.class),
 	DETECTOR_AUTO_FAIL_ENABLE(true),
 	DETECTOR_EVENT_PURGE_DAYS(90, 0),
@@ -90,8 +87,6 @@ public enum SystemAttrEnum {
 	DMS_RESET_ENABLE(false, Change.RESTART_CLIENT),
 	DMS_SEND_CONFIRMATION_ENABLE(false, Change.RESTART_CLIENT),
 	DMS_UPDATE_FONT_TABLE(true),
-	DMSXML_MODEM_OP_TIMEOUT_SECS(5 * 60 + 5, 5),
-	DMSXML_OP_TIMEOUT_SECS(60 + 5, 5),
 	DMSXML_REINIT_DETECT(false),
 	EMAIL_RATE_LIMIT_HOURS(0, 0),
 	EMAIL_RECIPIENT_ACTION_PLAN(String.class),
@@ -103,7 +98,6 @@ public enum SystemAttrEnum {
 	EMAIL_SMTP_HOST(String.class),
 	GATE_ARM_ALERT_TIMEOUT_SECS(90, 10),
 	GATE_ARM_EVENT_PURGE_DAYS(0, 0),
-	GSTREAMER_VERSION_WINDOWS("1.16.2"), // unused (see project.properties)
 	HELP_TROUBLE_TICKET_ENABLE(false),
 	HELP_TROUBLE_TICKET_URL(String.class),
 	INCIDENT_CLEAR_ADVICE_MULTI(String.class),

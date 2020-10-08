@@ -1,7 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2019  Minnesota Department of Transportation
- * Copyright (C) 2017       SRF Consulting Group
+ * Copyright (C) 2000-2020  Minnesota Department of Transportation
+ * Copyright (C) 2017-2020  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import us.mn.state.dot.tms.server.ControllerImpl;
  * CommThread represents a communication channel with priority-queued polling.
  *
  * @author Douglas Lau
- * @author John L. Stanley
+ * @author John L. Stanley - SRF Consulting
  */
 public class CommThread<T extends ControllerProperty> {
 
@@ -91,6 +91,9 @@ public class CommThread<T extends ControllerProperty> {
 	/** Receive timeout (ms) */
 	private final int timeout;
 
+	/** No response disconnect (sec) */
+	private final int no_resp_disconnect_sec;
+
 	/** Debug log */
 	private final DebugLog logger;
 
@@ -115,9 +118,10 @@ public class CommThread<T extends ControllerProperty> {
 	 * @param q The operation queue.
 	 * @param s Default URI scheme.
 	 * @param u The URI.
-	 * @param rt Receive timeout (ms) */
+	 * @param rt Receive timeout (ms).
+	 * @param nrd No-response disconnect (sec). */
 	public CommThread(ThreadedPoller<T> dp, OpQueue<T> q, URI s, String u,
-		int rt, DebugLog log)
+		int rt, int nrd, DebugLog log)
 	{
 		poller = dp;
  		thread = new Thread(GROUP, "Comm: " + poller.name) {
@@ -131,6 +135,7 @@ public class CommThread<T extends ControllerProperty> {
 		scheme = s;
 		uri = u;
 		timeout = rt;
+		no_resp_disconnect_sec = nrd;
 		logger = log;
 	}
 
@@ -180,7 +185,8 @@ public class CommThread<T extends ControllerProperty> {
 		MessengerException
 	{
 		while (shouldContinue()) {
-			try (Messenger m = createMessenger(scheme, uri,timeout))
+			try (Messenger m = createMessenger(scheme, uri,
+				timeout, no_resp_disconnect_sec))
 			{
 				pollQueue(m);
 			}
@@ -195,6 +201,12 @@ public class CommThread<T extends ControllerProperty> {
 				String msg = getMessage(e);
 				setStatus(msg);
 				if (poller.handleError(CONNECTION_REFUSED, msg))
+					break;
+			}
+			catch (NoResponseException e) {
+				String msg = getMessage(e);
+				setStatus(msg);
+				if (poller.noMoreOps())
 					break;
 			}
 			catch (IOException e) {
@@ -212,12 +224,13 @@ public class CommThread<T extends ControllerProperty> {
 	 * @param s Default URI scheme.
 	 * @param u The URI.
 	 * @param rt Receive timeout (ms).
+	 * @param nrd No-response disconnect (sec).
 	 * @return The new messenger.
 	 * @throws MessengerException if the messenger could not be created. */
-	protected Messenger createMessenger(URI s, String u, int rt)
+	protected Messenger createMessenger(URI s, String u, int rt, int nrd)
 		throws MessengerException, IOException
 	{
-		return Messenger.create(s, u, rt);
+		return Messenger.create(s, u, rt, nrd);
 	}
 
 	/** Poll the operation queue and perform operations.
@@ -249,7 +262,6 @@ public class CommThread<T extends ControllerProperty> {
 	private void doPoll(Messenger m, final OpController<T> o)
 		throws IOException
 	{
-		final String oname = o.toString();
 		try {
 			o.poll(createCommMessage(m, o));
 		}
@@ -283,11 +295,22 @@ public class CommThread<T extends ControllerProperty> {
 		catch (SocketTimeoutException e) {
 			String msg = getMessage(e);
 			o.handleCommError(EventType.POLL_TIMEOUT_ERROR, msg);
+			// Not sure if this is needed in addition
+			// to no_response_disconnect feature
 			if ((!o.isSuccess()) && needsReconnect(m))
 				throw new ReconnectException();
 		}
 		catch (SocketException e) {
 			String msg = getMessage(e);
+			if (m instanceof BasicMessenger) {
+				BasicMessenger bm = (BasicMessenger) m;
+				if (bm.hitNoResponseDisconnect()) {
+					o.handleCommError(EventType
+						.POLL_TIMEOUT_ERROR, msg);
+					o.setFailed();
+					throw new NoResponseException();
+				}
+			}
 			o.handleCommError(EventType.COMM_ERROR, msg);
 			throw new ReconnectException();
 		}

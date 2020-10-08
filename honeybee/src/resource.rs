@@ -12,10 +12,10 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-use crate::segments::{RNode, RNodeMsg};
+use crate::segments::{RNode, Road, SegMsg};
 use crate::signmsg::render_all;
 use crate::Result;
-use postgres::Connection;
+use postgres::Client;
 use std::fs::{rename, File};
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -104,6 +104,11 @@ enum Resource {
     /// * Listen specification.
     RNode(Listen),
 
+    /// Road resource.
+    ///
+    /// * Listen specification.
+    Road(Listen),
+
     /// Simple file resource.
     ///
     /// * File name.
@@ -135,7 +140,7 @@ const DMS_ATTRIBUTE_RES: Resource = Resource::Simple(
     "dms_attribute",
     Listen::All("system_attribute"),
     "SELECT jsonb_object_agg(name, value)::text \
- FROM dms_attribute_view",
+    FROM dms_attribute_view",
 );
 
 /// DMS resource
@@ -198,12 +203,15 @@ const INCIDENT_RES: Resource = Resource::Simple(
     SELECT name, event_date, description, road, direction, lane_type, \
            impact, confirmed, camera, detail, replaces, lat, lon \
     FROM incident_view \
-    WHERE cleared = false \
+    WHERE cleared = false\
 ) r",
 );
 
 /// RNode resource
 const R_NODE_RES: Resource = Resource::RNode(Listen::All("r_node"));
+
+/// Road resource
+const ROAD_RES: Resource = Resource::Road(Listen::All("road"));
 
 /// Sign configuration resource
 const SIGN_CONFIG_RES: Resource = Resource::Simple(
@@ -307,6 +315,7 @@ const ALL: &[Resource] = &[
     FONT_RES,
     GRAPHIC_RES,
     INCIDENT_RES,
+    ROAD_RES, // Roads must be loaded before R_Nodes
     R_NODE_RES,
     SIGN_CONFIG_RES,
     SIGN_DETAIL_RES,
@@ -318,17 +327,17 @@ const ALL: &[Resource] = &[
 
 /// Fetch a simple resource.
 ///
-/// * `conn` The database connection.
+/// * `client` The database connection.
 /// * `sql` SQL query.
 /// * `w` Writer to output resource.
 fn fetch_simple<W: Write>(
-    conn: &Connection,
+    client: &mut Client,
     sql: &str,
     mut w: W,
 ) -> Result<u32> {
     let mut c = 0;
     w.write_all(b"[")?;
-    for row in &conn.query(sql, &[])? {
+    for row in &client.query(sql, &[])? {
         if c > 0 {
             w.write_all(b",")?;
         }
@@ -346,37 +355,67 @@ fn fetch_simple<W: Write>(
 
 /// Fetch all r_nodes.
 ///
-/// * `conn` The database connection.
-/// * `sender` Sender for RNode messages.
-fn fetch_all_nodes(conn: &Connection, sender: &Sender<RNodeMsg>) -> Result<()> {
+/// * `client` The database connection.
+/// * `sender` Sender for segment messages.
+fn fetch_all_nodes(client: &mut Client, sender: &Sender<SegMsg>) -> Result<()> {
     debug!("fetch_all_nodes");
-    sender.send(RNodeMsg::Order(false))?;
-    for row in &conn.query(RNode::SQL_ALL, &[])? {
-        sender.send(RNode::from_row(&row).into())?;
+    sender.send(SegMsg::Order(false))?;
+    for row in &client.query(RNode::SQL_ALL, &[])? {
+        sender.send(SegMsg::UpdateNode(RNode::from_row(&row)))?;
     }
-    sender.send(RNodeMsg::Order(true))?;
+    sender.send(SegMsg::Order(true))?;
     Ok(())
 }
 
 /// Fetch one r_node.
 ///
-/// * `conn` The database connection.
+/// * `client` The database connection.
 /// * `name` RNode name.
-/// * `sender` Sender for RNode messages.
+/// * `sender` Sender for segment messages.
 fn fetch_one_node(
-    conn: &Connection,
+    client: &mut Client,
     name: &str,
-    sender: &Sender<RNodeMsg>,
+    sender: &Sender<SegMsg>,
 ) -> Result<()> {
     debug!("fetch_one_node: {}", name);
-    let rows = &conn.query(RNode::SQL_ONE, &[&name])?;
+    let rows = &client.query(RNode::SQL_ONE, &[&name])?;
     if rows.len() == 1 {
         for row in rows.iter() {
-            sender.send(RNode::from_row(&row).into())?;
+            sender.send(SegMsg::UpdateNode(RNode::from_row(&row)))?;
         }
     } else {
         assert!(rows.is_empty());
-        sender.send(RNodeMsg::Remove(name.to_string()))?;
+        sender.send(SegMsg::RemoveNode(name.to_string()))?;
+    }
+    Ok(())
+}
+
+/// Fetch all roads.
+///
+/// * `client` The database connection.
+/// * `sender` Sender for segment messages.
+fn fetch_all_roads(client: &mut Client, sender: &Sender<SegMsg>) -> Result<()> {
+    debug!("fetch_all_roads");
+    for row in &client.query(Road::SQL_ALL, &[])? {
+        sender.send(SegMsg::UpdateRoad(Road::from_row(&row)))?;
+    }
+    Ok(())
+}
+
+/// Fetch one road.
+///
+/// * `client` The database connection.
+/// * `name` Road name.
+/// * `sender` Sender for segment messages.
+fn fetch_one_road(
+    client: &mut Client,
+    name: &str,
+    sender: &Sender<SegMsg>,
+) -> Result<()> {
+    debug!("fetch_one_road: {}", name);
+    let rows = &client.query(Road::SQL_ONE, &[&name])?;
+    if let Some(row) = rows.iter().next() {
+        sender.send(SegMsg::UpdateRoad(Road::from_row(&row)))?;
     }
     Ok(())
 }
@@ -386,6 +425,7 @@ impl Resource {
     fn listen(&self) -> &Listen {
         match self {
             Resource::RNode(lsn) => &lsn,
+            Resource::Road(lsn) => &lsn,
             Resource::Simple(_, lsn, _) => &lsn,
             Resource::SignMsg(_, lsn, _) => &lsn,
         }
@@ -393,52 +433,71 @@ impl Resource {
 
     /// Fetch the resource from a connection.
     ///
-    /// * `conn` The database connection.
+    /// * `client` The database connection.
     /// * `payload` Postgres NOTIFY payload.
-    /// * `sender` Sender for RNode messages.
+    /// * `sender` Sender for segment messages.
     fn fetch(
         &self,
-        conn: &Connection,
+        client: &mut Client,
         payload: &str,
-        sender: &Sender<RNodeMsg>,
+        sender: &Sender<SegMsg>,
     ) -> Result<()> {
         match self {
-            Resource::RNode(_) => self.fetch_nodes(conn, payload, sender),
-            Resource::Simple(n, _, _) => self.fetch_file(conn, n),
-            Resource::SignMsg(n, _, _) => self.fetch_sign_msgs(conn, n),
+            Resource::RNode(_) => self.fetch_nodes(client, payload, sender),
+            Resource::Road(_) => self.fetch_roads(client, payload, sender),
+            Resource::Simple(n, _, _) => self.fetch_file(client, n),
+            Resource::SignMsg(n, _, _) => self.fetch_sign_msgs(client, n),
         }
     }
 
     /// Fetch r_node resource from a connection.
     ///
-    /// * `conn` The database connection.
+    /// * `client` The database connection.
     /// * `payload` Postgres NOTIFY payload.
-    /// * `sender` Sender for RNode messages.
+    /// * `sender` Sender for segment messages.
     fn fetch_nodes(
         &self,
-        conn: &Connection,
+        client: &mut Client,
         payload: &str,
-        sender: &Sender<RNodeMsg>,
+        sender: &Sender<SegMsg>,
     ) -> Result<()> {
         if payload == "" {
-            fetch_all_nodes(conn, sender)
+            fetch_all_nodes(client, sender)
         } else {
-            fetch_one_node(conn, payload, sender)
+            fetch_one_node(client, payload, sender)
+        }
+    }
+
+    /// Fetch road resource from a connection.
+    ///
+    /// * `client` The database connection.
+    /// * `payload` Postgres NOTIFY payload.
+    /// * `sender` Sender for segment messages.
+    fn fetch_roads(
+        &self,
+        client: &mut Client,
+        payload: &str,
+        sender: &Sender<SegMsg>,
+    ) -> Result<()> {
+        if payload == "" {
+            fetch_all_roads(client, sender)
+        } else {
+            fetch_one_road(client, payload, sender)
         }
     }
 
     /// Fetch a file resource from a connection.
     ///
-    /// * `conn` The database connection.
+    /// * `client` The database connection.
     /// * `name` File name.
-    fn fetch_file(&self, conn: &Connection, name: &str) -> Result<()> {
+    fn fetch_file(&self, client: &mut Client, name: &str) -> Result<()> {
         debug!("fetch_file: {:?}", name);
         let t = Instant::now();
         let p = Path::new("");
         let tn = make_tmp_name(p, name);
         let n = make_name(p, name);
         let writer = BufWriter::new(File::create(&tn)?);
-        let c = self.fetch_writer(conn, writer)?;
+        let c = self.fetch_writer(client, writer)?;
         rename(tn, &n)?;
         info!("{}: wrote {} rows in {:?}", name, c, t.elapsed());
         Ok(())
@@ -446,19 +505,20 @@ impl Resource {
 
     /// Fetch to a writer.
     ///
-    /// * `conn` The database connection.
+    /// * `client` The database connection.
     /// * `w` Writer for the file.
-    fn fetch_writer<W: Write>(&self, conn: &Connection, w: W) -> Result<u32> {
+    fn fetch_writer<W: Write>(&self, client: &mut Client, w: W) -> Result<u32> {
         match self {
             Resource::RNode(_) => unreachable!(),
-            Resource::Simple(_, _, sql) => fetch_simple(conn, sql, w),
-            Resource::SignMsg(_, _, sql) => fetch_simple(conn, sql, w),
+            Resource::Road(_) => unreachable!(),
+            Resource::Simple(_, _, sql) => fetch_simple(client, sql, w),
+            Resource::SignMsg(_, _, sql) => fetch_simple(client, sql, w),
         }
     }
 
     /// Fetch sign messages resource.
-    fn fetch_sign_msgs(&self, conn: &Connection, name: &str) -> Result<()> {
-        self.fetch_file(conn, name)?;
+    fn fetch_sign_msgs(&self, client: &mut Client, name: &str) -> Result<()> {
+        self.fetch_file(client, name)?;
         // FIXME: spawn another thread for this?
         render_all(Path::new(""))
     }
@@ -466,11 +526,12 @@ impl Resource {
 
 /// Listen for notifications on all channels we need to monitor.
 ///
-/// * `conn` Database connection.
-pub fn listen_all(conn: &Connection) -> Result<()> {
+/// * `client` Database connection.
+pub fn listen_all(client: &mut Client) -> Result<()> {
     for r in ALL {
         for lsn in r.listen().channel_names() {
-            conn.execute(&format!("LISTEN {}", lsn), &[])?;
+            let listen = format!("LISTEN {}", lsn);
+            client.execute(&listen[..], &[])?;
         }
     }
     Ok(())
@@ -478,33 +539,33 @@ pub fn listen_all(conn: &Connection) -> Result<()> {
 
 /// Fetch all resources.
 ///
-/// * `conn` The database connection.
-/// * `sender` Sender for RNode messages.
-pub fn fetch_all(conn: &Connection, sender: &Sender<RNodeMsg>) -> Result<()> {
+/// * `client` The database connection.
+/// * `sender` Sender for segment messages.
+pub fn fetch_all(client: &mut Client, sender: &Sender<SegMsg>) -> Result<()> {
     for r in ALL {
-        r.fetch(&conn, "", sender)?;
+        r.fetch(client, "", sender)?;
     }
     Ok(())
 }
 
 /// Handle a channel notification.
 ///
-/// * `conn` The database connection.
+/// * `client` The database connection.
 /// * `chan` Channel name.
 /// * `payload` Notification payload.
-/// * `sender` Sender for RNode messages.
+/// * `sender` Sender for segment messages.
 pub fn notify(
-    conn: &Connection,
+    client: &mut Client,
     chan: &str,
     payload: &str,
-    sender: &Sender<RNodeMsg>,
+    sender: &Sender<SegMsg>,
 ) -> Result<()> {
-    debug!("notify: {}, {}", &chan, &payload);
+    info!("notify: {}, {}", &chan, &payload);
     let mut found = false;
     for r in ALL {
         if r.listen().is_listening(chan, payload) {
             found = true;
-            r.fetch(&conn, payload, sender)?;
+            r.fetch(client, payload, sender)?;
         } else if r.listen().is_listening_payload(chan, payload) {
             found = true;
         }

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2019  Minnesota Department of Transportation
+ * Copyright (C) 2000-2020  Minnesota Department of Transportation
  * Copyright (C) 2011  Berkeley Transportation Systems Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -251,9 +251,9 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 	}
 
 	/** Get the polling period (sec) */
-	public int getPollPeriod() {
+	public int getPollPeriodSec() {
 		CommLinkImpl cl = comm_link;
-		return (cl != null) ? cl.getPollPeriod() : 30;
+		return (cl != null) ? cl.getPollPeriodSec() : 30;
 	}
 
 	/** Drop address */
@@ -527,11 +527,9 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 	}
 
 	/** Get the comm protocol */
-	public CommProtocol getProtocol() {
+	public CommProtocol getCommProtocol() {
 		CommLinkImpl cl = comm_link;
-		return (cl != null)
-		      ? CommProtocol.fromOrdinal(cl.getProtocol())
-		      : null;
+		return (cl != null) ? cl.getCommProtocol() : null;
 	}
 
 	/** Get a sample value from an array */
@@ -939,20 +937,22 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 	}
 
 	/** Poll controller devices */
-	public void pollDevices(int period) {
+	public void pollDevices(int period, boolean is_long) {
 		if (isConditionActive())
-			pollActiveDevices(period);
+			pollActiveDevices(period, is_long);
 		if (isConditionTesting())
 			startTesting();
 	}
 
 	/** Poll active controller devices */
-	private void pollActiveDevices(int period) {
-		pollController();
+	private void pollActiveDevices(int period, boolean is_long) {
+		if (!is_long)
+			pollController();
 		// Must call getDevices so we don't hold the lock
 		for (ControllerIO io: getDevices())
-			pollDevice(io);
-		if (hasActiveDetector())
+			pollDevice(io, is_long);
+		// Must check hasActiveMeter for green counts (mndot protocol)
+		if (hasActiveDetector() || (is_long && hasActiveMeter()))
 			pollDetectors(period);
 	}
 
@@ -1014,14 +1014,14 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 	}
 
 	/** Poll one device */
-	private void pollDevice(ControllerIO io) {
+	private void pollDevice(ControllerIO io, boolean is_long) {
 		if (io instanceof DeviceImpl) {
 			DeviceImpl dev = (DeviceImpl) io;
-			dev.periodicPoll();
+			dev.periodicPoll(is_long);
 		}
 		if (io instanceof AlarmImpl) {
 			AlarmImpl a = (AlarmImpl) io;
-			a.periodicPoll();
+			a.periodicPoll(is_long);
 		}
 	}
 
@@ -1050,7 +1050,7 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 		}
 		// We only want one settings operation per controller,
 		// no matter how many video monitors are connected
-		VideoMonitorImpl vm = getVideoMonitor();
+		VideoMonitorImpl vm = getFirstVideoMonitor();
 		if (vm != null) {
 			int dr = DeviceRequest.SEND_SETTINGS.ordinal();
 			vm.setDeviceRequest(dr);
@@ -1058,7 +1058,7 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 	}
 
 	/** Get the first video monitor for the controller */
-	public synchronized VideoMonitorImpl getVideoMonitor() {
+	public synchronized VideoMonitorImpl getFirstVideoMonitor() {
 		int max_pin = getMaxPin();
 		for (int p = 1; p <= max_pin; p++) {
 			ControllerIO io = io_pins.get(p);
@@ -1078,12 +1078,6 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 		}
 		super.doDestroy();
 		cabinet.notifyRemove();
-	}
-
-	/** Check if link is any type of modem (dial-up or cell) */
-	public boolean isModemAny() {
-		CommLinkImpl cl = comm_link;
-		return (cl != null) && cl.isModemAny();
 	}
 
 	/** Check if dial-up is required to communicate */

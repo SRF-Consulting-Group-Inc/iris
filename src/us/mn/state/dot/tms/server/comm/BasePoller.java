@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2018  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  * Copyright (C) 2017       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,9 @@ import us.mn.state.dot.sched.Job;
 import us.mn.state.dot.sched.Scheduler;
 import us.mn.state.dot.sched.Work;
 import us.mn.state.dot.sched.Worker;
+import us.mn.state.dot.tms.CommConfig;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.EventType;
-import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.utils.HexString;
 import us.mn.state.dot.tms.utils.URIUtil;
@@ -92,11 +93,17 @@ abstract public class BasePoller implements DevicePoller {
 	/** Default URI scheme */
 	private final URI scheme;
 
+	/** Remote URI */
+	private final String uri;
+
+	/** Receive timeout (ms) */
+	private final int timeout_ms;
+
 	/** Flag to close channel on timeout */
 	private final boolean close_on_timeout;
 
-	/** COMM_IDLE_DISCONNECT system attribute for this poller */
-	private final SystemAttrEnum attrCommIdleDisconnect;
+	/** Comm idle disconnect seconds */
+	private final int idle_disconnect_sec;
 
 	/** Protocol logger */
 	private final DebugLog logger;
@@ -148,20 +155,18 @@ abstract public class BasePoller implements DevicePoller {
 	private boolean destroyed = false;
 
 	/** Create a base poller */
-	protected BasePoller(String n, URI s, boolean cot) {
-		name = n;
+	protected BasePoller(CommLink link, URI s, boolean cot) {
+		CommConfig cc = link.getCommConfig();
+		name = link.getName();
 		scheme = s;
+		uri = link.getUri();
+		timeout_ms = cc.getTimeoutMs();
 		close_on_timeout = cot;
-		attrCommIdleDisconnect = null;
-		logger = new DebugLog(n + ".log");
+		idle_disconnect_sec = cc.getIdleDisconnectSec();
+		logger = new DebugLog(name + ".log");
 		tx_buf = ByteBuffer.allocate(BUF_SZ);
 		rx_buf = ByteBuffer.allocate(BUF_SZ);
 		log("CREATED");
-	}
-
-	/** Create a base poller */
-	protected BasePoller(String n, URI s) {
-		this(n, s, false);
 	}
 
 	/** Destroy the poller */
@@ -190,34 +195,6 @@ abstract public class BasePoller implements DevicePoller {
 	/** Get the receive buffer */
 	public ByteBuffer getRxBuffer() {
 		return rx_buf;
-	}
-
-	/** Remote URI */
-	private String uri = "";
-
-	/** Set the remote URI */
-	@Override
-	public void setUri(String u) {
-		uri = u;
-		closeChannel();
-	}
-
-	/** Receive timeout (ms) */
-	private int timeout;
-
-	/** Set the receive timeout (ms) */
-	@Override
-	public void setTimeout(int rt) {
-		timeout = rt;
-	}
-
-	/** Modem flag */
-	private boolean modem;
-
-	/** Set the modem flag */
-	@Override
-	public void setModem(boolean m) {
-		modem = m;
 	}
 
 	/** Poller status */
@@ -323,7 +300,7 @@ abstract public class BasePoller implements DevicePoller {
 	/** Add an operation to the receive queue */
 	private void addRecvQueue(Operation op) {
 		// r_queue is sorted by expire time
-		op.setRemaining(timeout);
+		op.setRemaining(timeout_ms);
 		synchronized (op_set) {
 			if (!r_queue.add(op)) {
 				// This should never happen
@@ -335,7 +312,7 @@ abstract public class BasePoller implements DevicePoller {
 
 	/** Schedule timeout of operation */
 	private void scheduleTimeout(final Operation op) {
-		COMM.addJob(new Job(timeout) {
+		COMM.addJob(new Job(timeout_ms) {
 			@Override public String getName() {
 				return "scheduleTimeout";
 			}
@@ -377,15 +354,7 @@ abstract public class BasePoller implements DevicePoller {
 	 * (0 indicates indefinite). */
 	@Override
 	public int getIdleDisconnectSec() {
-		SystemAttrEnum attr = getIdleDisconnectAttr();
-		return (attr != null) ? attr.getInt() : 0;
-	}
-
-	/** Get the comm idle disconnect system attribute */
-	private SystemAttrEnum getIdleDisconnectAttr() {
-		return (modem)
-		      ? SystemAttrEnum.COMM_IDLE_DISCONNECT_MODEM_SEC
-		      : attrCommIdleDisconnect;
+		return idle_disconnect_sec;
 	}
 
 	/** Open the channel */

@@ -37,9 +37,6 @@ abstract public class DeviceImpl extends ControllerIoImpl implements Device {
 	/** Device debug log */
 	static private final DebugLog DEVICE_LOG = new DebugLog("device");
 
-	/** "Long" polling period */
-	static private final int PERIOD_LONG_SEC = 60 * 5;
-
 	/** Check if device log is open */
 	protected boolean isDeviceLogging() {
 		return DEVICE_LOG.isOpen();
@@ -220,20 +217,9 @@ abstract public class DeviceImpl extends ControllerIoImpl implements Device {
 	}
 
 	/** Get the polling period (sec) */
-	protected int getPollPeriod() {
+	protected int getPollPeriodSec() {
 		ControllerImpl c = controller;	// Avoid race
-		return (c != null) ? c.getPollPeriod() : 30;
-	}
-
-	/** Check if link is any type of modem (dial-up or cell) */
-	public boolean isModemAny() {
-		ControllerImpl c = controller;
-		return (c != null) && c.isModemAny();
-	}
-
-	/** Check if the polling period is "long", with a modem link */
-	public boolean isLongPeriodModem() {
-		return getPollPeriod() >= PERIOD_LONG_SEC && isModemAny();
+		return (c != null) ? c.getPollPeriodSec() : 30;
 	}
 
 	/** Check if dial-up is required to communicate */
@@ -258,7 +244,7 @@ abstract public class DeviceImpl extends ControllerIoImpl implements Device {
 
 	/** Perform a periodic poll */
 	@Override
-	public void periodicPoll() {
+	public void periodicPoll(boolean is_long) {
 		sendDeviceRequest(DeviceRequest.QUERY_STATUS);
 	}
 }

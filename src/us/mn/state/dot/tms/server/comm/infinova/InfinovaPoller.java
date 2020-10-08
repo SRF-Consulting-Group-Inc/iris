@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2016-2017  Minnesota Department of Transportation
+ * Copyright (C) 2016-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.infinova;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.server.CameraImpl;
 import us.mn.state.dot.tms.server.comm.CameraPoller;
@@ -38,15 +39,17 @@ public class InfinovaPoller extends TransientPoller<PelcoDProperty>
 	static public final DebugLog INF_LOG = new DebugLog("infinova");
 
 	/** Create a new infinova poller */
-	public InfinovaPoller(String n) {
-		super(n, TCP, INF_LOG);
+	public InfinovaPoller(CommLink link) {
+		super(link, TCP, INF_LOG);
 	}
 
 	/** Create a comm thread */
 	@Override
-	protected InfinovaThread createCommThread(String uri, int timeout) {
+	protected InfinovaThread createCommThread(String uri, int timeout,
+		int nrd)
+	{
 		return new InfinovaThread(this, queue, scheme, uri, timeout,
-			INF_LOG);
+			nrd, INF_LOG);
 	}
 
 	/** Send a PTZ camera move command */

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2015-2018  Minnesota Department of Transportation
+ * Copyright (C) 2015-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.dr500;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.PriorityLevel;
 import us.mn.state.dot.tms.server.comm.SamplePoller;
@@ -33,8 +34,8 @@ public class DR500Poller extends ThreadedPoller<DR500Property>
 	static private final DebugLog DR500_LOG = new DebugLog("dr500");
 
 	/** Create a new DR500 poller */
-	public DR500Poller(String n) {
-		super(n, TCP, DR500_LOG);
+	public DR500Poller(CommLink link) {
+		super(link, TCP, DR500_LOG);
 	}
 
 	/** Perform a controller reset */
@@ -60,7 +61,7 @@ public class DR500Poller extends ThreadedPoller<DR500Property>
  	 * @param p Sample period in seconds. */
 	@Override
 	public void querySamples(ControllerImpl c, int p) {
-		if (c.getPollPeriod() == p)
+		if (c.getPollPeriodSec() == p)
 			addOp(new OpQuerySpeed(c, p));
 	}
 }

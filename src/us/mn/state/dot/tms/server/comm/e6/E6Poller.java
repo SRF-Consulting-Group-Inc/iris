@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2015-2018  Minnesota Department of Transportation
+ * Copyright (C) 2015-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.e6;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.server.TagReaderImpl;
 import us.mn.state.dot.tms.server.comm.TagReaderPoller;
@@ -33,14 +34,14 @@ public class E6Poller extends ThreadedPoller<E6Property>
 	static private final DebugLog E6_LOG = new DebugLog("e6");
 
 	/** Create a new E6 poller */
-	public E6Poller(String n) {
-		super(n, UDP, E6_LOG);
+	public E6Poller(CommLink link) {
+		super(link, UDP, E6_LOG);
 	}
 
 	/** Create a comm thread */
 	@Override
-	public E6Thread createCommThread(String uri, int timeout) {
-		return new E6Thread(this, queue, scheme, uri, timeout);
+	public E6Thread createCommThread(String uri, int timeout, int nrd) {
+		return new E6Thread(this, queue, scheme, uri, timeout, nrd);
 	}
 
 	/** Tag reader */

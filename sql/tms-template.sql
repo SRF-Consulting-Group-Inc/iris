@@ -6,12 +6,13 @@
 -- update data (usually blank).
 --
 -- CHANNEL: camera, dms, font, glyph, graphic, incident, parking_area,
---          sign_config, sign_detail, sign_message
+--          road, road_class, sign_config, sign_detail, sign_message
 --
 -- PAYLOAD: 'publish ' || name, 'video_loss' (camera)
 --          'msg_current', 'msg_sched', 'expire_time' (dms)
 --          'time_stamp' (parking_area)
---          name (r_node, any notify_tag in geo_loc)
+--          id (road_class)
+--          name (r_node, road, any notify_tag in geo_loc)
 --
 SET client_encoding = 'UTF8';
 
@@ -145,10 +146,7 @@ client_event_purge_days	0
 client_units_si	true
 comm_event_enable	true
 comm_event_purge_days	14
-comm_idle_disconnect_dms_sec	0
-comm_idle_disconnect_gps_sec	5
-comm_idle_disconnect_modem_sec	20
-database_version	5.15.0
+database_version	5.17.0
 detector_auto_fail_enable	true
 detector_event_purge_days	90
 detector_occ_spike_enable	true
@@ -182,8 +180,6 @@ dms_quickmsg_store_enable	false
 dms_reset_enable	false
 dms_send_confirmation_enable	false
 dms_update_font_table	true
-dmsxml_modem_op_timeout_secs	305
-dmsxml_op_timeout_secs	65
 dmsxml_reinit_detect	false
 email_rate_limit_hours	0
 email_recipient_action_plan	
@@ -194,7 +190,6 @@ email_sender_server
 email_smtp_host	
 gate_arm_alert_timeout_secs	90
 gate_arm_event_purge_days	0
-gstreamer_version_windows	1.16.2
 help_trouble_ticket_enable	false
 help_trouble_ticket_url	
 incident_clear_advice_multi	JUST CLEARED
@@ -393,6 +388,7 @@ camera_template
 cam_vid_src_ord
 capability
 catalog
+comm_config
 comm_link
 connection
 controller
@@ -435,10 +431,10 @@ privilege
 quick_message
 ramp_meter
 r_node
-rpt_conduit
 road
 road_affix
 role
+rpt_conduit
 sign_config
 sign_detail
 sign_group
@@ -523,6 +519,7 @@ PRV_003E	camera_tab	catalog		f
 PRV_003G	camera_tab	camera_template		f
 PRV_003H	camera_tab	cam_vid_src_ord		f
 PRV_003I	camera_tab	vid_src_template		f
+PRV_004A	comm_admin	comm_config		t
 PRV_0039	comm_admin	comm_link		t
 PRV_0040	comm_admin	modem		t
 PRV_0041	comm_admin	cabinet_style		t
@@ -532,6 +529,7 @@ PRV_0044	comm_admin	alarm		t
 PRV_0045	comm_control	controller	condition	t
 PRV_0046	comm_control	controller	download	t
 PRV_0047	comm_control	controller	counters	t
+PRV_004B	comm_tab	comm_config		f
 PRV_0048	comm_tab	comm_link		f
 PRV_0049	comm_tab	modem		f
 PRV_0050	comm_tab	alarm		f
@@ -764,19 +762,36 @@ COPY iris.direction (id, direction, dir) FROM stdin;
 CREATE TABLE iris.road_class (
 	id INTEGER PRIMARY KEY,
 	description VARCHAR(12) NOT NULL,
-	grade CHAR NOT NULL
+	grade CHAR NOT NULL,
+	scale REAL NOT NULL
 );
 
-COPY iris.road_class (id, description, grade) FROM stdin;
-0		
-1	residential	A
-2	business	B
-3	collector	C
-4	arterial	D
-5	expressway	E
-6	freeway	F
-7	CD road	
+COPY iris.road_class (id, description, grade, scale) FROM stdin;
+0			1
+1	residential	A	2
+2	business	B	3
+3	collector	C	3
+4	arterial	D	4
+5	expressway	E	4
+6	freeway	F	6
+7	CD road		3.5
 \.
+
+CREATE FUNCTION iris.road_class_notify() RETURNS TRIGGER AS
+	$road_class_notify$
+BEGIN
+	PERFORM pg_notify('road_class', CAST(NEW.id AS TEXT));
+	RETURN NULL; -- AFTER trigger return is ignored
+END;
+$road_class_notify$ LANGUAGE plpgsql;
+
+CREATE TRIGGER road_class_notify_trig
+	AFTER UPDATE ON iris.road_class
+	FOR EACH ROW EXECUTE PROCEDURE iris.road_class_notify();
+
+CREATE TRIGGER road_class_table_notify_trig
+	AFTER INSERT OR DELETE ON iris.road_class
+	FOR EACH STATEMENT EXECUTE PROCEDURE iris.table_notify();
 
 CREATE TABLE iris.road_modifier (
 	id SMALLINT PRIMARY KEY,
@@ -802,6 +817,22 @@ CREATE TABLE iris.road (
 	r_class SMALLINT NOT NULL REFERENCES iris.road_class(id),
 	direction SMALLINT NOT NULL REFERENCES iris.direction(id)
 );
+
+CREATE FUNCTION iris.road_notify() RETURNS TRIGGER AS
+	$road_notify$
+BEGIN
+	PERFORM pg_notify('road', NEW.name);
+	RETURN NULL; -- AFTER trigger return is ignored
+END;
+$road_notify$ LANGUAGE plpgsql;
+
+CREATE TRIGGER road_notify_trig
+	AFTER UPDATE ON iris.road
+	FOR EACH ROW EXECUTE PROCEDURE iris.road_notify();
+
+CREATE TRIGGER road_table_notify_trig
+	AFTER INSERT OR DELETE ON iris.road
+	FOR EACH STATEMENT EXECUTE PROCEDURE iris.table_notify();
 
 CREATE VIEW road_view AS
 	SELECT name, abbrev, rcl.description AS r_class, dir.direction
@@ -1215,22 +1246,46 @@ COPY iris.comm_protocol (id, description) FROM stdin;
 41	Streambed
 \.
 
+CREATE TABLE iris.comm_config (
+	name VARCHAR(10) PRIMARY KEY,
+	description VARCHAR(20) NOT NULL UNIQUE,
+	protocol SMALLINT NOT NULL REFERENCES iris.comm_protocol(id),
+	modem BOOLEAN NOT NULL,
+	timeout_ms INTEGER NOT NULL,
+	poll_period_sec INTEGER NOT NULL,
+	long_poll_period_sec INTEGER NOT NULL,
+	idle_disconnect_sec INTEGER NOT NULL,
+	no_response_disconnect_sec INTEGER NOT NULL
+);
+
+ALTER TABLE iris.comm_config
+	ADD CONSTRAINT poll_period_ck
+	CHECK (poll_period_sec >= 5
+	       AND long_poll_period_sec >= poll_period_sec);
+
+CREATE VIEW comm_config_view AS
+	SELECT cc.name, cc.description, cp.description AS protocol, modem,
+	       timeout_ms, poll_period_sec, long_poll_period_sec,
+	       idle_disconnect_sec, no_response_disconnect_sec
+	FROM iris.comm_config cc
+	JOIN iris.comm_protocol cp ON cc.protocol = cp.id;
+GRANT SELECT ON comm_config_view TO PUBLIC;
+
 CREATE TABLE iris.comm_link (
 	name VARCHAR(20) PRIMARY KEY,
 	description VARCHAR(32) NOT NULL,
-	modem BOOLEAN NOT NULL,
 	uri VARCHAR(64) NOT NULL,
-	protocol SMALLINT NOT NULL REFERENCES iris.comm_protocol(id),
 	poll_enabled BOOLEAN NOT NULL,
-	poll_period INTEGER NOT NULL,
-	timeout INTEGER NOT NULL
+	comm_config VARCHAR(10) NOT NULL REFERENCES iris.comm_config
 );
 
 CREATE VIEW comm_link_view AS
-	SELECT cl.name, cl.description, modem, uri, cp.description AS protocol,
-	       poll_enabled, poll_period, timeout
+	SELECT cl.name, cl.description, uri, poll_enabled,
+	       cp.description AS protocol, cc.description AS comm_config,
+	       modem, timeout_ms, poll_period_sec
 	FROM iris.comm_link cl
-	JOIN iris.comm_protocol cp ON cl.protocol = cp.id;
+	JOIN iris.comm_config cc ON cl.comm_config = cc.name
+	JOIN iris.comm_protocol cp ON cc.protocol = cp.id;
 GRANT SELECT ON comm_link_view TO PUBLIC;
 
 CREATE TABLE iris.modem (
@@ -2739,8 +2794,9 @@ CREATE VIEW dms_view AS
 GRANT SELECT ON dms_view TO PUBLIC;
 
 CREATE VIEW dms_message_view AS
-	SELECT d.name, msg_current, cc.description AS condition, multi,
-	       beacon_enabled, prefix_page, msg_priority,
+	SELECT d.name, msg_current, cc.description AS condition,
+	       fail_time IS NOT NULL AS failed, multi, beacon_enabled,
+	       prefix_page, msg_priority,
 	       iris.sign_msg_sources(source) AS sources, duration, expire_time
 	FROM iris.dms d
 	LEFT JOIN iris.controller c ON d.controller = c.name

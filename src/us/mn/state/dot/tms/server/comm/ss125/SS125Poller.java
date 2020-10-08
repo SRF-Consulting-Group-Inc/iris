@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2018  Minnesota Department of Transportation
+ * Copyright (C) 2009-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.ss125;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.PriorityLevel;
 import us.mn.state.dot.tms.server.comm.SamplePoller;
@@ -34,8 +35,8 @@ public class SS125Poller extends ThreadedPoller<SS125Property>
 	static private final DebugLog SS125_LOG = new DebugLog("ss125");
 
 	/** Create a new SS125 poller */
-	public SS125Poller(String n) {
-		super(n, TCP, SS125_LOG);
+	public SS125Poller(CommLink link) {
+		super(link, TCP, SS125_LOG);
 	}
 
 	/** Perform a controller reset */
@@ -61,7 +62,7 @@ public class SS125Poller extends ThreadedPoller<SS125Property>
  	 * @param p Sample period in seconds. */
 	@Override
 	public void querySamples(ControllerImpl c, int p) {
-		if (c.getPollPeriod() == p)
+		if (c.getPollPeriodSec() == p)
 			addOp(new OpQuerySamples(c, p));
 	}
 }

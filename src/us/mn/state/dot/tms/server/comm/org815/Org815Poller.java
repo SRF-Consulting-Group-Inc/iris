@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2010-2019  Minnesota Department of Transportation
+ * Copyright (C) 2010-2020  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 package us.mn.state.dot.tms.server.comm.org815;
 
 import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.tms.CommLink;
 import us.mn.state.dot.tms.DeviceRequest;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.WeatherSensorImpl;
@@ -34,8 +35,8 @@ public class Org815Poller extends ThreadedPoller<Org815Property>
 	static private final DebugLog ORG815_LOG = new DebugLog("org815");
 
 	/** Create a new ORG-815 poller */
-	public Org815Poller(String n) {
-		super(n, TCP, ORG815_LOG);
+	public Org815Poller(CommLink link) {
+		super(link, TCP, ORG815_LOG);
 	}
 
 	/** Send a device request */
