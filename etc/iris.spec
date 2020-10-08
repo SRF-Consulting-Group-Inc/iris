@@ -113,9 +113,6 @@ ln -sf /usr/lib/jvm/jre-openjdk/lib/amd64/jli/libjli.so /usr/lib64
 %{_serverdir}/iris-server-%{version}.jar
 %{_serverdir}/iris-common-%{version}.jar
 %{_serverdir}/mail.jar
-%{_serverdir}/lib/json-@@JSON.VERSION@@.jar
-%{_serverdir}/lib/postgis-jdbc-@@POSTGIS.VERSION@@.jar
-%{_serverdir}/lib/postgis-geometry-@@POSTGIS.VERSION@@.jar
 
 # /var/lib/iris
 %dir %attr(3775,tms,tms) /var/lib/iris
