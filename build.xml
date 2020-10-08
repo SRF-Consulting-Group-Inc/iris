@@ -96,6 +96,11 @@
 			       value="jna-platform-${jna_version}.jar"/>
 			<param name="file.dep"
 			       value="gst1-java-core-${gst_java_version}.jar"/>
+			<param name="file.dep" value="json-${json_version}.jar"/>
+			<param name="file.dep"
+				value="postgis-jdbc-${postgis_version}.jar"/>
+			<param name="file.dep"
+				value="postgis-geometry-${postgis_version}.jar"/>
 		</antcall>
 	</target>
 
@@ -110,6 +115,8 @@
 				        value="${jna_version}"/>
 				<filter token="GST.JAVA.VERSION"
 				        value="${gst_java_version}"/>
+				<filter token="JSON.VERSION" value="${json_version}"/>
+				<filter token="POSTGIS.VERSION" value="${postgis_version}"/>
 				<filter token="BUILD.RPM" value="${build.rpm}"/>
 				<filter token="RPM.URL" value="${rpm.url}"/>
 				<filter token="RPM.RELEASE"
