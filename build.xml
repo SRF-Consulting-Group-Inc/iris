@@ -232,6 +232,9 @@
 		<copy todir="${dist.server}">
 			<fileset dir="${lib.dir}">
 				<include name="mail.jar"/>
+				<include name="json-${json_version}.jar"/>
+				<include name="postgis-jdbc-${postgis_version}.jar"/>
+				<include name="postgis-geometry-${postgis_version}.jar"/>
 			</fileset>
 		</copy>
 	</target>
