@@ -139,9 +139,6 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 	
 	/** Draw the specified map object. Overridden to do nothing so only
 	 *  selected alerts are drawn.
-	 *  
-	 *  TODO decide if we want to draw non-selected alerts too and distinguish
-	 *  selected ones somehow...
 	 */
 	@Override
 	public void draw(Graphics2D g, MapObject mo) { }
