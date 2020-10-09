@@ -236,8 +236,6 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 	public boolean checkStyle(ItemStyle is, IpawsAlertDeployer proxy) {
 		Integer t = checkAlertTimes(proxy);
 		boolean past = IpawsAlertDeployerHelper.isPastPostAlertTime(proxy);
-//		if (proxy.getName().equals("ipaws_dplr_4"))
-//			System.out.println("past = " + past);
 		if (t == null)
 			// problem with the dates
 			return false;
@@ -258,6 +256,8 @@ public class AlertManager extends ProxyManager<IpawsAlertDeployer> {
 			return Boolean.FALSE.equals(proxy.getDeployed())
 				&& !proxy.getActive() && past;
 		case ALL:
+			// TODO some alerts are slipping through here but not in other
+			// categories...
 			return true;
 		default:
 			return false;
