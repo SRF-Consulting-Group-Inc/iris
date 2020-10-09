@@ -173,11 +173,11 @@ public class IpawsReader {
             
             // if it doesn't, create a new one
             if (ia == null) {
-            	IpawsProcJob.logError("Creating new alert with name: " + name);
+            	IpawsProcJob.log("Creating new alert with name: " + name);
             	ia = new IpawsAlertImpl(name);
             	ia.notifyCreate();
             } else
-            	IpawsProcJob.logError("Updating alert with name: " + name);
+            	IpawsProcJob.log("Updating alert with name: " + name);
             
             // either way set all the values
             ia.doSetIdentifier(getTagValue("identifier", element));

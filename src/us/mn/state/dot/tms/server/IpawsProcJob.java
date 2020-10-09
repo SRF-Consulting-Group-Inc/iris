@@ -99,7 +99,7 @@ public class IpawsProcJob extends Job {
 	static private final int OFFSET_SECS = 30;
 	
 	/** Log an IPAWS message */
-	static public void logError(String msg) {
+	static public void log(String msg) {
 		if (IPAWS_LOG.isOpen())
 			IPAWS_LOG.log(msg);
 	}
@@ -119,10 +119,10 @@ public class IpawsProcJob extends Job {
 				IpawsAlertImpl ia = it.next();
 				
 				if (ia.getPurgeable() == null) {
-					logError("Processing IPAWS " + "alert: " + ia.getName());
+					log("Processing IPAWS " + "alert: " + ia.getName());
 					
 					String area = ia.getArea();
-					logError(area);
+					log(area);
 					
 					// normalize the geometry and get a geographic object
 					// (sets the polygon on the alert object for us, or marks
@@ -156,7 +156,7 @@ public class IpawsProcJob extends Job {
 						// alert hasn't been processed since before alert
 						// start time and alert is now active - reprocess to
 						// create a deployer with the appropriate message
-						logError("Alert " + ia.getName() +
+						log("Alert " + ia.getName() +
 								" is starting");
 						processAlert(ia);
 					} else if (proc.before(end) && (now.after(end)
@@ -164,7 +164,7 @@ public class IpawsProcJob extends Job {
 						// deployer was for during alert - reprocess to create
 						// a new deployer for post-alert (which may blank the
 						// signs)
-						logError("Alert " + ia.getName() +
+						log("Alert " + ia.getName() +
 								" is ending");
 						processAlert(ia);
 					} else {
@@ -198,6 +198,7 @@ public class IpawsProcJob extends Job {
 			}
 		} catch (Exception e) {
 			// if we hit any exceptions, send an email alert
+			e.printStackTrace();
 			sendEmailAlert("Error encountered in IPAWS alert processing " +
 				"system. Check the server logs for details.");
 		}
@@ -208,10 +209,10 @@ public class IpawsProcJob extends Job {
 			Date alertStart, Date alertEnd) {
 		// get the message template from the alert config
 		String qmn = iac.getQuickMessage();
-		logError("Looking up quick message: " + qmn);
+		log("Looking up quick message: " + qmn);
 		QuickMessage qm = QuickMessageHelper.lookup(qmn);
 		String qmMulti = qm != null ? qm.getMulti() : "";
-		logError("Got message template: " + qmMulti);
+		log("Got message template: " + qmMulti);
 		
 		// use a MultiBuilder to process cap action tags
 		MultiBuilder builder = new MultiBuilder() {
@@ -297,7 +298,7 @@ public class IpawsProcJob extends Job {
 		// process the QuickMessage with the MultiBuilder
 		new MultiString(qmMulti).parse(builder);
 		MultiString ms = builder.toMultiString();
-		logError("MULTI: " + ms.toString());
+		log("MULTI: " + ms.toString());
 		
 		// return the MULTI if it's valid and not blank
 		if (ms.isValid() && !ms.isBlank()) {
@@ -339,7 +340,7 @@ public class IpawsProcJob extends Job {
 		// calculate a priority "score" (higher = more important)
 		float score = wu * uf + ws * sf + wc * cf;
 		
-		logError("Priority score: " + wu + " * " + uf + " + " + ws
+		log("Priority score: " + wu + " * " + uf + " + " + ws
 				+ " * " + sf + " + " + wc + " * " + cf + " = " + score);
 		
 		// convert the score to an index and return one of the allowed values
@@ -387,6 +388,8 @@ public class IpawsProcJob extends Job {
 				// query the list of DMS that falls within the MultiPolygon
 				// for this alert - use array_agg to get one array instead of
 				// multiple rows do this once for each sign group
+				log("Searching for DMS in group " + iac.getSignGroup() +
+						" for alert " + ia.getName());
 				int t = SystemAttrEnum.IPAWS_SIGN_THRESH_AUTO_METERS.getInt();
 				IpawsAlertImpl.store.query(
 				"SELECT array_agg(d.name) FROM iris." + DMS.SONAR_TYPE + " d" +
@@ -403,7 +406,7 @@ public class IpawsProcJob extends Job {
 							// make sure we got some DMS
 							String[] dms = (String[]) row.getArray(1)
 									.getArray();
-							
+							log("Found " + dms.length + " signs");
 							if (dms.length > 0) {
 								// if we did, finish processing the alert
 								IpawsAlertDeployerImpl iad = 
@@ -422,7 +425,7 @@ public class IpawsProcJob extends Job {
 		// note that the alert has been processed - if no deployers were
 		// created, the alert can be purged
 		if (iadList.isEmpty() && ia.getPurgeable() == null) {
-			logError("No alert deployers created for " +
+			log("No alert deployers created for " +
 					ia.getName() + ", marking alert as purgeable");
 			ia.doSetPurgeable(true);
 		} else if (!iadList.isEmpty())
@@ -449,7 +452,7 @@ public class IpawsProcJob extends Job {
 		// check the time against the alert deployer - if it's past the after
 		// alert time, don't make a deployer and cancel any previous one
 		if (iad != null && iad.isPastPostAlertTime(aEnd)) {
-			logError("Past alert display end time. Canceling any " +
+			log("Past alert display end time. Canceling any " +
 					"existing messages and not posting any more.");
 			iad.setDeployedNotify(false);
 			
@@ -496,7 +499,7 @@ public class IpawsProcJob extends Job {
 				postAlert = iad.getPostAlertTime();
 			}
 			
-			logError("Creating new deployer " + name +
+			log("Creating new deployer " + name +
 					" replacing " + replaces);
 			iad = new IpawsAlertDeployerImpl(name, ia.getName(), gl, aStart,
 					aEnd, iac.getName(), iac.getSignGroup(), adms, ddms,
@@ -649,7 +652,7 @@ public class IpawsProcJob extends Job {
 		PushNotificationImpl pn = new PushNotificationImpl(
 				IpawsAlertDeployer.SONAR_TYPE, dName,
 				true, title, description);
-		logError("Sending notification " + pn.getName());
+		log("Sending notification " + pn.getName());
 		
 		// notify clients of the creation so they receive it, then return
 		pn.notifyCreate();
@@ -694,13 +697,14 @@ public class IpawsProcJob extends Job {
 	 *  no polygon, the other location information is used to look up one or
 	 *  more polygons.
 	 */
-	private void getGeogPoly(IpawsAlertImpl ia) throws TMSException {
+	private void getGeogPoly(IpawsAlertImpl ia) throws TMSException,
+				SQLException, NoSuchFieldException {
 		// get a JSON object from the area string (which is in JSON syntax)
 		JSONObject jo = null;
 		String ps = null;
 		if (ia.getArea() != null) {
 			try {
-				logError(ia.getArea());
+				log(ia.getArea());
 				jo = new JSONObject(ia.getArea());
 				// get the "polygon" section
 				if (jo.has("polygon"))
@@ -718,7 +722,7 @@ public class IpawsProcJob extends Job {
 		// if we didn't get a polygon, check the other fields in the area to
 		// find one we can use to lookup a geographical area
 		if (ps == null) {
-			logError("No polygon, trying UGC codes...");
+			log("No polygon, trying UGC codes...");
 			
 			// look for geocode fields in the area section
 			JSONObject gj;
@@ -760,7 +764,7 @@ public class IpawsProcJob extends Job {
 				sb.setLength(sb.length() - 2);
 			sb.append(")");
 			String arrStr = sb.toString();
-			logError("Got codes: " + arrStr);
+			log("Got codes: " + arrStr);
 			
 			// query the database for the result
 			IpawsAlertImpl.store.query(
@@ -769,30 +773,25 @@ public class IpawsProcJob extends Job {
 			new ResultFactory() {
 				@Override
 				public void create(ResultSet row) throws Exception {
-					try {
-						// we should get back a MultiPolygon string
-						MultiPolygon mp = new MultiPolygon(row.getString(1));
+					// we should get back a MultiPolygon string
+					String polystr = row.getString(1);
+					if (polystr != null && !polystr.isEmpty()) {
+						MultiPolygon mp = new MultiPolygon(polystr);
 						ia.doSetGeoPoly(mp);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					} else
+						log("No polygon found for UGC codes!");
 				}
 			});
 		} else {
 			// reformat the string so PostGIS will accept it
-			try {
-				// create and set the MultiPolygon on the alert object
-				String pgps = formatMultiPolyStr(ps);
-				MultiPolygon mp = new MultiPolygon(pgps);
-				ia.doSetGeoPoly(mp);
-			} catch (NoSuchFieldException e) {
-				e.printStackTrace();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			// create and set the MultiPolygon on the alert object
+			log("Got polygon: " + ps);
+			String pgps = formatMultiPolyStr(ps);
+			MultiPolygon mp = new MultiPolygon(pgps);
+			ia.doSetGeoPoly(mp);
 		}
 		if (ia.getGeoPoly() == null) {
-			logError("No polygon found, marking alert " +
+			log("No polygon found, marking alert " +
 					ia.getName() + " as purgeable");
 			ia.doSetPurgeable(true);
 		}

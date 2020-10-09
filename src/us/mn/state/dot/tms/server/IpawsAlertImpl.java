@@ -169,8 +169,8 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	 */
 	static public void purgeRecords() throws TMSException {
 		int age = getPurgeDays();
-		System.out.println("Purging purgeable IPAWS alert records older than "
-				+ age + " days...");
+		IpawsProcJob.log("Purging purgeable IPAWS alert records older " +
+				"than " + age + " days...");
 		if (store != null && age > 0) {
 			store.update("DELETE FROM " + TABLE +
 				" WHERE expiration_date < now() - '" + age +
@@ -225,7 +225,6 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 			try {
 				geo_poly = new MultiPolygon(gp);
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				System.out.println("Error generating polygon from: " + gp);
 				e.printStackTrace();
 			}
@@ -1007,7 +1006,7 @@ public class IpawsAlertImpl extends BaseObjectImpl implements IpawsAlert {
 	 */
 	public void doSetPurgeable(Boolean p) throws TMSException {
 		if (!objectEquals(purgeable, p)) {
-			System.out.println("Setting purgeable flag of alert " +
+			IpawsProcJob.log("Setting purgeable flag of alert " +
 					name + " to " + p);
 			store.update(this, "purgeable", p);
 			setPurgeable(p);

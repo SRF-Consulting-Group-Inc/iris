@@ -97,7 +97,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				try {
 					namespace.addObject(new IpawsAlertDeployerImpl(row));
 				} catch (Exception e) {
-					IpawsProcJob.logError("Error adding: " + row.getString(1));
+					IpawsProcJob.log("Error adding: " + row.getString(1));
 					e.printStackTrace();
 				}
 			}
@@ -867,7 +867,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	 */
 	public void doSetDeployed(Boolean d) throws TMSException {
 		if (d != null) {	// don't allow setting back to null
-			IpawsProcJob.logError("Setting deployed on deployer " +
+			IpawsProcJob.log("Setting deployed on deployer " +
 						name + " to " + d);
 			if (Boolean.TRUE.equals(d))
 				// call with flag if it's already deployed (then it's an
@@ -912,7 +912,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 			int millis = (int) TimeUnit.MILLISECONDS.convert(
 					pre_alert_time, prePostTimeUnits);
 			Date start = new Date(alert_start.getTime() - millis);
-			IpawsProcJob.logError("Waiting until " + start +
+			IpawsProcJob.log("Waiting until " + start +
 					" for alert to start...");
 		}
 		return true;
@@ -1095,7 +1095,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				IpawsAlertDeployerImpl old =
 						lookupIpawsAlertDeployer(replaces);
 				if (old != null && Boolean.TRUE.equals(old.getDeployed())) {
-					IpawsProcJob.logError("Canceling old deployer " +
+					IpawsProcJob.log("Canceling old deployer " +
 						old.getName() + " for alert " + old.getAlertId());
 					old.setDeployedNotify(false);
 				}
@@ -1110,7 +1110,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 				// use the auto DMS if we don't have deployed DMS
 				setDeployedDmsNotify(auto_dms);
 			
-			IpawsProcJob.logError("Deploying alert " + alert_id +
+			IpawsProcJob.log("Deploying alert " + alert_id +
 				" with message " + deployed_multi + ", priority " +
 				mp.toString() + ", and duration " + duration + " to " +
 				deployed_dms.length + " DMS from deployer " + name + " ...");
@@ -1164,7 +1164,7 @@ public class IpawsAlertDeployerImpl extends BaseObjectImpl
 	/** Cancel an alert on the specified list of DMS. */
 	private void cancelAlert(String[] dmsList) throws TMSException {
 		if (dmsList != null && dmsList.length > 0) {
-			IpawsProcJob.logError("Canceling deployment " + name
+			IpawsProcJob.log("Canceling deployment " + name
 					+ " of alert " + alert_id + " on " + dmsList.length +
 					" DMS...");
 			for (String dmsName: dmsList) {
