@@ -205,8 +205,9 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 		
 		// check the style with the deployer - past alerts will be a
 		// different color and alert style will trigger different behavior
-		Color outline = null;
-		Color fill = null;
+		// past and inactive alerts are gray
+		Color outline = PAST_ALERT_COLOR;
+		Color fill = PAST_ALERT_FILL;
 		ItemStyle alertState = null;
 		if (manager.checkStyle(ItemStyle.ACTIVE, iad)) {
 			// active alerts are red
@@ -223,12 +224,6 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 			outline = SCHEDULED_ALERT_COLOR;
 			fill = SCHEDULED_ALERT_FILL;
 			alertState = ItemStyle.SCHEDULED;
-		} else if (manager.checkStyle(ItemStyle.PAST, iad) ||
-				manager.checkStyle(ItemStyle.INACTIVE, iad)) {
-			// past and inactive alerts are gray
-			outline = PAST_ALERT_COLOR;
-			fill = PAST_ALERT_FILL;
-			alertState = ItemStyle.PAST;
 		}
 		
 		// draw the polygons on the graphics context
@@ -274,8 +269,9 @@ public class AlertTheme extends ProxyTheme<IpawsAlertDeployer> {
 			// for active alerts not in edit mode, draw only deployed DMS
 			for (String dmsName: iad.getDeployedDms())
 				drawDms(g, dmsName, dmsDeployedStyle, t);
-		} else if (alertState == ItemStyle.PAST) {
-			// for past alerts draw only deployed DMS but using all style
+		} else {
+			// for past and inactive alerts draw only deployed DMS but using
+			// "all" style
 			for (String dmsName: iad.getDeployedDms())
 				drawDms(g, dmsName, dmsAllStyle, t);
 		}
