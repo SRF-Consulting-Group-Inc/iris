@@ -321,7 +321,17 @@ public final class SubnetChecker {
 		StringBuilder sb = new StringBuilder();
 		Enumeration<NetworkInterface> e;
 		try {
-			e = NetworkInterface.getNetworkInterfaces();
+			try {
+				e = NetworkInterface.getNetworkInterfaces();
+			} catch (java.lang.Error e1) {
+				try {
+					// Deal with rare getNetworkInterfaces() exception.
+					// (See Java Bug System: JDK-8165665)
+					e = NetworkInterface.getNetworkInterfaces();
+				} catch (java.lang.Error e2) {
+					return "";
+				}
+			}
 			while (e.hasMoreElements()) {
 				NetworkInterface n = e.nextElement();
 				Enumeration<InetAddress> ee = n.getInetAddresses();
@@ -333,7 +343,7 @@ public final class SubnetChecker {
 				}
 			}
 		} catch (SocketException e1) {
-			e1.printStackTrace();
+			return "";
 		}
 		return sb.toString();
 	}
