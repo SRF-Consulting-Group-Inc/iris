@@ -57,7 +57,7 @@ public class SSLState {
 	static private String[] getProtocols(SSLEngine engine) {
 		ArrayList<String> protocols = new ArrayList<String>();
 		for (String sp: engine.getSupportedProtocols()) {
-			if (sp.equals("TLSv1.2") || sp.equals("TLSv1.3")) {
+			if (sp.equals("TLSv1.2")) { // || sp.equals("TLSv1.3")) {
 				protocols.add(sp);
 				DEBUG_TLS.log("protocol enabled: " + sp);
 			}

@@ -134,9 +134,33 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 			"msg_user, msg_sched, msg_current, expire_time " +
 			"FROM iris." + SONAR_TYPE + ";", new ResultFactory()
 		{
+			// original method code
+//			public void create(ResultSet row) throws Exception {
+//				namespace.addObject(new DMSImpl(row));
+//			}
+			// temporary fix for nulled _dms.gps fields.
+			// replace nulled dms.gps value in DB (if gps exists)
 			public void create(ResultSet row) throws Exception {
-				namespace.addObject(new DMSImpl(row));
+				DMSImpl dms = new DMSImpl(row);
+				namespace.addObject(dms);
+				if (dms.gps == null) {
+					Gps g = (Gps) namespace.lookupObject(Gps.SONAR_TYPE, dms.name+"_gps");
+					if (g != null)
+						dms.doSetGps(g);
+				}
 			}
+//			// temporary fix for nulled _dms.gps fields.
+//			// just replace dms.gps value in memory
+//			public void create(ResultSet row) throws Exception {
+//				DMSImpl dms = new DMSImpl(row);
+//				namespace.addObject(dms);
+//				if (dms.gps == null) {
+//					Gps g = (Gps) namespace.lookupObject(Gps.SONAR_TYPE, dms.name+"_gps");
+//					if (g != null) {
+//						dms.setGps(g);
+//					}
+//				}
+//			}
 		});
 	}
 
