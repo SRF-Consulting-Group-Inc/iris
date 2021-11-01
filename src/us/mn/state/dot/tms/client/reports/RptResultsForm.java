@@ -101,7 +101,7 @@ public class RptResultsForm extends AbstractForm {
 	};
 	
 	/** Date formatter for CSV file export */
-	private SimpleDateFormat dtFormatter = new SimpleDateFormat("yyyy_mm_dd_HH_mm_ss");
+	private SimpleDateFormat dtFormatter = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 
 	/** Report CSV export file */
 	//TODO: Convert directory to be a system attribute
