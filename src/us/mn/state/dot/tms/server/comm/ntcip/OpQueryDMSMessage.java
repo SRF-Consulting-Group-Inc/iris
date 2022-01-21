@@ -221,10 +221,7 @@ public class OpQueryDMSMessage extends OpDMS {
 			if (!multi.isBlank())
 				return DmsMsgPriority.OTHER_SYSTEM;
 		}
-		if (DmsMsgPriority.RESERVED == rp)
-			return DmsMsgPriority.OTHER_SYSTEM;
-		else
-			return rp;
+		return rp;
 	}
 
 	/** Set the current message on the sign */

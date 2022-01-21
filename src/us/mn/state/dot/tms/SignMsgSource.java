@@ -36,7 +36,8 @@ public enum SignMsgSource {
 	slow_warning,   // 10 slow warning with [slow...] tag
 	speed_advisory, // 11 speed advisory with [vsa] tag
 	parking,        // 12 parking availability with [pa...] tag
-	clearguide;     // 13 ClearGuide advisory with [cg...] tag
+	clearguide,     // 13 ClearGuide advisory with [cg...] tag
+	standby;        // 14 Standby message with [standby] tag
 
 	/** Get the bit for a source */
 	public int bit() {
