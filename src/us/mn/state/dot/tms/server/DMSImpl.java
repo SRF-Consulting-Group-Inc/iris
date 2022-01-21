@@ -1368,7 +1368,7 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	@Override
 	protected boolean isAvailable() {
 		return super.isAvailable()
-		    && isMsgBlank()
+		    && (isMsgBlank() || isMsgStandby())
 		    && purpose == DevicePurpose.GENERAL;
 	}
 
@@ -1415,12 +1415,16 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 
 	/** Test if a DMS has been deployed by a user */
 	public boolean isUserDeployed() {
-		return isMsgDeployed() && isMsgOperator();
+		return isMsgDeployed()
+		    && isMsgOperator()
+		    && !isMsgStandby();
 	}
 
 	/** Test if a DMS has been deployed by schedule */
 	public boolean isScheduleDeployed() {
-		return isMsgDeployed() && isMsgScheduled();
+		return isMsgDeployed()
+		    && isMsgScheduled()
+		    && !isMsgStandby();
 	}
 
 	/** Test if a DMS has been deployed by an external system */
