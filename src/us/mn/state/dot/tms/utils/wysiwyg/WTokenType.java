@@ -147,6 +147,11 @@ public enum WTokenType {
 	incidentLoc(             "Incident Locator"),
 
 	//-------------------------------------
+	//=== Standby-message token ===
+
+	standby(                 "Standby Message"),
+	
+	//-------------------------------------
 	//=== Special WYSIWYG-editor tokens ===
 
 	// one character in a span of text
