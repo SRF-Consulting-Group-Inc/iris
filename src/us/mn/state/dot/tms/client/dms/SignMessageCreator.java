@@ -23,6 +23,8 @@ import us.mn.state.dot.tms.SignMessage;
 import us.mn.state.dot.tms.SignMessageHelper;
 import us.mn.state.dot.tms.SignMsgSource;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.utils.wysiwyg.WMessage;
+import us.mn.state.dot.tms.utils.wysiwyg.WTokenType;
 
 /**
  * This is a utility class to create sign messages.
@@ -131,6 +133,12 @@ public class SignMessageCreator {
 		boolean be, DmsMsgPriority mp, int src, String owner,
 		Integer duration)
 	{
+		WMessage wmsg = new WMessage(multi);
+		if (wmsg.removeAll(WTokenType.standby)) {
+			multi = wmsg.toString();
+			mp = DmsMsgPriority.STANDBY;
+			src |= SignMsgSource.standby.bit();
+		}
 		boolean pp = false; // Operators cannot enable prefix page
 		SignMessage sm = SignMessageHelper.find(sc, inc, multi, pp, mp,
 			src, owner, duration);
