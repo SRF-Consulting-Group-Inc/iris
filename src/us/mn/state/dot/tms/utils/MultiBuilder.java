@@ -443,4 +443,10 @@ public class MultiBuilder implements Multi {
 		multi.append(code);
 		multi.append("]");
 	}
+
+	/** Add a standby-message tag */
+	@Override
+	public void addStandby() {
+		multi.append("[standby]");
+	}
 }

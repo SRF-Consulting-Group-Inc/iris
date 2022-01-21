@@ -204,4 +204,7 @@ public interface Multi {
 
 	/** Add an incident locator */
 	void addLocator(String code);
+
+	/** Add a standby-message tag */
+	void addStandby();
 }

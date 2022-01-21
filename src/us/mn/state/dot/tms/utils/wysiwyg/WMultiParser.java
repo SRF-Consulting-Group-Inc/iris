@@ -285,4 +285,12 @@ public class WMultiParser implements Multi {
 	public void addLocator(String code) {
 		page.addToken(new WtLocator(code));
 	}
+
+	/* (non-Javadoc)
+	 * @see us.mn.state.dot.tms.utils.AddStandby()
+	 */
+	@Override
+	public void addStandby() {
+		page.addToken(new WtStandby());
+	}
 }
