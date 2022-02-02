@@ -81,8 +81,11 @@ public class WMsgEditorForm extends AbstractForm {
 	/* Menu Bar */
 	private WMsgEditorMenuBar menu_bar;
 	
-	/* Prefix Check Boxes */ 
+	/* Prefix Check Box */ 
 	private JCheckBox prefix_chk;
+
+	/* Standby Check Box */ 
+	private JCheckBox standby_chk;
 
 	/* Sign drop-down (only present for groups) */
 	private WMultiConfigComboBox multiConfigList;
@@ -179,8 +182,9 @@ public class WMsgEditorForm extends AbstractForm {
 		/* Menu Bar */
 		menu_bar = new WMsgEditorMenuBar();
 		
-		/* Prefix Check Boxes */ 
+		/* Prefix and Standby Check Boxes */ 
 		prefix_chk = new JCheckBox();
+		standby_chk = new JCheckBox(controller.toggleStandbyMsg);
 		
 		/* Sign group drop-down - only present if editing for sign group */
 		if (signGroupMessage()) {
@@ -328,7 +332,7 @@ public class WMsgEditorForm extends AbstractForm {
 		gbc.anchor = GridBagConstraints.BASELINE_LEADING;
 		gbPanel.add(epanel, gbc);
 		
-		/* Beacon and prefix CheckBoxes */
+		/* Prefix and Standby CheckBoxes */
 		gbc.gridx = 1;
 		gbc.gridy = 3;
 		gbc.weightx = 0;
@@ -337,8 +341,12 @@ public class WMsgEditorForm extends AbstractForm {
 		JPanel pPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		pPanel.add(new ILabel("wysiwyg.editor.prefix"));
 		pPanel.add(prefix_chk);
+		pPanel.add(Box.createHorizontalStrut(10));
+		pPanel.add(new ILabel("wysiwyg.editor.standby"));
+		pPanel.add(standby_chk);
 		gbPanel.add(pPanel, gbc);
 		prefix_chk.setSelected(controller.getPrefixPage());
+		standby_chk.setSelected(controller.isStandby());
 		
 		/* Cancel/Save As/Save Buttons */
 		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -542,6 +550,11 @@ public class WMsgEditorForm extends AbstractForm {
 	/** Return the state of the prefix page box. */
 	public boolean getPrefixPage() {
 		return prefix_chk.isSelected();
+	}
+	
+	/** Return the state of the standby message box. */
+	public boolean getStandby() {
+		return standby_chk.isSelected();
 	}
 
 	public String getMultiPanelContents() {
