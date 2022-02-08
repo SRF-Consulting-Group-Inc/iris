@@ -4055,7 +4055,7 @@ public class WController {
 		if (multiConfigUseable()) {
 			int maxHeight = multiConfig.getPixelHeight();
 			int maxWidth = multiConfig.getPixelWidth();
-			int maxColorScheme = multiConfig.getColorScheme().ordinal();
+			int colorScheme = multiConfig.getColorScheme().ordinal();
 			
 			// clear the list we have before updating
 			supportedGraphics.removeAllElements();
@@ -4064,8 +4064,10 @@ public class WController {
 			Iterator<Graphic> it = GraphicHelper.iterator();
 			while (it.hasNext()) {
 				Graphic g = it.next();
+				int gcs = g.getColorScheme();
 				if (g.getHeight() <= maxHeight && g.getWidth() <= maxWidth
-						&& g.getColorScheme() <= maxColorScheme)
+						&& (gcs == colorScheme
+						|| gcs == ColorScheme.MONOCHROME_1_BIT.ordinal()))
 					supportedGraphics.addElement(g);
 			}
 		} else
