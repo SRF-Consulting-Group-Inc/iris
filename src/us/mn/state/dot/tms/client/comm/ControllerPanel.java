@@ -58,7 +58,7 @@ public class ControllerPanel extends ProxyTablePanel<Controller> {
 				PrintWriter pw = new PrintWriter(csvFile);
 				
 				// write the header
-				String chead = String.join(",", "Controller", "Comm Link",
+				String chead = String.join(",", "Controller", "Comm Link", "URI",
 						"Drop ID", "Location", "Notes", "Version", "Condition",
 						"Fail Time", "Status", "Maint Status", "Timeout Errors",
 						"Checksum Errors", "Parsing Errors", "Controller Errors",
@@ -75,7 +75,8 @@ public class ControllerPanel extends ProxyTablePanel<Controller> {
 					String ft = c.getFailTime() != null ?
 							new Date(c.getFailTime()).toString() : "";
 					cline = String.join(",", c.getName(),
-						c.getCommLink().getName(), Integer.toString(c.getDrop()),
+						c.getCommLink().getName(), c.getCommLink().getUri(),
+						Integer.toString(c.getDrop()),
 						c.getLocation(), c.getNotes(), c.getVersion(),
 						CtrlCondition.fromOrdinal(c.getCondition()).toString(), ft,
 						c.getStatus(), c.getMaint(),
