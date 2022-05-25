@@ -46,6 +46,10 @@ abstract public class ProxyTableModel<T extends SonarObject>
 
 	/** Proxy descriptor */
 	protected final ProxyDescriptor<T> descriptor;
+	
+	public ProxyDescriptor<T> getDescriptor() {
+		return descriptor;
+	}
 
 	/** Visible row count */
 	private final int visible_row_count;
