@@ -537,12 +537,16 @@ public class DMSDispatcher extends JPanel {
 	 * Or uses SignConfig from the selected sign(s).
 	 * Returns null if it fails for any reason. */
 	static public TransMsgPattern getTransMsgPattern(MsgPattern pat) {
-		if (pat == null)
-			return null;
-		SignConfig sc = pat.getSignConfig();
+		SignConfig sc = null;
+		String     ms = null;
+		if (pat != null) {
+			sc = pat.getSignConfig();
+			ms = pat.getMulti();
+		}
 		if (sc == null)
 			sc = selSignConfig;
-		String ms = pat.getMulti();
+		if (ms == null)
+			ms = "";
 		return TransMsgPattern.generate(sc, ms);
 	}
 }
