@@ -644,6 +644,23 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 		}
 	}
 
+	/** Pavement friction (null for missing) */
+	private transient Integer pvmt_friction;
+
+	/** Get pavement friction (null for missing) */
+	@Override
+	public Integer getPvmtFriction() {
+		return pvmt_friction;
+	}
+
+	/** Set pavement friction (null for missing) */
+	public void setPvmtFrictionNotify(Integer v) {
+		if (!objectEquals(v, pvmt_friction)) {
+			pvmt_friction = v;
+			notifyAttribute("pvmtFriction");
+		}
+	}
+
 	/** Settings (JSON) read from sensors */
 	private String settings;
 
