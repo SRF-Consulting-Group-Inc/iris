@@ -276,7 +276,9 @@ public class SingleSignTab extends IPanel {
 	{
 		String ms = dispatcher.getPreviewMulti(dms);
 		RasterBuilder rb = DMSHelper.createRasterBuilder(dms);
-		return new SignPixelPager(pix_pnl, rb, ms, PREVIEW_CLR);
+		return (rb != null)
+			  ? new SignPixelPager(pix_pnl, rb, ms, PREVIEW_CLR)
+			  : null;
 	}
 
 	/** Update the current panel */
@@ -286,7 +288,9 @@ public class SingleSignTab extends IPanel {
 		String ms = DMSHelper.getMultiString(dms);
 		RasterBuilder rb = DMSHelper.createRasterBuilder(dms);
 		Color clr = SignPixelPanel.filterColor(dms);
-		return new SignPixelPager(pix_pnl, rb, ms, clr);
+		return (rb != null)
+			  ? new SignPixelPager(pix_pnl, rb, ms, clr)
+			  : null;
 	}
 
 	/** Set a single selected DMS */
