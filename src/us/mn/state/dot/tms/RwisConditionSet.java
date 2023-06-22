@@ -164,7 +164,7 @@ public class RwisConditionSet {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (RwisCondition c: condSet) {
-			if (!sb.isEmpty())
+			if (sb.length() != 0)
 				sb.append(", ");
 			sb.append(c.getName());
 		}
