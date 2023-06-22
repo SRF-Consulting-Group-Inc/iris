@@ -241,4 +241,11 @@ public class SignMessageHelper extends BaseHelper {
 		       (sm.getDuration() != null) &&
 		       SignMsgSource.operator.checkBit(sourceBits(sm));
 	}
+
+	/** Check if a message came from RWIS subsystem.
+	 * @param sm The sign message. */
+	static public boolean isRwis(SignMessage sm) {
+		return (!isBlank(sm)) &&
+				SignMsgSource.rwis.checkBit(sourceBits(sm));
+	}
 }

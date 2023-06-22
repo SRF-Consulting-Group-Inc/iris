@@ -114,4 +114,7 @@ public interface WeatherSensor extends Device {
 
 	/** Get the latest sample time stamp */
 	Long getStamp();
+
+	/** Get pavement friction (null for missing) */
+	Integer getPvmtFriction();
 }
