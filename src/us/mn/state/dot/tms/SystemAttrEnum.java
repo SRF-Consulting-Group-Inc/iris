@@ -3,7 +3,7 @@
  * Copyright (C) 2009-2023  Minnesota Department of Transportation
  * Copyright (C) 2009-2015  AHMCT, University of California
  * Copyright (C) 2012-2021  Iteris Inc.
- * Copyright (C) 2015-2020  SRF Consulting Group
+ * Copyright (C) 2015-2023  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,10 +107,13 @@ public enum SystemAttrEnum {
 	PRICE_MESSAGE_EVENT_PURGE_DAYS(0, 0),
 	ROUTE_MAX_LEGS(8, 1, 20),
 	ROUTE_MAX_MILES(16, 1, 30),
+	RWIS_AUTO_MAX_M(805, -1),
+	RWIS_CYCLE_SEC(-1, -1),
 	RWIS_HIGH_WIND_SPEED_KPH(40, 0),
 	RWIS_LOW_VISIBILITY_DISTANCE_M(152, 0),
 	RWIS_OBS_AGE_LIMIT_SECS(240, 0),
 	RWIS_MAX_VALID_WIND_SPEED_KPH(282, 0),
+	RWIS_MSG_PRIORITY(9, 2, 9),
 	SAMPLE_ARCHIVE_ENABLE(true),
 	SIGN_EVENT_PURGE_DAYS(0, 0),
 	SPEED_LIMIT_MIN_MPH(45, 0, 100),

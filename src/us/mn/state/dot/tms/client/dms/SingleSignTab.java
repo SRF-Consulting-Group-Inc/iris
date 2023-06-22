@@ -285,6 +285,8 @@ public class SingleSignTab extends IPanel {
 	{
 		String ms = DMSHelper.getMultiString(dms);
 		RasterBuilder rb = DMSHelper.createRasterBuilder(dms);
+		if (rb == null)
+			return null;
 		Color clr = SignPixelPanel.filterColor(dms);
 		return new SignPixelPager(pix_pnl, rb, ms, clr);
 	}

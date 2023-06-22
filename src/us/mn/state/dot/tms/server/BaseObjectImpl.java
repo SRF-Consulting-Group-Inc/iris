@@ -25,10 +25,10 @@ import us.mn.state.dot.sonar.SonarException;
 import us.mn.state.dot.sonar.SonarObject;
 import us.mn.state.dot.sonar.server.Server;
 import us.mn.state.dot.sonar.server.ServerNamespace;
-import us.mn.state.dot.tms.BaseHelper;
 import us.mn.state.dot.tms.TMSException;
 import static us.mn.state.dot.tms.server.MainServer.FLUSH;
 import us.mn.state.dot.tms.server.event.BaseEvent;
+import us.mn.state.dot.tms.server.rwis.RwisProcess;
 
 /**
  * Base object class for storable SONAR objects.
@@ -123,6 +123,9 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		AlertConfigImpl.loadAll();
 		AlertMessageImpl.loadAll();
 		AlertInfoImpl.loadAll();
+//		RwisDataField.loadAll();
+		RwisConditionImpl.loadAll();
+		RwisSignImpl.loadAll();
 	}
 
 	/** Get the time as a time stamp */
@@ -460,7 +463,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 			if (u != null)
 				return u;
 		}
-		return BaseHelper.USER_AUTO;
+		return "IRIS user";
 	}
 
 	/** Notify SONAR clients of an object created */

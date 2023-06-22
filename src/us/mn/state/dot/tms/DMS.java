@@ -69,6 +69,13 @@ public interface DMS extends Device {
 	/** Get verification camera preset */
 	CameraPreset getPreset();
 
+	/** Set RWIS WeatherSensor override 
+	 * @throws TMSException */
+	void setWeatherSensorOverride(String ess);
+
+	/** Get RWIS WeatherSensor override */
+	String getWeatherSensorOverride();
+
 	/** Get the sign configuration */
 	SignConfig getSignConfig();
 

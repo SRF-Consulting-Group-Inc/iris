@@ -46,7 +46,7 @@ public class SignMessageHelper extends BaseHelper {
 
 	/** Make a message owner string */
 	static public String makeMsgOwner(int src) {
-		return makeMsgOwner(src, USER_AUTO);
+		return "IRIS; " + SignMsgSource.toString(src);
 	}
 
 	/** Make a message owner string with name */
@@ -240,5 +240,12 @@ public class SignMessageHelper extends BaseHelper {
 		return (!isBlank(sm)) &&
 		       (sm.getDuration() != null) &&
 		       SignMsgSource.operator.checkBit(sourceBits(sm));
+	}
+
+	/** Check if a message came from RWIS subsystem.
+	 * @param sm The sign message. */
+	static public boolean isRwis(SignMessage sm) {
+		return (!isBlank(sm)) &&
+				SignMsgSource.rwis.checkBit(sourceBits(sm));
 	}
 }

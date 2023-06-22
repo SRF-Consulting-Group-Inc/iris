@@ -20,6 +20,7 @@ import us.mn.state.dot.tms.Beacon;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.client.wysiwyg.selector.WMsgSelectorForm;
 import us.mn.state.dot.tms.client.Session;
+import us.mn.state.dot.tms.client.rwis.RwisSignStatusForm;
 import us.mn.state.dot.tms.client.widget.IAction;
 import us.mn.state.dot.tms.client.widget.IMenu;
 import us.mn.state.dot.tms.client.widget.SmartDesktop;
