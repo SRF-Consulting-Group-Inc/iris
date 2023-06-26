@@ -144,4 +144,10 @@ INSERT INTO iris.role_capability (role, capability) VALUES ('administrator', 'rw
 INSERT INTO iris.privilege (name, capability, type_n, obj_n, group_n, attr_n, write) VALUES
     ('PRV_RWIS', 'rwis', 'rwis_sign', '', '', '', false);
 
+
+INSERT INTO iris.system_attribute (name, value) VALUES
+    ('rwis_auto_max_m', '805'),
+    ('rwis_cycle_sec', '-1'),
+    ('rwis_msg_priority', '9');
+
 COMMIT;
