@@ -895,7 +895,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 		if (prefix != null) {
 			String key = prefix + "." + sensorName;
 			String sValue = (String) testProp.get(key);
-			if ((sValue != null) && !sValue.isEmpty()) {
+			if (SString.isBlank(sValue)) {
 				if (sValue.equals("null"))
 					return null;
 				try {
