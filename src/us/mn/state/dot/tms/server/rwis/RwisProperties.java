@@ -33,7 +33,7 @@ public enum RwisProperties {
 	
 	/* Initialize the single instance of RwisProperties */
 	private RwisProperties() {
-		String filename = "./etc/rwis.properties";
+		String filename = "/etc/iris/rwis.properties";
 		try {
 			InputStream input = new FileInputStream(filename);
 			myProp = new Properties();
