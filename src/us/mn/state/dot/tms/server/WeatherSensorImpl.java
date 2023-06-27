@@ -897,7 +897,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 			String key = prefix + "." + sensorName;
 			String sValue = (String) testProp.get(key);
 			System.err.println("Reading override for " + key + " value: " + sValue);
-			if (SString.isBlank(sValue)) {
+			if (!SString.isBlank(sValue)) {
 				if (sValue.equals("null"))
 					return null;
 				try {
