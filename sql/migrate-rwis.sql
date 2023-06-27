@@ -155,7 +155,7 @@ INSERT INTO iris.msg_pattern (name, multi, flash_beacon, compose_hashtag) VALUES
     ('RWISz_5', 'TEST 5[nl]...[nl]...', false, NULL),
     ('RWISz_6', 'TEST 6[nl]...[nl]...', false, NULL),
     ('RWISz_7', 'TEST 7[nl]...[nl]...', false, NULL),
-    ('RWISz_TESTx3', 'TEST[nl]TESTnl]TEST', false, 'RWISz');
+    ('RWISz_TESTx3', 'TEST[nl]TESTnl]TEST', false, '#RWISz');
 
 -- Add basic RWIS admin permissions
 INSERT INTO iris.capability (name, enabled) VALUES ('rwis', true);
