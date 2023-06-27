@@ -70,6 +70,10 @@ BEGIN
 END;
 $dms_insert$ LANGUAGE plpgsql;
 
+CREATE TRIGGER dms_insert_trig
+    INSTEAD OF INSERT ON iris.dms
+    FOR EACH ROW EXECUTE PROCEDURE iris.dms_insert();
+
 CREATE OR REPLACE FUNCTION iris.dms_update() RETURNS TRIGGER AS
     $dms_update$
 BEGIN
@@ -101,6 +105,14 @@ BEGIN
     RETURN NEW;
 END;
 $dms_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER dms_update_trig
+    INSTEAD OF UPDATE ON iris.dms
+    FOR EACH ROW EXECUTE PROCEDURE iris.dms_update();
+
+CREATE TRIGGER dms_delete_trig
+    INSTEAD OF DELETE ON iris.dms
+    FOR EACH ROW EXECUTE PROCEDURE iris.controller_io_delete();
 
 CREATE VIEW dms_view AS
     SELECT d.name, d.geo_loc, d.controller, d.pin, d.notes, d.gps,
@@ -135,7 +147,15 @@ INSERT INTO iris.msg_pattern (name, multi, flash_beacon, compose_hashtag) VALUES
     ('RWIS_4_Wind60mph', 'WIND GST[nl]>60 MPH[nl]DETECTED[np]REDUCE[nl]SPEED', false, NULL),
     ('RWIS_5_VerySlippery', 'SLIPPERY[nl]ROAD[nl]DETECTED[np]REDUCE[nl]SPEED', false, NULL),
     ('RWIS_6_LowVisib', 'LOW[nl]VISBLITY[nl]DETECTED[np]REDUCE[nl]SPEED', false, NULL),
-    ('RWIS_7_IceDetected', 'ICE[nl]DETECTED[np]REDUCE[nl]SPEED', false, NULL);
+    ('RWIS_7_IceDetected', 'ICE[nl]DETECTED[np]REDUCE[nl]SPEED', false, NULL),
+    ('RWISz_1', 'TEST 1[nl]...[nl]...', false, NULL),
+    ('RWISz_2', 'TEST 2[nl]...[nl]...', false, NULL),
+    ('RWISz_3', 'TEST 3[nl]...[nl]...', false, NULL),
+    ('RWISz_4', 'TEST 4[nl]...[nl]...', false, NULL),
+    ('RWISz_5', 'TEST 5[nl]...[nl]...', false, NULL),
+    ('RWISz_6', 'TEST 6[nl]...[nl]...', false, NULL),
+    ('RWISz_7', 'TEST 7[nl]...[nl]...', false, NULL),
+    ('RWISz_TESTx3', 'TEST[nl]TESTnl]TEST', false, 'RWISz');
 
 -- Add basic RWIS admin permissions
 INSERT INTO iris.capability (name, enabled) VALUES ('rwis', true);
