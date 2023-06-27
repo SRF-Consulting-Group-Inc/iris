@@ -878,6 +878,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 					String devName = testProp.getProperty(key);
 					String prefix = key.split("\\.")[0];
 					testPrefix.put(devName, prefix);
+					System.err.println("Got device " + devName + " with prefix " + prefix);
 				}
 			}
 		} catch (IOException|SecurityException ex) {
@@ -895,6 +896,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 		if (prefix != null) {
 			String key = prefix + "." + sensorName;
 			String sValue = (String) testProp.get(key);
+			System.err.println("Reading override for " + key + " value: " + sValue);
 			if (SString.isBlank(sValue)) {
 				if (sValue.equals("null"))
 					return null;
