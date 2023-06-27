@@ -838,7 +838,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 	}
 
 	/** Name of test properties file */
-	static final String testFilename = "./ess_test.properties";
+	static final String testFilename = "/var/lib/iris/ess_test.properties";
 	
 	/** Loaded copy of test properties */
 	static private Properties testProp = null;
