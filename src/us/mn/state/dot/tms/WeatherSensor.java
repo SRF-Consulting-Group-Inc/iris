@@ -109,8 +109,14 @@ public interface WeatherSensor extends Device {
 	/** Get the pavement surface freeze temperature (null for missing) */
 	Integer getSurfFreezeTemp();
 
+	/** Get surface conductivity (null for missing) */
+	Integer getSurfCond();
+
 	/** Get the subsurface temperature (null for missing) */
 	Integer getSubSurfTemp();
+
+	/** Get surface conductivity (V2) (null for missing) */
+	Integer getSurfCondV2();
 
 	/** Get the latest sample time stamp */
 	Long getStamp();

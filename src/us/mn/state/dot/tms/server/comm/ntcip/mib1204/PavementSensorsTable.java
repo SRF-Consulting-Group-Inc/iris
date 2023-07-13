@@ -101,8 +101,10 @@ public class PavementSensorsTable {
 		public final ASN1Integer water_depth;
 		public final ASN1Integer ice_or_water_depth;
 		public final ASN1Integer salinity;
+		public final PercentObject surface_conductivity;
 		public final TemperatureObject freeze_point;
 		public final ASN1Enum<SurfaceBlackIceSignal> black_ice_signal;
+		public final PercentObject surface_conductivity_v2;
 		public final PercentObject friction;
 
 		/** Create a table row */
@@ -136,11 +138,15 @@ public class PavementSensorsTable {
 			ice_or_water_depth.setInteger(DEPTH_V2_ERROR_MISSING);
 			salinity = essSurfaceSalinity.makeInt(row);
 			salinity.setInteger(SALINITY_ERROR_MISSING);
+			surface_conductivity = new PercentObject("surface_conductivity",
+					essSurfaceConductivity.makeInt());
 			freeze_point = new TemperatureObject("freeze_point",
 				essSurfaceFreezePoint.makeInt(row));
 			black_ice_signal = new ASN1Enum<SurfaceBlackIceSignal>(
 				SurfaceBlackIceSignal.class,
 				essSurfaceBlackIceSignal.node, row);
+			surface_conductivity_v2 = new PercentObject("surface_conductivity_v2",
+					essSurfaceConductivityV2.makeInt());
 			// Note: friction coefficient is not part of pavement
 			//       table (even though it *should* be)
 			friction = new PercentObject("friction",
@@ -219,6 +225,13 @@ public class PavementSensorsTable {
 			return convertSalinity(salinity);
 		}
 
+		/** Get surface conductivity as Integer or null on error */
+		public Integer getSurfCond() {
+			return (surface_conductivity != null)
+					? surface_conductivity.getPercent()
+					: null;
+		}
+
 		/** Get surface freeze temp or null on error */
 		public Integer getFreezePointC() {
 			return freeze_point.getTempC();
@@ -228,6 +241,13 @@ public class PavementSensorsTable {
 		public SurfaceBlackIceSignal getBlackIceSignal() {
 			SurfaceBlackIceSignal bis = black_ice_signal.getEnum();
 			return (bis != null && bis.isValue()) ? bis : null;
+		}
+
+		/** Get surface conductivity (V2) as Integer or null on error */
+		public Integer getSurfCondV2() {
+			return (surface_conductivity_v2 != null)
+					? surface_conductivity_v2.getPercent()
+					: null;
 		}
 
 		/** Get JSON representation */

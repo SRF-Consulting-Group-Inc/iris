@@ -615,6 +615,23 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 		}
 	}
 
+	/** Surface conductivity (null for missing) */
+	private transient Integer surface_conductivity;
+
+	/** Get surface conductivity (null for missing) */
+	@Override
+	public Integer getSurfCond() {
+		return getTestOverride("surface.conductivity", surface_conductivity);
+	}
+
+	/** Set surface conductivity (null for missing) */
+	public void getSurfCondNotify(Integer v) {
+		if (!objectEquals(v, surface_conductivity)) {
+			surface_conductivity = v;
+			notifyAttribute("surfaceConductivity");
+		}
+	}
+
 	/** Pavement surface freeze point (null for missing) */
 	private transient Integer surf_freeze_temp;
 
@@ -646,6 +663,23 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 		if (!objectEquals(v, subsurf_temp)) {
 			subsurf_temp = v;
 			notifyAttribute("subSurfTemp");
+		}
+	}
+
+	/** Surface conductivity (V2) (null for missing) */
+	private transient Integer surface_conductivity_v2;
+
+	/** Get surface conductivity (V2) (null for missing) */
+	@Override
+	public Integer getSurfCondV2() {
+		return getTestOverride("surface.conductivity.v2", surface_conductivity_v2);
+	}
+
+	/** Set surface conductivity (V2) (null for missing) */
+	public void getSurfCondV2Notify(Integer v) {
+		if (!objectEquals(v, surface_conductivity_v2)) {
+			surface_conductivity_v2 = v;
+			notifyAttribute("surfaceConductivityV2");
 		}
 	}
 
