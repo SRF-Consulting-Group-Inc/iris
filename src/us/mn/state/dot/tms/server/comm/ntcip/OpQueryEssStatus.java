@@ -350,7 +350,7 @@ public class OpQueryEssStatus extends OpEss {
 				logQuery(pr.surface_conductivity_v2.node);
 			}
 			catch (NoSuchName e) {
-				log("Could not poll surface conductivity V2");
+				log("Could not poll surface conductivity V2: " + e.getMessage());
 			}
 			mess.add(pr.ice_or_water_depth);
 			try {
@@ -390,7 +390,7 @@ public class OpQueryEssStatus extends OpEss {
 				logQuery(pr.surface_conductivity.node);
 			}
 			catch (NoSuchName e) {
-				log("Could not poll surface conductivity");
+				log("Could not poll surface conductivity: " + e.getMessage());
 			}
 			return ps_table.isDone()
 			      ? new QuerySubSurface()
