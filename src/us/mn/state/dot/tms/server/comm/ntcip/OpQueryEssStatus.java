@@ -344,8 +344,15 @@ public class OpQueryEssStatus extends OpEss {
 
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
+			mess.add(pr.surface_conductivity_v2.node);
+			try {
+				mess.queryProps();
+				logQuery(pr.surface_conductivity_v2.node);
+			}
+			catch (NoSuchName e) {
+				// Note: not sure if all manufacturers support this
+			}
 			mess.add(pr.ice_or_water_depth);
-			// Note: essSurfaceConductivityV2 could be polled here
 			try {
 				mess.queryProps();
 				logQuery(pr.ice_or_water_depth);
@@ -370,13 +377,20 @@ public class OpQueryEssStatus extends OpEss {
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
 			mess.add(pr.water_depth);
-			// Note: essSurfaceConductivity could be polled here
 			try {
 				mess.queryProps();
 				logQuery(pr.water_depth);
 			}
 			catch (NoSuchName e) {
 				// Note: this object was deprecated in V2
+			}
+			mess.add(pr.surface_conductivity.node);
+			try {
+				mess.queryProps();
+				logQuery(pr.surface_conductivity.node);
+			}
+			catch (NoSuchName e) {
+				// Note: not sure if all manufacturers support this
 			}
 			return ps_table.isDone()
 			      ? new QuerySubSurface()
