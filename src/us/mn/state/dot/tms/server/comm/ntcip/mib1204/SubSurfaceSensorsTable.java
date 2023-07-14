@@ -135,7 +135,7 @@ public class SubSurfaceSensorsTable {
 	}
 
 	/** Rows in table */
-	public final ArrayList<Row> table_rows = new ArrayList<Row>();
+	private final ArrayList<Row> table_rows = new ArrayList<Row>();
 
 	/** Get number of rows in table reported by ESS */
 	private int size() {

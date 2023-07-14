@@ -350,7 +350,6 @@ public class OpQueryEssStatus extends OpEss {
 				logQuery(pr.surface_conductivity_v2.node);
 			}
 			catch (NoSuchName e) {
-				log("Could not poll surface conductivity V2: " + e.getMessage());
 			}
 			mess.add(pr.ice_or_water_depth);
 			try {
@@ -390,7 +389,6 @@ public class OpQueryEssStatus extends OpEss {
 				logQuery(pr.surface_conductivity.node);
 			}
 			catch (NoSuchName e) {
-				log("Could not poll surface conductivity: " + e.getMessage());
 			}
 			return ps_table.isDone()
 			      ? new QuerySubSurface()
@@ -411,9 +409,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
-				log("Could not poll subsurface num_sensors: " + e.getMessage());
 			}
-			log("SubSurface table size = " + ss_table.table_rows.size());
 			return ss_table.isDone()
 			      ? new QueryTotalSun()
 			      : new QuerySubSurfaceTable();
@@ -434,9 +430,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
-				log("Could not poll subsurface sensor error: " + e.getMessage());
 			}
-			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceTemp(sr);
 		}
 	}
@@ -447,7 +441,7 @@ public class OpQueryEssStatus extends OpEss {
 		private QuerySubSurfaceTemp(SubSurfaceSensorsTable.Row r) {
 			sr = r;
 		}
-
+		
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
 			mess.add(sr.temp.node);
@@ -457,9 +451,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
-				log("Could not poll subsurface temp: " + e.getMessage());
 			}
-			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceMoisture(sr);
 		}
 	}
@@ -480,9 +472,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
-				log("Could not poll subsurface moisture: " + e.getMessage());
 			}
-			log("SubSurface table size = " + ss_table.table_rows.size());
 			return ss_table.isDone()
 			      ? new QueryTotalSun()
 			      : new QuerySubSurfaceTable();
