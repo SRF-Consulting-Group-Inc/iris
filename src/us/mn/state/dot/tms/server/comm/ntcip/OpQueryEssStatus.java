@@ -356,6 +356,11 @@ public class OpQueryEssStatus extends OpEss {
 			try {
 				mess.queryProps();
 				logQuery(pr.ice_or_water_depth);
+				if (pr.ice_or_water_depth.getInteger() == 65535) {
+					// some sensors return this when they don't support the
+					// object instead of NoSuchName
+					return new QueryPavementTableV1(pr);
+				}
 				return ps_table.isDone()
 				      ? new QuerySubSurface()
 				      : new QueryPavementTable();
