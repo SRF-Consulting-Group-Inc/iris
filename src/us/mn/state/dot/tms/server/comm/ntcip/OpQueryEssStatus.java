@@ -431,7 +431,7 @@ public class OpQueryEssStatus extends OpEss {
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
 			}
-			return new QuerySubSurfaceTemp(sr);
+			return new QuerySubSurfaceDepth(sr);
 		}
 	}
 
