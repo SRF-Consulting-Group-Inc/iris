@@ -435,6 +435,27 @@ public class OpQueryEssStatus extends OpEss {
 		}
 	}
 
+	/** Phase to query sub-surface depth */
+	protected class QuerySubSurfaceDepth extends Phase {
+		private final SubSurfaceSensorsTable.Row sr;
+		private QuerySubSurfaceDepth(SubSurfaceSensorsTable.Row r) {
+			sr = r;
+		}
+
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess) throws IOException {
+			mess.add(sr.depth);
+			try {
+				mess.queryProps();
+				logQuery(sr.depth);
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors do not support this object
+			}
+			return new QuerySubSurfaceTemp(sr);
+		}
+	}
+	
 	/** Phase to query sub-surface temperature */
 	protected class QuerySubSurfaceTemp extends Phase {
 		private final SubSurfaceSensorsTable.Row sr;
