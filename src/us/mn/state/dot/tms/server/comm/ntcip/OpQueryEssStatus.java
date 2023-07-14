@@ -434,6 +434,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
+				log("Could not poll subsurface: " + e.getMessage());
 			}
 			return new QuerySubSurfaceMoisture(sr);
 		}
