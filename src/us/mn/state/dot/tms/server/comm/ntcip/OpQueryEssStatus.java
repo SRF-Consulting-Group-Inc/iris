@@ -411,6 +411,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
+				log("Could not poll subsurface num_sensors: " + e.getMessage());
 			}
 			log("SubSurface table size = " + ss_table.table_rows.size());
 			return ss_table.isDone()
@@ -433,6 +434,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
+				log("Could not poll subsurface sensor error: " + e.getMessage());
 			}
 			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceTemp(sr);
@@ -455,6 +457,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
+				log("Could not poll subsurface temp: " + e.getMessage());
 			}
 			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceMoisture(sr);
@@ -477,6 +480,7 @@ public class OpQueryEssStatus extends OpEss {
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
+				log("Could not poll subsurface moisture: " + e.getMessage());
 			}
 			log("SubSurface table size = " + ss_table.table_rows.size());
 			return ss_table.isDone()
