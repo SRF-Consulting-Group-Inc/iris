@@ -425,28 +425,46 @@ public class OpQueryEssStatus extends OpEss {
 
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
-			mess.add(sr.temp.node);
 			mess.add(sr.sensor_error);
 			try {
 				mess.queryProps();
-				logQuery(sr.temp.node);
 				logQuery(sr.sensor_error);
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
-				log("Could not poll subsurface: " + e.getMessage());
+			}
+			return new QuerySubSurfaceTemp(sr);
+		}
+	}
+
+	/** Phase to query sub-surface temperature */
+	protected class QuerySubSurfaceTemp extends Phase {
+		private final SubSurfaceSensorsTable.Row sr;
+		private QuerySubSurfaceTemp(SubSurfaceSensorsTable.Row r) {
+			sr = r;
+		}
+
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess) throws IOException {
+			mess.add(sr.temp.node);
+			try {
+				mess.queryProps();
+				logQuery(sr.temp.node);
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors do not support this object
 			}
 			return new QuerySubSurfaceMoisture(sr);
 		}
 	}
-
+	
 	/** Phase to query sub-surface moisture */
 	protected class QuerySubSurfaceMoisture extends Phase {
 		private final SubSurfaceSensorsTable.Row sr;
 		private QuerySubSurfaceMoisture(SubSurfaceSensorsTable.Row r) {
 			sr = r;
 		}
-
+		
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
 			mess.add(sr.moisture.node);
