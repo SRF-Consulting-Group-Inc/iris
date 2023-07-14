@@ -139,14 +139,14 @@ public class PavementSensorsTable {
 			salinity = essSurfaceSalinity.makeInt(row);
 			salinity.setInteger(SALINITY_ERROR_MISSING);
 			surface_conductivity = new PercentObject("surface_conductivity",
-					essSurfaceConductivity.makeInt());
+					essSurfaceConductivity.makeInt(row));
 			freeze_point = new TemperatureObject("freeze_point",
 				essSurfaceFreezePoint.makeInt(row));
 			black_ice_signal = new ASN1Enum<SurfaceBlackIceSignal>(
 				SurfaceBlackIceSignal.class,
 				essSurfaceBlackIceSignal.node, row);
 			surface_conductivity_v2 = new PercentObject("surface_conductivity_v2",
-					essSurfaceConductivityV2.makeInt());
+					essSurfaceConductivityV2.makeInt(row));
 			// Note: friction coefficient is not part of pavement
 			//       table (even though it *should* be)
 			friction = new PercentObject("friction",
