@@ -434,6 +434,7 @@ public class OpQueryEssStatus extends OpEss {
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
 			}
+			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceTemp(sr);
 		}
 	}
@@ -455,6 +456,7 @@ public class OpQueryEssStatus extends OpEss {
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
 			}
+			log("SubSurface table size = " + ss_table.table_rows.size());
 			return new QuerySubSurfaceMoisture(sr);
 		}
 	}
@@ -476,6 +478,7 @@ public class OpQueryEssStatus extends OpEss {
 			catch (NoSuchName e) {
 				// Note: some vendors do not support this object
 			}
+			log("SubSurface table size = " + ss_table.table_rows.size());
 			return ss_table.isDone()
 			      ? new QueryTotalSun()
 			      : new QuerySubSurfaceTable();
