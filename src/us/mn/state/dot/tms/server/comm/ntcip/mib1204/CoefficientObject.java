@@ -45,6 +45,7 @@ public class CoefficientObject {
 	 * @return Percent or null if missing */
 	public Integer getPercent() {
 		int p = node.getInteger();
+		System.out.println("CoefficientObject: " + p);
 		return (p >= 0 && p < ERROR_MISSING)
 		      ? Integer.valueOf(p)
 		      : null;
