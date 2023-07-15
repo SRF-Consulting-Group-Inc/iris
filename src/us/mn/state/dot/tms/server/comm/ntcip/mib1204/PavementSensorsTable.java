@@ -271,18 +271,14 @@ public class PavementSensorsTable {
 			sb.append(freeze_point.toJson());
 			sb.append(Json.str("black_ice_signal",
 				getBlackIceSignal()));
-			sb.append(Json.str("surface_conductivity",
-					surface_conductivity.toJson()));
-			sb.append(Json.str("surface_conductivity_v2",
-					surface_conductivity_v2.toJson()));
+			sb.append(surface_conductivity.toJson());
+			sb.append(surface_conductivity_v2.toJson());
 			sb.append(friction.toJson());
 			// remove trailing comma
 			if (sb.charAt(sb.length() - 1) == ',')
 				sb.setLength(sb.length() - 1);
 			sb.append("},");
-			String s = sb.toString();
-			System.out.println("JSON: " + s);
-			return s;
+			return sb.toString();
 		}
 	}
 

@@ -45,7 +45,6 @@ public class CoefficientObject {
 	 * @return Percent or null if missing */
 	public Integer getPercent() {
 		int p = node.getInteger();
-		System.out.println("CoefficientObject: " + p);
 		return (p >= 0 && p < ERROR_MISSING)
 		      ? Integer.valueOf(p)
 		      : null;
@@ -54,7 +53,6 @@ public class CoefficientObject {
 	/** Get JSON representation */
 	public String toJson() {
 		String s = Json.num(key, getPercent());
-		System.out.println("CoefficientObject: " + s);
 		return s;
 	}
 }
