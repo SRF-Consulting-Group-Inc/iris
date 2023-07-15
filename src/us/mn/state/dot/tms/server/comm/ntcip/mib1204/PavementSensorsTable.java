@@ -280,7 +280,9 @@ public class PavementSensorsTable {
 			if (sb.charAt(sb.length() - 1) == ',')
 				sb.setLength(sb.length() - 1);
 			sb.append("},");
-			return sb.toString();
+			String s = sb.toString();
+			System.out.println("JSON: " + s);
+			return s;
 		}
 	}
 
