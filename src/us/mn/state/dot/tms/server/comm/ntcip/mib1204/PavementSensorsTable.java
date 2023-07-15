@@ -272,9 +272,9 @@ public class PavementSensorsTable {
 			sb.append(Json.str("black_ice_signal",
 				getBlackIceSignal()));
 			sb.append(Json.str("surface_conductivity",
-					getSurfCond()));
+					surface_conductivity.toJson()));
 			sb.append(Json.str("surface_conductivity_v2",
-					getSurfCondV2()));
+					surface_conductivity_v2.toJson()));
 			sb.append(friction.toJson());
 			// remove trailing comma
 			if (sb.charAt(sb.length() - 1) == ',')
