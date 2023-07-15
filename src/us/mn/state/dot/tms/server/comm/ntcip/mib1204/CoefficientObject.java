@@ -53,6 +53,8 @@ public class CoefficientObject {
 
 	/** Get JSON representation */
 	public String toJson() {
-		return Json.num(key, getPercent());
+		String s = Json.num(key, getPercent());
+		System.out.println("CoefficientObject: " + s);
+		return s;
 	}
 }
