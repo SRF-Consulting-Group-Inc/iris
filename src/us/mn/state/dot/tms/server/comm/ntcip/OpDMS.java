@@ -85,7 +85,12 @@ abstract public class OpDMS extends OpNtcip {
 	private boolean isMakeContaining(String value) {
 		assert value.equals(value.toLowerCase());
 		SignDetail sd = dms.getSignDetail();
-		String make = (sd != null) ? sd.getSoftwareMake() : null;
+		if (sd == null)
+			return false;
+		String make = sd.getSoftwareMake();
+		if ((make != null) && make.toLowerCase().contains(value))
+			return true;
+		make = sd.getHardwareMake();
 		return (make != null) && make.toLowerCase().contains(value);
 	}
 

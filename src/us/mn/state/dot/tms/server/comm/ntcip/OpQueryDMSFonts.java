@@ -255,7 +255,14 @@ public class OpQueryDMSFonts extends OpDMS {
 				characterBitmap.node, row, crow);
 			mess.add(char_width);
 			mess.add(char_bitmap);
-			mess.queryProps();
+			try {
+				mess.queryProps();
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors respond with
+				//       NoSuchName: characterBitmap
+				//       if the char is undefined.
+			}
 			logQuery(char_width);
 			logQuery(char_bitmap);
 			if (char_width.getInteger() > 0) {
