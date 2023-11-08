@@ -177,7 +177,6 @@ public class OpQueryGpsLocation extends OpDevice<AsciiDeviceProperty> {
 		{
 			mess.add(gps_prop);
 			mess.queryProps();
-			System.out.println(gps_prop);
 			return null;
 		}
 	}
