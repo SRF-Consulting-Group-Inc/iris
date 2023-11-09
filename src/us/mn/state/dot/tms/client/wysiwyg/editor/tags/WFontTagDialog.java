@@ -59,6 +59,8 @@ public class WFontTagDialog extends WMultiTagDialog {
 	protected WtFont makeNewTag() {
 		f_num = f_numField.getValue();
 		f_id = f_idField.getText();
+		if (f_id.isEmpty())
+			f_id = null;
 		return new WtFont(f_num, f_id);
 	}
 
