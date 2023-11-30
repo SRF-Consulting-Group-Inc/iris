@@ -2581,7 +2581,7 @@ public class WController {
 		
 		// create the appropriate font tag token
 		WtFont fTok = new WtFont(font.getNumber(),
-				Integer.toHexString(font.getVersionID()));
+				String.format("%04x", font.getVersionID()));
 		
 		// if there is a selection, get the font of the first token after
 		// if there are no tokens after, don't do anything
@@ -2593,7 +2593,7 @@ public class WController {
 			if (tc != null) {
 				WFont wf = tc.getFont();
 				afTok = new WtFont(wf.getNumber(),
-						Integer.toHexString(wf.getVersionID()));
+						String.format("%04x", wf.getVersionID()));
 			}
 		}
 		addTextOptionToken(fTok, afTok);
