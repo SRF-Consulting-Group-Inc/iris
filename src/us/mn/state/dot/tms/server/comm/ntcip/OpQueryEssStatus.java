@@ -313,6 +313,27 @@ public class OpQueryEssStatus extends OpEss {
 			logQuery(pr.sensor_error);
 			logQuery(pr.salinity);
 			logQuery(pr.black_ice_signal);
+			return new QuerySurfCondV2(pr);
+		}
+	}
+
+	/** Phase to query one pavement sensor row (V2) */
+	protected class QuerySurfCondV2 extends Phase {
+		private final PavementSensorsTable.Row pr;
+		private QuerySurfCondV2(PavementSensorsTable.Row r) {
+			pr = r;
+		}
+
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess) throws IOException {
+			mess.add(pr.surface_conductivity_v2.node);
+			try {
+				mess.queryProps();
+				logQuery(pr.surface_conductivity_v2.node);
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors do not support this object
+			}
 			return new QueryPavementRowV2(pr);
 		}
 	}
@@ -323,12 +344,11 @@ public class OpQueryEssStatus extends OpEss {
 		private QueryPavementRowV2(PavementSensorsTable.Row r) {
 			pr = r;
 		}
-
+	
 		@SuppressWarnings("unchecked")
 		protected Phase poll(CommMessage mess) throws IOException {
 			// Note: this object was introduced in V2
 			mess.add(pr.ice_or_water_depth);
-			// Note: essSurfaceConductivityV2 could be polled here
 			try {
 				mess.queryProps();
 				logQuery(pr.ice_or_water_depth);
