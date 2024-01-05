@@ -103,6 +103,7 @@ public class PavementSensorsTable {
 		public final ASN1Integer salinity;
 		public final TemperatureObject freeze_point;
 		public final ASN1Enum<SurfaceBlackIceSignal> black_ice_signal;
+		public final CoefficientObject surface_conductivity_v2;
 		public final PercentObject friction;
 
 		/** Create a table row */
@@ -141,6 +142,8 @@ public class PavementSensorsTable {
 			black_ice_signal = new ASN1Enum<SurfaceBlackIceSignal>(
 				SurfaceBlackIceSignal.class,
 				essSurfaceBlackIceSignal.node, row);
+			surface_conductivity_v2 = new CoefficientObject("surface_conductivity_v2",
+					essSurfaceConductivityV2.makeInt(row));
 			// Note: friction coefficient is not part of pavement
 			//       table (even though it *should* be)
 			friction = new PercentObject("friction",
@@ -225,6 +228,13 @@ public class PavementSensorsTable {
 			return (bis != null && bis.isValue()) ? bis : null;
 		}
 
+		/** Get surface conductivity (V2) as Integer or null on error */
+		public Integer getSurfCondV2() {
+			return (surface_conductivity_v2 != null)
+					? surface_conductivity_v2.getPercent()
+					: null;
+		}
+
 		/** Get JSON representation */
 		private String toJson() {
 			StringBuilder sb = new StringBuilder();
@@ -246,6 +256,7 @@ public class PavementSensorsTable {
 			sb.append(freeze_point.toJson());
 			sb.append(Json.str("black_ice_signal",
 				getBlackIceSignal()));
+			sb.append(surface_conductivity_v2.toJson());
 			sb.append(friction.toJson());
 			// remove trailing comma
 			if (sb.charAt(sb.length() - 1) == ',')
