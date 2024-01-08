@@ -200,8 +200,8 @@ public class RwisProcess extends Thread {
 		RwisMsgDataset rwisMsgs = new RwisMsgDataset();
 		WeatherSensorImpl.loadTestProperties();
 		
-		// Make sure an RwisScratchpad is defined for each enabled RWIS sign...
-		for (DMS d: getEnabledRwisDms()) {
+		// Make sure an RwisScratchpad is defined for each RWIS sign...
+		for (DMS d: getAllRwisDms()) {
 			ensureScratchpad(d);
 		}
 		// For each RWIS sign...
@@ -356,7 +356,7 @@ public class RwisProcess extends Thread {
 
 	// --- Assorted helper methods...
 	
-	/** Is a sign an RWIS sign */
+	/** Does a sign have one or more RWIS hashtags? */
 	static public boolean isRwisSign(DMS dms) {
 		if (dms == null)
 			return false;
@@ -394,16 +394,15 @@ public class RwisProcess extends Thread {
 		return ((cl != null) && (cl.getPollEnabled() == true));
 	}
 
-	/** Get RWIS DMS objects with enabled commlinks */
-	static public Collection<DMS> getEnabledRwisDms() {
+	/** Get all DMS with RWIS hashtags */
+	static public Collection<DMS> getAllRwisDms() {
 		HashMap<String, DMS> dmsMap = new HashMap<String, DMS>();
 		Iterator<DMS> it = DMSHelper.iterator();
 		DMS dms;
 		while (it.hasNext()) {
 			dms = it.next();
-			if (!commlinkEnabled(dms) || !isRwisSign(dms))
-				continue;
-			dmsMap.put(dms.getName(), dms);
+			if (isRwisSign(dms))
+				dmsMap.put(dms.getName(), dms);
 		}
 		return dmsMap.values();
 	}

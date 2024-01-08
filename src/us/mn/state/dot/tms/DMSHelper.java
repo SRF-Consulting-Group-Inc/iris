@@ -503,10 +503,6 @@ public class DMSHelper extends BaseHelper {
 		Iterator<WeatherSensor> it = WeatherSensorHelper.iterator();
 		while (it.hasNext()) {
 			ws = it.next();
-			if (WeatherSensorHelper.isSampleExpired(ws)) {
-				//FIXME:  Don't skip if we have test data for this WeatherSensor.
-				continue; // Skip those where sample has expired.
-			}
 			dist = calcDistanceMeters(ws, dms);
 			if ((dist == null) || (dist > closestDist))
 				continue;
