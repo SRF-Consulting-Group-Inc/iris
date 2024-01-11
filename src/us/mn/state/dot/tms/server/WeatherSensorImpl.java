@@ -16,6 +16,7 @@
 package us.mn.state.dot.tms.server;
 
 import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -942,5 +943,95 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 			}
 		}
 		return iDefault;
+	}
+	
+	/** total sun int in terms of minutes */
+	private transient Integer totalSun;
+
+	/** instantaneousTerrestrial object in terms of W/m^2 */
+	private transient Integer instantaneousTerrestrial;
+	
+	/** instantaneousTerrestrial object in terms of W/m^2 */
+	private transient Integer instantaneousSolar;
+	
+	/** total radiation object in terms of W/m^2 */
+	private transient Integer totalRadiation;
+	
+	/** total radiation period int in terms of seconds */
+	private transient Integer totalRadiationPeriod;
+	
+	/** total radiation period int in terms of J/m^2 */
+	private transient Integer solarRadiation;
+
+	@Override
+	public Integer getInstantaneousTerrestrial() {
+		return instantaneousTerrestrial;
+	}
+	
+	@Override
+	public Integer getInstantaneousSolar() {
+		return instantaneousSolar;
+	}
+	
+	@Override
+	public Integer getTotalRadiation() {
+		return totalRadiation;
+	}
+	
+	@Override
+	public Integer getTotalSun() {
+		return totalSun;
+	}
+	
+	@Override
+	public Integer getTotalRadiationPeriod() {
+		return totalRadiationPeriod;
+	}
+	
+	@Override
+	public Integer getSolarRadiation() {
+		return solarRadiation;
+	}
+	
+	public void setTotalSunNotify(Integer ts) {
+		if (!objectEquals(ts, totalSun)) {
+			totalSun = ts;
+			notifyAttribute("totalSun");
+		}
+	}
+
+	public void setInstantaneousTerrestrialNotify(Integer it) {
+		if (!objectEquals(it, instantaneousTerrestrial)) {
+			instantaneousTerrestrial = it;
+			notifyAttribute("instantaneousTerrestrialRadiation");
+		}
+	}
+	
+	public void setInstantaneousSolarNotify(Integer is) {
+		if (!objectEquals(is, instantaneousSolar)) {
+			instantaneousSolar = is;
+			notifyAttribute("instantaneousSolarRadiation");
+		}
+	}
+	
+	public void setTotalRadiationNotify(Integer tr) {
+		if (!objectEquals(tr, totalRadiation)) {
+			totalRadiation = tr;
+			notifyAttribute("totalRadiation");
+		}
+	}
+	
+	public void setTotalRadiationPeriodNotify(Integer trp) {
+		if (!objectEquals(trp, totalRadiationPeriod)) {
+			totalRadiationPeriod = trp;
+			notifyAttribute("totalRadiationPeriod");
+		}
+	}
+	
+	public void setSolarRadiationNotify(Integer sr) {
+		if (!objectEquals(sr, solarRadiation)) {
+			solarRadiation = sr;
+			notifyAttribute("solarRadiation");
+		}
 	}
 }
