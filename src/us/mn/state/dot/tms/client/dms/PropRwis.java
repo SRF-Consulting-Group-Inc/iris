@@ -46,6 +46,7 @@ import us.mn.state.dot.tms.client.widget.IPanel;
 import us.mn.state.dot.tms.units.Distance;
 import us.mn.state.dot.tms.units.Distance.Units;
 import us.mn.state.dot.tms.utils.I18N;
+import us.mn.state.dot.tms.utils.SString;
 
 /**
  * PropRwis is a DMS properties panel for displaying
@@ -222,7 +223,7 @@ public class PropRwis extends IPanel implements ProxyView<GeoLoc> {
 		ArrayList<String> hashtagList = getRwisHashtags();
 		String extra = getHashtagsString();
 		setLabelValue(hashtagsList_lbl, extra);
-		boolean bNoOverrides = dms.getWeatherSensorOverride().isBlank();
+		boolean bNoOverrides = SString.isBlank(dms.getWeatherSensorOverride());
 
 		ArrayList<WeatherSensor> sensorList;
 		sensorList = DMSHelper.getAssociatedWeatherSensors(dms);
