@@ -15,6 +15,8 @@
 package us.mn.state.dot.tms.server.comm.ntcip;
 
 import java.io.IOException;
+
+import us.mn.state.dot.tms.ControllerHelper;
 import us.mn.state.dot.tms.DMSType;
 import us.mn.state.dot.tms.SignDetail;
 import us.mn.state.dot.tms.server.DMSImpl;
@@ -111,7 +113,12 @@ abstract public class OpDMS extends OpNtcip {
 
 	/** Check if DMS make is Skyline */
 	protected boolean isSkyline() {
-		return isMakeContaining("skyline");
+		if (isMakeContaining("skyline")) {
+			String v = ControllerHelper.getSetup(
+					dms.getController(), "sw", 0, "version");
+			return v.compareToIgnoreCase("MSC_04.04.0068") >= 0;
+		}
+		return false;
 	}
 
 	/** Check if DMS type is character matrix */

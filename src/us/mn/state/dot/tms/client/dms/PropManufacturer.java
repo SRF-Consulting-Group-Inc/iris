@@ -167,7 +167,7 @@ public class PropManufacturer extends IPanel {
 	public void updateAttribute(String a) {
 		if (null == a || a.equals("controller")) {
 			String v = ControllerHelper.getSetup(
-				dms.getController(), "version");
+				dms.getController(), "sw", 0, "version");
 			version_lbl.setText(formatString(v));
 		}
 		if (null == a || a.equals("status")) {

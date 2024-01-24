@@ -142,4 +142,33 @@ public class ControllerHelper extends BaseHelper {
 		}
 		return "UNKNOWN";
 	}
+
+	/** Get controller setup array data from a specific index.
+	 *
+	 * Finds a value in the "setup" field.  The last JSON object in the
+	 * "arr" array will be found, and the value of "key" returned.
+	 * If not found, "UNKNOWN" will be returned.
+	 */
+	static public String getSetup(Controller ctrl, String arr, int idx, String key)
+	{
+		String setup = (ctrl != null) ? ctrl.getSetup() : null;
+		if (setup != null) {
+			try {
+				JSONObject jo = new JSONObject(setup);
+				JSONArray ja = jo.optJSONArray(arr);
+				if (ja != null && ja.length() > 0) {
+					JSONObject o = ja.optJSONObject(idx);
+					if (o != null) {
+						return o.optString(key,
+								"UNKNOWN");
+					}
+				}
+			}
+			catch (JSONException e) {
+				// malformed JSON
+				e.printStackTrace();
+			}
+		}
+		return "UNKNOWN";
+	}
 }
