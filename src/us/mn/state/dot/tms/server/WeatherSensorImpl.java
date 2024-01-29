@@ -629,7 +629,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 	public void getSurfCondNotify(Integer v) {
 		if (!objectEquals(v, surface_conductivity)) {
 			surface_conductivity = v;
-			notifyAttribute("surfaceConductivity");
+			notifyAttribute("surfCond");
 		}
 	}
 
@@ -680,7 +680,7 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor {
 	public void getSurfCondV2Notify(Integer v) {
 		if (!objectEquals(v, surface_conductivity_v2)) {
 			surface_conductivity_v2 = v;
-			notifyAttribute("surfaceConductivityV2");
+			notifyAttribute("surfCondV2");
 		}
 	}
 
