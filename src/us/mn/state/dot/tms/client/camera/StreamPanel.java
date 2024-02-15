@@ -144,6 +144,7 @@ public class StreamPanel extends JPanel {
 
 	/** Scheduler streaming to stop */
 	void schedStopStream() {
+//		System.out.println("StreamPanel.schedStopStream()");
 		STREAMER.addJob(new Job() {
 			public void perform() {
 				stopStream();
@@ -162,6 +163,7 @@ public class StreamPanel extends JPanel {
 
 	/** Schedule streaming to start */
 	void schedPlayStream() {
+//		System.out.println("StreamPanel.schedPlayStream()");
 		STREAMER.addJob(new Job() {
 			public void perform() {
 				playStream();
@@ -258,13 +260,15 @@ public class StreamPanel extends JPanel {
 	private void requestStream(Camera c) {
 		screen_pnl.setCamera(c);
 		handleStateChange();
-		timer.start();
+		if (c != null)
+			timer.start();
 	}
 
 	/** Clear the video stream */
 	private void clearStream() {
-		screen_pnl.releaseStream();
-		screen_pnl.stopStatusMonitor();
+//		screen_pnl.releaseStream();
+//		screen_pnl.stopStatusMonitor();
+		screen_pnl.stopStream();
 		handleStateChange();
 	}
 

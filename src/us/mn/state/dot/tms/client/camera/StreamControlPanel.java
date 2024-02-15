@@ -26,6 +26,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -256,9 +257,33 @@ public class StreamControlPanel extends JPanel {
 	/** Close all open video layouts */
 	public void closeAllLayouts() {
 		ArrayList<Frame> oldFrames = StreamLayout.getOpenFramesList();
-		for (Frame f: oldFrames)
+		for (Frame f: oldFrames) {
+			JFrame jf = (JFrame)f;			
+			VidWindow vw = (VidWindow)(jf.getContentPane());
+			vw.stopStreaming();
 			f.dispose();
+		}
 		updateCloseAllLayoutsBtn();
+	}
+
+	/** Restart streaming in all open video layouts */
+	static public void restartOpenLayouts() {
+		ArrayList<Frame> oldFrames = StreamLayout.getOpenFramesList();
+		for (Frame f: oldFrames) {
+			JFrame jf = (JFrame)f;			
+			VidWindow vw = (VidWindow)(jf.getContentPane());
+			vw.restartStreaming();
+		}
+	}
+
+	/** Stop streaming in all open video layouts */
+	static public void stopOpenLayouts() {
+		ArrayList<Frame> oldFrames = StreamLayout.getOpenFramesList();
+		for (Frame f: oldFrames) {
+			JFrame jf = (JFrame)f;			
+			VidWindow vw = (VidWindow)(jf.getContentPane());
+			vw.stopStreaming();
+		}
 	}
 
 	/** Queue a close old-frames to be done
@@ -284,8 +309,12 @@ public class StreamControlPanel extends JPanel {
 					public void run()
 					{
 						// Finally, close all old video frames.
-						for (Frame f: oldFrames)
+						for (Frame f: oldFrames) {
+							JFrame jf = (JFrame)f;			
+							VidWindow vw = (VidWindow)(jf.getContentPane());
+							vw.stopStreaming();
 							f.dispose();
+						}
 						updateCloseAllLayoutsBtn();
 					}
 				});

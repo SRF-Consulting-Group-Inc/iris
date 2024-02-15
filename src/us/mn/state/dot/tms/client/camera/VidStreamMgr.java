@@ -133,7 +133,7 @@ public abstract class VidStreamMgr {
 	public void queueStopStream() {
 		STREAM_SCHED.removeJob(jobStartStream);
 		if (isStreaming()) {
-			System.out.println("VidStreamMgr.queueStopStream()");
+//			System.out.println("VidStreamMgr.queueStopStream()");
 			STREAM_SCHED.addJob(jobStopStream);
 		}
 	}
@@ -142,7 +142,7 @@ public abstract class VidStreamMgr {
 	  * (Called from the STREAM_SCHED thread.) */
 	private final Job jobStopStream = new Job() {
 		public void perform() {
-			System.out.println("VidStreamMgr.jobStopStream.perform()");
+//			System.out.println("VidStreamMgr.jobStopStream.perform()");
 			doStopStream();
 		}
 	};
@@ -192,7 +192,7 @@ public abstract class VidStreamMgr {
 	protected void clearErrorMsg() {
 		if (sCurErrMsg == null)
 			return;
-		System.out.println("== VidStreamMgr.clearErrorMsg()");
+//		System.out.println("== VidStreamMgr.clearErrorMsg()");
 		sCurErrMsg = null;
 		videoPanel.queueUpdatePanel();
 	}
@@ -200,7 +200,7 @@ public abstract class VidStreamMgr {
 	/** Set a stream error message.
 	 * (Latches first reported error.) */
 	protected void setErrorMsg(String errMsg) {
-		System.out.println("== VidStreamMgr.setErrorMsg(\""+errMsg+"\")");
+//		System.out.println("== VidStreamMgr.setErrorMsg(\""+errMsg+"\")");
 		if ((sCurErrMsg != null)
 		 || (errMsg == null)
 		 || errMsg.isEmpty())
@@ -214,7 +214,7 @@ public abstract class VidStreamMgr {
 	 * Uses the defaultMsg if the exception has no message. */
 	protected void setErrorMsg(Exception ex, String defaultMsg) {
 		String errMsg = ex.getMessage();
-		System.out.println("== VidStreamMgr.setErrorMsg2(\""+errMsg+"\")");
+//		System.out.println("== VidStreamMgr.setErrorMsg2(\""+errMsg+"\")");
 		if ((errMsg == null) || errMsg.isEmpty())
 			errMsg = defaultMsg;
 		setErrorMsg(errMsg);
@@ -250,16 +250,5 @@ public abstract class VidStreamMgr {
 
 	public void dispose() {
 		queueStopStream();
-	}
-
-	//-------------------------------------------
-
-	/** Create a video manager of the appropriate type */
-	public VidStreamMgr create(VidPanel vp, VidStreamReq vr) {
-		if (vreq.isGst())
-			return new VidStreamMgrGst(vp, vr);
-		else if (vreq.isMJPEG())
-			return new VidStreamMgrMJPEG(vp, vr);
-		return null; // <-- should never happen
 	}
 }

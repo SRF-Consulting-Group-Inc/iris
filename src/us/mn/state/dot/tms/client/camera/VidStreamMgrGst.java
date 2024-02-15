@@ -438,7 +438,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 		public void eos(AppSink elem) {
 			if (bStreaming) {
 				streamingStopped();
-				System.out.println("### EOS");
+//				System.out.println("### EOS");
 				bStreaming = false;
 			}
 		}
@@ -484,6 +484,7 @@ public class VidStreamMgrGst extends VidStreamMgr {
 
 	}
 
+	/** Debug tool:  Print GStreamer Element to stdout */
 	public void dumpElement(Element elem, String title) {
 		System.out.println("## "+ title);
 		List<String> names = elem.listPropertyNames();
