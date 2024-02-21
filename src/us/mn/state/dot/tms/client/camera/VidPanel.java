@@ -152,14 +152,12 @@ public class VidPanel extends JPanel implements FocusListener {
 	/** For VIEWING stream, how long has it been running. */
 	private int videoDurationSec = 0;
 
-	private boolean repeatStatusMonitor = false;
-	
 	private String pauseMsg = null;
 
-	private boolean setStatus(PanelStatus ps, String pm) {
+	/** Set new panel status.
+	 *  (May be same as current status.) */
+	private synchronized boolean setStatus(PanelStatus ps, String pm) {
 		boolean ret = true;
-//		if (ps == panelStatus)
-//			return;
 		// start new panel status
 		pauseMsg = null;
 		panelStatus = ps;
@@ -195,7 +193,14 @@ public class VidPanel extends JPanel implements FocusListener {
 	}
 	
 	/** Status monitor job called once per second */
-	private final Job statusMonitor = new Job(Calendar.SECOND, 1) {
+	private StatusMonitor statusMonitor = null;
+
+	/** Status monitor job called once per second */
+	private class StatusMonitor extends Job {
+		StatusMonitor() {
+			super(Calendar.SECOND, 1);
+		}
+
 		@SuppressWarnings("incomplete-switch")
 		public void perform2() {
 			try {
@@ -296,9 +301,10 @@ public class VidPanel extends JPanel implements FocusListener {
 		@Override
 		public void perform() {
 			try {
-				if (repeatStatusMonitor)
+				if (statusMonitor == this)
 					perform2();
-	//			queueUpdatePanel();
+				else
+					PANEL_UPDATE.removeJob(this);
 			}
 			catch (Exception ex) {
 				ex.printStackTrace();
@@ -308,24 +314,22 @@ public class VidPanel extends JPanel implements FocusListener {
 		/** Check if this is a repeating job */
 		@Override
 		public boolean isRepeating() {
-			return repeatStatusMonitor;
+			return statusMonitor == this;
 		}
 	};
 
 	/** Start status monitor */
 	private void startStatusMonitor() {
-		if (!repeatStatusMonitor) {
-			repeatStatusMonitor = true;
-			PANEL_UPDATE.addJob(statusMonitor);
-		}
+		statusMonitor = new StatusMonitor();
+		PANEL_UPDATE.addJob(statusMonitor);
 	}
 
-	public void stopStatusMonitor() {
-		if (repeatStatusMonitor) {
-			repeatStatusMonitor = false;
-			PANEL_UPDATE.removeJob(statusMonitor);
-			videoGapSec = 0;
-		}
+	/** Stop status monitor */
+	private void stopStatusMonitor() {
+		StatusMonitor old = statusMonitor;
+		statusMonitor = null;
+		PANEL_UPDATE.removeJob(old);
+		videoGapSec = 0;
 	}
 
 	/** Create fixed-size video panel */
