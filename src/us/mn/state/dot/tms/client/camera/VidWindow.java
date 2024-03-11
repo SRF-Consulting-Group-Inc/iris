@@ -97,8 +97,10 @@ public class VidWindow extends AbstractForm {
 		videoPanel = new VidPanel(sz, strm_num);
 		add(videoPanel, BorderLayout.CENTER);
 
-		if (ctrl)
+		if (ctrl) {
 			add(new PopoutCamControlPanel(cam_ptz), BorderLayout.SOUTH);
+			videoPanel.initPopoutTooltip();
+		}
 
 		setPreferredSize(UI.dimension(pdm.width, pdm.height));
 		setMinimumSize(UI.dimension(pdm.width, pdm.height));

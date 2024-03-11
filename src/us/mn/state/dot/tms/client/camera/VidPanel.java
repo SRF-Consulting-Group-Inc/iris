@@ -972,4 +972,10 @@ public class VidPanel extends JPanel implements FocusListener {
 		PANEL_UPDATE.removeJob(fireChangeListenersJob);
 		PANEL_UPDATE.addJob(fireChangeListenersJob);
 	}
+
+	/** Display popout tooltip on no-video gray-background */
+	public void initPopoutTooltip() {
+		String str1 = "<html>F5 = Start stream<br>F6 = Stop stream<br>Shift+F5 = Restart all popout streams<br>Shift+F6 = Stop all popout streams";
+		placeholderComponent.setToolTipText(str1);
+	}
 }
