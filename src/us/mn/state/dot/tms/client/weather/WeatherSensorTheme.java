@@ -88,9 +88,9 @@ public class WeatherSensorTheme extends ProxyTheme<WeatherSensor> {
 			Temperature.create(p.getSurfTemp()));
 		ttb.addLine("Subsurface temperature", 
 			Temperature.create(p.getSubSurfTemp()));
+		ttb.setLast();
 		ttb.addLine("Time", 
 			formatDateString(p.getStamp()));
-		ttb.setLast();
 		return ttb.get();
 	}
 
