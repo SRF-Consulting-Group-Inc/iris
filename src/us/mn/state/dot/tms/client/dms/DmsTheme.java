@@ -116,8 +116,8 @@ public class DmsTheme extends ProxyTheme<DMS> {
 		// TODO move tip text to i18n
 		ttb.addLine("Message",
 			p.getMsgCurrent().getMulti());
-		ttb.addLine("Message owner",
-				p.getMsgCurrent().getMsgOwner());
+		ttb.addLine("Owner",
+				p.getMsgCurrent().getOwner());
 		ttb.setLast();
 		return ttb.get();
 	}
