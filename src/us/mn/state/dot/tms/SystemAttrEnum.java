@@ -3,7 +3,7 @@
  * Copyright (C) 2009-2023  Minnesota Department of Transportation
  * Copyright (C) 2009-2015  AHMCT, University of California
  * Copyright (C) 2012-2021  Iteris Inc.
- * Copyright (C) 2015-2020  SRF Consulting Group
+ * Copyright (C) 2015-2024  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -119,6 +119,7 @@ public enum SystemAttrEnum {
 	VID_CONNECT_FAIL_NEXT_SOURCE(true),
 	VID_CONNECT_FAIL_SEC(20, 0, 32000),
 	VID_LOST_TIMEOUT_SEC(10, 0, 32000),
+	VID_MAX_DURATION_SEC(0, 0, 31622400),
 	VID_RECONNECT_AUTO(true),
 	VID_RECONNECT_TIMEOUT_SEC(10, 0, 32000),
 	VSA_BOTTLENECK_ID_MPH(55, 10, 65),
