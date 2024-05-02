@@ -51,6 +51,7 @@ import us.mn.state.dot.tms.Camera;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.camera.VideoRequest.Size;
+import us.mn.state.dot.tms.utils.I18N;
 
 /** JPanel that shows video.
  *
@@ -912,5 +913,11 @@ public class VidPanel extends JPanel implements FocusListener {
 	private void queueFireChangeListeners() {
 		PANEL_UPDATE.removeJob(fireChangeListenersJob);
 		PANEL_UPDATE.addJob(fireChangeListenersJob);
+	}
+
+	/** Initialize popout-panel tooltip for blank no-video background */
+	public void initPopoutTooltip() {
+		String ttt = I18N.get("vid.blank.tooltip");
+		placeholderComponent.setToolTipText(ttt);
 	}
 }
