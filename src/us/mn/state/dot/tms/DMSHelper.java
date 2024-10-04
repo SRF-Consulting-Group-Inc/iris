@@ -562,7 +562,9 @@ public class DMSHelper extends BaseHelper {
 		if (dms == null)
 			return wsList;
 		WeatherSensor ws;
-		String wsOverride = dms.getWeatherSensorOverride().trim();
+		String wsOverride = dms.getWeatherSensorOverride();
+		if (wsOverride != null)
+			wsOverride = wsOverride.trim();
 		if ((wsOverride != null) && !wsOverride.isEmpty()) {
 			// Get WeatherSensor name(s) from dms.weatherSensorOverride...
 			try {
