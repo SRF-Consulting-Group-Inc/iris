@@ -261,8 +261,12 @@ public class PropRwis extends IPanel implements ProxyView<GeoLoc> {
 				GeoLoc g1 = ws.getGeoLoc();
 				GeoLoc g2 = dms.getGeoLoc();
 				Distance d = GeoLocHelper.distanceTo(g1, g2);
-				d = d.convert(units);
-				str = String.format("<br>%10s  %-20s  %-8s", d.toString(), ws.getName(), str);
+				String dstr = "UNKNOWN";
+				if (d != null) {
+					d = d.convert(units);
+					dstr = d.toString();
+				}
+				str = String.format("<br>%10s  %-20s  %-8s", dstr, ws.getName(), str);
 				sbTooltip.append(str);
 			}
 			str = sbTooltip.toString().replace(" ", "&nbsp;");
