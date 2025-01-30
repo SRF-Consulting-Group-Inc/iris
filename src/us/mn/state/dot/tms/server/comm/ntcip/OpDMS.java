@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2002-2023  Minnesota Department of Transportation
+ * Copyright (C) 2002-2025  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.server.comm.ntcip;
 import java.io.IOException;
 import us.mn.state.dot.tms.DMSType;
 import us.mn.state.dot.tms.SignDetail;
+import us.mn.state.dot.tms.SignMessage;
 import us.mn.state.dot.tms.server.DMSImpl;
 import us.mn.state.dot.tms.server.comm.PriorityLevel;
 
@@ -57,10 +58,24 @@ abstract public class OpDMS extends OpNtcip {
 		return (sd != null) && sd.getBeaconActivationFlag();
 	}
 
+	/** Get flash beacon flag for a sign message */
+	protected boolean getFlashBeacon(SignMessage sm) {
+		return supportsBeaconActivation() && (sm != null)
+		      ? sm.getFlashBeacon()
+		      : false;
+	}
+
 	/** Check if DMS supports pixel service object */
 	protected boolean supportsPixelService() {
 		SignDetail sd = dms.getSignDetail();
 		return (sd != null) && sd.getPixelServiceFlag();
+	}
+
+	/** Get pixel service flag for a sign message */
+	protected boolean getPixelService(SignMessage sm) {
+		return supportsPixelService() && (sm != null)
+		      ? sm.getPixelService()
+		      : false;
 	}
 
 	/** Create a new DMS operation */
