@@ -23,6 +23,7 @@ import us.mn.state.dot.tms.EventType;
 import us.mn.state.dot.tms.server.ControllerImpl;
 import us.mn.state.dot.tms.server.comm.CommMessage;
 import us.mn.state.dot.tms.server.comm.PriorityLevel;
+import us.mn.state.dot.tms.utils.DevelCfg;
 
 /**
  * This operation reads alerts from a test file and processes them.
@@ -33,7 +34,8 @@ import us.mn.state.dot.tms.server.comm.PriorityLevel;
 public class OpTestCap extends OpReadCap {
 
 	/** Path to test file */
-	static private final String TEST_FILE = "/var/log/iris/cap_test.xml";
+	static private final String TEST_FILE = String.join(File.separator,
+			DevelCfg.get("log.output.dir", "/var/log/iris/"), "cap_test.xml");
 
 	/** Create a new operation to read alert feed */
 	protected OpTestCap(ControllerImpl c, String fid) {

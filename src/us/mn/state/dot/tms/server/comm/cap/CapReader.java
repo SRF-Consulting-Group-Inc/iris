@@ -17,17 +17,24 @@ package us.mn.state.dot.tms.server.comm.cap;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import us.mn.state.dot.sched.TimeSteward;
 import us.mn.state.dot.tms.SystemAttrEnum;
+import us.mn.state.dot.tms.utils.DevelCfg;
 
 /**
  * Common Alerting Protocol (CAP) reader.
@@ -79,41 +86,53 @@ public class CapReader {
 
 	/** Parse alerts */
 	public void parse() throws IOException {
+		boolean xmlSuccess;
+		boolean jsonSuccess;
 		Date now = TimeSteward.getDateInstance();
+		String iStr = inputString();
+		InputSource iSrc = new InputSource(new StringReader(iStr));
 		try {
 			SAXParserFactory spf = SAXParserFactory.newInstance();
 			SAXParser parser = spf.newSAXParser();
-			parser.parse(inputStream(), handler);
-			REQ_SUCCESS = now;
+			parser.parse(iSrc, handler);
+			xmlSuccess = true;
+//			REQ_SUCCESS = now;
 		}
 		catch (ParserConfigurationException | SAXException e) {
-			CapPoller.slog("parse error: " + e.getMessage());
-			saveXmlFile();
+			xmlSuccess = false;
+//			CapPoller.slog("parse error: " + e.getMessage());		// TODO FIXME
+//			saveXmlFile();
+		}
+		if (!xmlSuccess) {
+			JSONObject jo = new JSONObject(iStr);
+			JSONArray jof = jo.getJSONArray("features");
+			for (int i = 0; i<jof.length(); i++) {
+				JSONObject jf = jof.getJSONObject(i).getJSONObject("properties");
+				PROCESSOR.processAlert(jf);
+			}
+			jsonSuccess = true;
 		}
 	}
 
-	/** Get input stream containing the XML */
-	private InputStream inputStream() throws IOException {
-		if (getXmlSaveEnabled()) {
-			// make a copy of the input stream - if we hit an
-			// exception we will save the XML and the text of the
-			// exception on the server
-			byte[] buf = new byte[1024];
-			int len;
-			while ((len = input.read(buf)) > -1)
-				baos.write(buf, 0, len);
-			baos.flush();
-			return new ByteArrayInputStream(baos.toByteArray());
-		} else
-			return input;
+	/** Get input string containing the XML */
+	private String inputString() throws IOException {
+		// make a copy of the input stream
+		byte[] buf = new byte[1024];
+		int len;
+		while ((len = input.read(buf)) > -1)
+			baos.write(buf, 0, len);
+		baos.flush();
+		return baos.toString();
 	}
 
 	/** Save the XML contents to a file */
 	private void saveXmlFile() throws IOException {
 		if (getXmlSaveEnabled()) {
-			String fn = "/var/log/iris/cap_err_" + DT_FMT.format(
+			String fn = "cap_err_" + DT_FMT.format(
 				TimeSteward.getDateInstance()) + ".xml";
-			baos.writeTo(new FileOutputStream(fn));
+			String fp = String.join(File.separator,
+					DevelCfg.get("log.output.dir", "/var/log/iris/"), fn);
+			baos.writeTo(new FileOutputStream(fp));
 		}
 	}
 }

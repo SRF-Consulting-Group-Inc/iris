@@ -31,7 +31,12 @@ public class AlertProcessor {
 
 	/** Process one alert */
 	public void processAlert(JSONObject ja) {
-		String id = ja.getString("identifier");
+		String id = null;
+		if (ja.has("identifier"))
+			id = ja.getString("identifier");
+		else if (ja.has("id"))
+			id = ja.getString("id");
+		
 		if (id != null) {
 			CapAlert ca = new CapAlert(id, ja);
 			SCHED.addJob(new Job() {

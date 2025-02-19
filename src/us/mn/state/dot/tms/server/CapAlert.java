@@ -131,7 +131,7 @@ public class CapAlert implements Storable {
 	 */
 	public void process() {
 		log("processing");
-		if (storeAlert() && checkStatus() && checkScope())
+		if (storeAlert() && checkStatus()) // && checkScope())
 			processData();
 	}
 
@@ -183,8 +183,10 @@ public class CapAlert implements Storable {
 	/** Process alert data */
 	private void processData() {
 		try {
-			CapMsgType msg_type = CapMsgType.fromValue(
-				alert.getString("msgType"));
+			String msgType = alert.has("msgType")
+					? alert.getString("msgType")
+					: alert.getString("messageType");
+			CapMsgType msg_type = CapMsgType.fromValue(msgType);
 			String references = alert.optString("references", "");
 			String sent = alert.getString("sent");
 			JSONArray infos = alert.getJSONArray("info");

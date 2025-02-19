@@ -118,7 +118,7 @@ public class AlertHandler extends DefaultHandler {
 		String qName) throws SAXException
 	{
 		Object obj = stack.pop();
-		if (qName.equals("alert")) {
+		if (qName.equals("entry")) {
 			if (obj instanceof JSONObject)
 				processAlert((JSONObject) obj);
 		} else if (ELEMENTS.contains(qName)) {

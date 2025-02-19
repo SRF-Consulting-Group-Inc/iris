@@ -100,16 +100,17 @@ public class AlertData {
 	static private CapResponseType lookupResponseType(JSONObject info)
 		throws JSONException
 	{
+		CapResponseType crt = CapResponseType.NONE;
 		if (info.has("responseType")) {
 			JSONArray rts = info.getJSONArray("responseType");
 			for (int i = 0; i < rts.length(); i++) {
-				CapResponseType crt = CapResponseType.fromValue(
-					rts.getString(i));
+				crt = CapResponseType.fromValue(rts.getString(i));
 				if (crt != CapResponseType.NONE)
 					return crt;
 			}
-		}
-		return CapResponseType.NONE;
+		} else if (info.has("response"))
+			crt = CapResponseType.fromValue(info.getString("response"));
+		return crt;
 	}
 
 	/** Date formatter for formatting/parsing CAP dates */
@@ -157,7 +158,8 @@ public class AlertData {
 				JSONObject area = areas.getJSONObject(i);
 				return area.getString("areaDesc");
 			}
-		}
+		} else if (info.has("areaDesc"))
+			return info.getString("areaDesc");
 		return null;
 	}
 
@@ -170,6 +172,36 @@ public class AlertData {
 			JSONArray areas = info.getJSONArray("area");
 			for (int i = 0; i < areas.length(); i++)
 				createPolygons(areas.getJSONObject(i), polys);
+		} else if (info.has("geocode")) {
+			// likely NWS feed - use UGC or SAME (FIPS) codes to get geometry
+			JSONObject gc = info.getJSONObject("geocode");
+			ArrayList<String> gcodes = new ArrayList<String>();
+			if (gc.has("UGC")) {
+				JSONArray ugcArr = gc.getJSONArray("UGC");
+				for (int i = 0; i < ugcArr.length(); i++) {
+					String u = ugcArr.getString(i);
+					if (u.length() == 6  && u.charAt(2) == 'Z') {
+						// NWS forecast zone - use it since it is more precise
+						gcodes.add(formatUGC(u));
+					} else
+						// probably county codes
+						break;
+				}
+			}
+			if (!gcodes.isEmpty())
+				createPolygonsNwsZones(gcodes, polys);
+			else if (gc.has("SAME")) {
+				JSONArray sameArr = gc.getJSONArray("SAME");
+				for (int i = 0; i < sameArr.length(); i++) {
+					String s = sameArr.getString(i);
+					if (s.length() == 6 && s.charAt(0) == '0')
+						// NWS FIPS codes have a leading 0, but the county
+						// shapefile leaves it off...
+						gcodes.add(formatFIPS(s));
+				}
+				if (!gcodes.isEmpty())
+					createPolygonsFips(gcodes, polys);
+			}
 		}
 		return polys.size() > 0
 		      ? new MultiPolygon(polys.toArray(new Polygon[0]))
@@ -184,9 +216,23 @@ public class AlertData {
 		throws JSONException, SQLException, TMSException
 	{
 		if (area.has("polygon"))
+			// TODO NWS CAP feed puts polygons in a separate spot, need to
+			// rework the parsing machine somewhat to get those in if desired
+			// (though the UGC codes usually seem better anyways) 
 			createPolygonsArr(area.getJSONArray("polygon"), polys);
-		else if (area.has("geocode"))
-			createPolygonsGeo(area.getJSONArray("geocode"), polys);
+		else if (area.has("geocode")) {
+			ArrayList<String> zones = new ArrayList<String>();
+			JSONArray geocode = area.getJSONArray("geocode");
+			for (int i = 0; i < geocode.length(); i++) {
+				JSONObject gc = geocode.getJSONObject(i);
+				if ("UGC".equals(gc.getString("valueName")))
+					zones.add(formatUGC(gc.getString("value")));
+				// FIXME: if valueName is "SAME", use FIPS code
+			}
+			if (!zones.isEmpty()) {
+				createPolygonsNwsZones(zones, polys);
+			}
+		}
 		else
 			log("no polygon or geocode section in area!");
 	}
@@ -234,27 +280,46 @@ public class AlertData {
 	 *  / updated from the NWS by going to this website and importing the
 	 *  shapefile into PostGIS: https://www.weather.gov/gis/PublicZones. */
 	static private final String NWS_ZONE_TABLE = "cap.nws_zones";
-
-	/** Create Polygons from a "geocode" section */
-	static private void createPolygonsGeo(JSONArray geocode,
-		List<Polygon> polys) throws JSONException, SQLException,
-		TMSException
+	
+	/** Create Polygons from a list of NWS forecast zones. */
+	static private void createPolygonsNwsZones(List<String> zones,
+			List<Polygon> polys) throws JSONException, SQLException,
+	TMSException
 	{
-		ArrayList<String> zones = new ArrayList<String>();
-		for (int i = 0; i < geocode.length(); i++) {
-			JSONObject gc = geocode.getJSONObject(i);
-			if ("UGC".equals(gc.getString("valueName")))
-				zones.add(formatUGC(gc.getString("value")));
-			// FIXME: if valueName is "SAME", use FIPS code
-		}
-		if (zones.isEmpty()) {
-			log("no UGC codes found!");
-			return;
-		}
 		String codes = String.join(",", zones);
 		log("got UGC codes: " + codes);
 		BaseObjectImpl.store.query("SELECT geom FROM " + NWS_ZONE_TABLE
-			+ " WHERE state_zone IN (" + codes + ");",
+				+ " WHERE state_zone IN (" + codes + ");",
+				new ResultFactory()
+		{
+			@Override
+			public void create(ResultSet row) throws SQLException {
+				MultiPolygon mp = SQLConnection.multiPolygon(
+						row.getObject(1));
+				if (mp != null) {
+					Polygon[] pgons = mp.getPolygons();
+					for (int i = 0; i < pgons.length; i++)
+						polys.add(pgons[i]);
+				} else
+					log("invalid geom in zone table!");
+			}
+		});
+	}
+
+	/** Table containing US County boundary Geometries. This can be obtained
+	 *  / updated from the NWS by going to this website and importing the
+	 *  shapefile into PostGIS: https://www.weather.gov/gis/Counties. */
+	static private final String NWS_COUNTIES_TABLE = "cap.nws_counties";
+	
+	/** Create Polygons from a list of SAME (FIPS) county codes. */
+	static private void createPolygonsFips(List<String> ccodes,
+		List<Polygon> polys) throws JSONException, SQLException,
+		TMSException
+	{
+		String codes = String.join(",", ccodes);
+		log("got FIPS codes: " + codes);
+		BaseObjectImpl.store.query("SELECT geom FROM " + NWS_COUNTIES_TABLE
+			+ " WHERE fips IN (" + codes + ");",
 			new ResultFactory()
 		{
 			@Override
@@ -266,7 +331,7 @@ public class AlertData {
 					for (int i = 0; i < pgons.length; i++)
 						polys.add(pgons[i]);
 				} else
-					log("invalid geom in zone table!");
+					log("invalid geom in counties table!");
 			}
 		});
 	}
@@ -281,13 +346,22 @@ public class AlertData {
 				"ST_Point(g.lon,g.lat)::geography," + th + ")";
 	}
 
-	/** Format a UGC code.
+	/** Format a UGC code containing an NWS forecast zone ID.
 	 *
 	 *  UGC fields will come in as "{STATE}Z{CODE}" (e.g. "MNZ060").
 	 *  We want "{STATE}{CODE}" (e.g. "MN060"), which matches the data from
 	 *  NWS_ZONE_TABLE. */
 	static private String formatUGC(String ugc) {
 		return "'" + String.join("", ugc.split("Z")) + "'";
+	}
+	
+	/** Format a SAME (FIPS) code containing a county ID.
+	 *
+	 *  The NWS feed sends these as 6-digit codes with a leading 0. We will
+	 *  remove that leading 0 to match the data from the NWS_COUNTIES_TABLE. */
+	static private String formatFIPS(String fips) {
+		String dbFips = fips.charAt(0) == '0' ? fips.substring(1) : fips;
+		return "'" + dbFips + "'";
 	}
 
 	/** Get the distance threshold for auto DMS */
