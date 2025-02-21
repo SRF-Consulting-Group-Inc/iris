@@ -134,14 +134,16 @@ public class AlertData {
 	static private Date getEndDate(JSONObject info) throws JSONException,
 		ParseException
 	{
-		JSONArray params = info.getJSONArray("parameter");
-		for (int i = 0; i < params.length(); i++) {
-			JSONObject param = params.getJSONObject(i);
-			if (param.getString("valueName").equals(
-				"eventEndingTime"))
-			{
-				String value = param.getString("value");
-				return CAP_DATE.parse(value);
+		if (info.has("parameter")) {
+			JSONArray params = info.getJSONArray("parameter");
+			for (int i = 0; i < params.length(); i++) {
+				JSONObject param = params.getJSONObject(i);
+				if (param.getString("valueName").equals(
+					"eventEndingTime"))
+				{
+					String value = param.getString("value");
+					return CAP_DATE.parse(value);
+				}
 			}
 		}
 		// No eventEndingTime parameter found; use expires instead
@@ -149,6 +151,7 @@ public class AlertData {
 	}
 
 	/** Get area description */
+	@SuppressWarnings("unused")
 	static private String getAreaDesc(JSONObject info)
 		throws JSONException
 	{
@@ -463,26 +466,26 @@ public class AlertData {
 	/** Automatic plus optional signs */
 	private final TreeSet<DMS> all_dms = new TreeSet<DMS>();
 
-	/** Create alert data from JSON info */
+	/** Create alert data from JSON info/properties section (depends on feed). */
 	public AlertData(String id, CapMsgType mt, String ref, String sent,
-		JSONObject info) throws JSONException, ParseException,
+		JSONObject infoProps) throws JSONException, ParseException,
 		SonarException, SQLException, TMSException
 	{
 		identifier = id;
 		msg_type = mt;
 		references = ref;
-		event = lookupEvent(info);
-		response_type = lookupResponseType(info);
-		urgency = CapUrgency.fromValue(info.getString("urgency"));
-		severity = CapSeverity.fromValue(info.getString("severity"));
-		certainty = CapCertainty.fromValue(info.getString("certainty"));
-		start_date = getStartDate(info, sent);
-		end_date = getEndDate(info);
-		headline = info.optString("headline", "");
-		description = info.optString("description", "");
-		instruction = info.optString("instruction", "");
-		area_desc = getAreaDesc(info);
-		geo_poly = createPolygons(info);
+		event = lookupEvent(infoProps);
+		response_type = lookupResponseType(infoProps);
+		urgency = CapUrgency.fromValue(infoProps.getString("urgency"));
+		severity = CapSeverity.fromValue(infoProps.getString("severity"));
+		certainty = CapCertainty.fromValue(infoProps.getString("certainty"));
+		start_date = getStartDate(infoProps, sent);
+		end_date = getEndDate(infoProps);
+		headline = infoProps.optString("headline", "");
+		description = infoProps.optString("description", "");
+		instruction = infoProps.optString("instruction", "");
+		area_desc = getAreaDesc(infoProps);
+		geo_poly = createPolygons(infoProps);
 		if (geo_poly != null) {
 			log("found polygons: " + geo_poly.getPolygons().length);
 			findCentroid();

@@ -17,6 +17,7 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -183,17 +184,42 @@ public class CapAlert implements Storable {
 	/** Process alert data */
 	private void processData() {
 		try {
-			String msgType = alert.has("msgType")
-					? alert.getString("msgType")
-					: alert.getString("messageType");
-			CapMsgType msg_type = CapMsgType.fromValue(msgType);
-			String references = alert.optString("references", "");
-			String sent = alert.getString("sent");
-			JSONArray infos = alert.getJSONArray("info");
-			for (int i = 0; i < infos.length(); i++) {
-				JSONObject info = infos.getJSONObject(i);
+			if (alert.has("msgType") && alert.has("info")) {
+				// IPAWS CAP XML feed
+				String msgType = alert.getString("msgType");
+				CapMsgType msg_type = CapMsgType.fromValue(msgType);
+				String references = alert.optString("references", "");
+				String sent = alert.getString("sent");
+				JSONArray infos = alert.getJSONArray("info");
+				for (int i = 0; i < infos.length(); i++) {
+					JSONObject info = infos.getJSONObject(i);
+					AlertData data = new AlertData(identifier,
+						msg_type, references, sent, info);
+					data.process();
+				}
+			} else {
+				// NWS CAP GeoJSON feed
+				String msgType = alert.getString("messageType");
+				CapMsgType msg_type = CapMsgType.fromValue(msgType);
+				String sent = alert.getString("sent");
+
+				// put references in same format as IPAWS for simplicity
+				// (sender,identifier,sent separated by whitespace)
+				String references = "";
+				if (alert.has("references")) {
+					JSONArray refs = alert.getJSONArray("references");
+					ArrayList<String> rList = new ArrayList<String>();
+					for (int i = 0; i < refs.length(); i++) {
+						JSONObject ref = refs.getJSONObject(i);
+						String r = String.join(",",ref.getString("sender"),
+								ref.getString("identifier"),
+								ref.getString("sent"));
+						rList.add(r);
+					}
+					references = String.join(" ",  rList);
+				}
 				AlertData data = new AlertData(identifier,
-					msg_type, references, sent, info);
+					msg_type, references, sent, alert);
 				data.process();
 			}
 		}
