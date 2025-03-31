@@ -58,12 +58,10 @@ pub enum Res {
     IncLocator,
     IncRange,
     LaneCode,
-    LaneMarking,
-    LaneUseIndication,
     Lcs,
-    LcsArray,
     LcsIndication,
-    LcsLock,
+    LcsState,
+    LcsType,
     MeterAlgorithm,
     MeterType,
     Modem,
@@ -157,12 +155,10 @@ impl Res {
             IncLocator,
             IncRange,
             LaneCode,
-            LaneMarking,
-            LaneUseIndication,
             Lcs,
-            LcsArray,
             LcsIndication,
-            LcsLock,
+            LcsState,
+            LcsType,
             MeterAlgorithm,
             MeterType,
             Modem,
@@ -244,12 +240,10 @@ impl Res {
             IncLocator => "inc_locator",
             IncRange => "inc_range",
             LaneCode => "lane_code",
-            LaneUseIndication => "lane_use_indication",
-            LaneMarking => "lane_marking",
             Lcs => "lcs",
-            LcsArray => "lcs_array",
             LcsIndication => "lcs_indication",
-            LcsLock => "lcs_lock",
+            LcsState => "lcs_state",
+            LcsType => "lcs_type",
             MeterAlgorithm => "meter_algorithm",
             MeterType => "meter_type",
             Modem => "modem",
@@ -316,9 +310,8 @@ impl Res {
             IncAdvice => "🚨❗",
             IncDescriptor => "🚨❓",
             IncLocator => "🚨🗺️",
-            LaneMarking => "⛙",
-            LcsArray => "🡇 ❌ ",
-            LcsIndication => "🡇 ",
+            Lcs => "🠟✖🠟",
+            LcsState => "🠟",
             Modem => "🖀 ",
             MonitorStyle => "FIXME",
             Permission => "🗝️ ",
@@ -345,7 +338,7 @@ impl Res {
         match self {
             BeaconState | CommProtocol | Condition | Direction | Encoding
             | Font | GateArmInterlock | GateArmState | Graphic | IncImpact
-            | IncRange | LaneCode | LaneUseIndication | LcsLock
+            | IncRange | LaneCode | LcsIndication | LcsType
             | MeterAlgorithm | MeterType | ResourceType | RnodeTransition
             | RnodeType | RoadClass | RoadModifier => true,
             _ => false,
@@ -362,13 +355,12 @@ impl Res {
             | DayMatcher | DayPlan | Detector | DeviceAction | Dms | Domain
             | EncoderStream | EncoderType | EventConfig | FlowStream
             | GateArm | GateArmArray | Gps | Incident | IncidentDetail
-            | IncAdvice | IncDescriptor | IncLocator | LaneMarking
-            | LcsArray | LcsIndication | Modem | MonitorStyle | MsgLine
-            | MsgPattern | ParkingArea | Permission | PlanPhase | PlayList
-            | RampMeter | Rnode | Road | RoadAffix | Role | SignConfig
-            | SignDetail | SignMessage | SystemAttribute | TagReader
-            | TimeAction | TollZone | User | VideoMonitor | WeatherSensor
-            | Word => true,
+            | IncAdvice | IncDescriptor | IncLocator | Lcs | LcsState
+            | Modem | MonitorStyle | MsgLine | MsgPattern | ParkingArea
+            | Permission | PlanPhase | PlayList | RampMeter | Rnode | Road
+            | RoadAffix | Role | SignConfig | SignDetail | SignMessage
+            | SystemAttribute | TagReader | TimeAction | TollZone | User
+            | VideoMonitor | WeatherSensor | Word => true,
             _ => false,
         }
     }
@@ -400,7 +392,7 @@ impl Res {
             IncidentDetail | IncAdvice | IncDescriptor | IncLocator
             | RoadAffix => Incident,
             // LCS resources
-            LcsArray | LcsIndication | LaneMarking => Lcs,
+            LcsState => Lcs,
             // Permission resources
             Domain | User | Role => Permission,
             // System attribute resources

@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2000-2024  Minnesota Department of Transportation
+ * Copyright (C) 2000-2025  Minnesota Department of Transportation
  * Copyright (C) 2011  Berkeley Transportation Systems Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -53,13 +53,14 @@ import us.mn.state.dot.tms.server.event.CommEvent;
  * @author Douglas Lau
  * @author Michael Darter
  */
-public class ControllerImpl extends BaseObjectImpl implements Controller {
-
+public class ControllerImpl extends BaseObjectImpl implements Controller,
+	Comparable<ControllerImpl>
+{
 	/** Check if controller IO should receive device requests */
 	static private boolean shouldRequestDevice(ControllerIO io) {
 		return io instanceof BeaconImpl ||
 		       io instanceof DMSImpl ||
-		       io instanceof LCSArrayImpl ||
+		       io instanceof LcsImpl ||
 		       io instanceof RampMeterImpl ||
 		       io instanceof TagReaderImpl ||
 		       io instanceof WeatherSensorImpl;
@@ -104,6 +105,12 @@ public class ControllerImpl extends BaseObjectImpl implements Controller {
 		map.put("status", status);
 		map.put("fail_time", asTimestamp(failTime));
 		return map;
+	}
+
+	/** Compare to another controller */
+	@Override
+	public int compareTo(ControllerImpl o) {
+		return name.compareTo(o.name);
 	}
 
 	/** Create a new controller */

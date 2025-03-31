@@ -30,6 +30,7 @@ use pix::{Palette, Raster};
 use resources::Res;
 use serde::Deserialize;
 use std::borrow::Cow;
+use std::fmt;
 use std::io::Write;
 use wasm_bindgen::JsValue;
 use web_sys::console;
@@ -42,6 +43,18 @@ enum MeterState {
     Green,
     Yellow,
     Red,
+}
+
+/// Meter lock reason
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum LockReason {
+    Unlocked,
+    Incident,
+    Testing,
+    KnockedDown,
+    Indication,
+    Maintenance,
+    Construction,
 }
 
 /// Meter Lock
@@ -297,68 +310,115 @@ fn encode_meter_2<W: Write>(enc: Encoder<W>, red_cs: u16) -> Result<()> {
 
 /// Make meter signal as html
 fn meter_html(buf: Vec<u8>) -> String {
-    let width = 24;
-    let height = 64;
+    const WIDTH: u32 = 24;
+    const HEIGHT: u32 = 64;
     let mut html = String::new();
     html.push_str("<img");
     html.push_str(" width='");
-    html.push_str(&width.to_string());
+    html.push_str(&WIDTH.to_string());
     html.push_str("' height='");
-    html.push_str(&height.to_string());
+    html.push_str(&HEIGHT.to_string());
     html.push_str("' ");
     html.push_str("src='data:image/gif;base64,");
     b64enc.encode_string(buf, &mut html);
-    html.push('\'');
-    html.push_str("/>");
+    html.push_str("' />");
     html
+}
+
+impl From<&str> for LockReason {
+    fn from(r: &str) -> Self {
+        match r {
+            "incident" => Self::Incident,
+            "testing" => Self::Testing,
+            "knocked down" => Self::KnockedDown,
+            "indication" => Self::Indication,
+            "maintenance" => Self::Maintenance,
+            "construction" => Self::Construction,
+            _ => Self::Unlocked,
+        }
+    }
+}
+
+impl fmt::Display for LockReason {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl LockReason {
+    /// Get lock reason as a string slice
+    fn as_str(&self) -> &'static str {
+        use LockReason::*;
+        match self {
+            Unlocked => "unlocked",
+            Incident => "incident",
+            Testing => "testing",
+            KnockedDown => "knocked down",
+            Indication => "indication",
+            Maintenance => "maintenance",
+            Construction => "construction",
+        }
+    }
 }
 
 impl RampMeter {
     /// Get fault, if any
     fn fault(&self) -> Option<&str> {
-        if let Some(status) = &self.status {
-            if let Some(fault) = &status.fault {
-                return Some(fault);
-            }
-        }
-        None
+        self.status.as_ref().and_then(|s| s.fault.as_deref())
     }
 
     /// Get item states
     fn item_states<'a>(&'a self, anc: &'a RampMeterAnc) -> ItemStates<'a> {
         let mut states = anc.cio.item_states(self);
+        if states.contains(ItemState::Available) {
+            states = self.item_states_lock();
+        }
         if let Some(fault) = self.fault() {
             states = states.with(ItemState::Fault, fault);
         }
         states
     }
 
-    /// Convert to Compact HTML
-    fn to_html_compact(&self, anc: &RampMeterAnc) -> String {
-        let name = HtmlStr::new(self.name());
-        let item_states = self.item_states(anc);
-        let location = HtmlStr::new(&self.location).with_len(32);
-        format!(
-            "<div class='title row'>{name} {item_states}</div>\
-            <div class='info fill'>{location}</div>"
-        )
+    /// Get lock reason
+    fn lock_reason(&self) -> LockReason {
+        self.lock
+            .as_ref()
+            .map(|lk| LockReason::from(lk.reason.as_str()))
+            .unwrap_or(LockReason::Unlocked)
     }
 
-    /// Convert to Control HTML
-    fn to_html_control(&self, anc: &RampMeterAnc) -> String {
-        if let Some((lat, lon)) = anc.loc.latlon() {
-            fly_map_item(&self.name, lat, lon);
+    /// Get item states from status/lock
+    fn item_states_lock(&self) -> ItemStates<'_> {
+        let deployed = match &self.status {
+            Some(st) if st.rate.is_some() => true,
+            _ => false,
+        };
+        let reason = self.lock_reason();
+        let states = if reason == LockReason::Incident {
+            ItemStates::default()
+                .with(ItemState::Incident, LockReason::Incident.as_str())
+        } else {
+            ItemStates::default()
+        };
+        match (deployed, reason) {
+            (true, LockReason::Unlocked) => states
+                .with(ItemState::Deployed, "metering")
+                .with(ItemState::Planned, "metering"),
+            (true, _) => states
+                .with(ItemState::Deployed, "metering")
+                .with(ItemState::Locked, reason.as_str()),
+            (false, LockReason::Unlocked) => ItemState::Available.into(),
+            (false, _) => states.with(ItemState::Locked, reason.as_str()),
         }
-        let title = self.title(View::Control);
-        let item_states = self.item_states(anc).to_html();
-        let location = HtmlStr::new(&self.location).with_len(64);
-        let mut rate = "".to_string();
+    }
+
+    /// Render meter images
+    fn meter_images_html(&self) -> (String, String) {
         let mut meter1 = "".to_string();
         let mut meter2 = "".to_string();
         if let Some(s) = &self.status {
             if let Some(r) = s.rate {
                 let c = 3_600.0 / (r as f32);
-                rate = format!("{r} veh/hr ({c:.1} s)");
                 let ds = (c * 10.0).round() as i32;
                 // between 0.1 and 50.0 seconds
                 if ds > 0 && ds < 500 {
@@ -392,6 +452,110 @@ impl RampMeter {
                 }
             }
         }
+        (meter1, meter2)
+    }
+
+    /// Create an HTML `select` element of lock reasons
+    fn lock_reason_html(&self) -> String {
+        let reason = self.lock_reason();
+        let mut html = String::new();
+        html.push_str("<span>");
+        html.push(match reason {
+            LockReason::Unlocked => '🔓',
+            _ => '🔒',
+        });
+        html.push_str("<select id='lock_reason'>");
+        for r in [
+            LockReason::Unlocked,
+            LockReason::Incident,
+            LockReason::Testing,
+            LockReason::KnockedDown,
+            LockReason::Indication,
+            LockReason::Maintenance,
+            LockReason::Construction,
+        ] {
+            html.push_str("<option");
+            if r == reason {
+                html.push_str(" selected");
+            }
+            html.push('>');
+            html.push_str(r.as_str());
+            html.push_str("</option>");
+        }
+        html.push_str("</select></span>");
+        html
+    }
+
+    /// Get metering rate as HTML
+    fn rate_html(&self) -> String {
+        if let Some(s) = &self.status {
+            if let Some(r) = s.rate {
+                let c = 3_600.0 / (r as f32);
+                return format!("<span>⏱️ {c:.1} s ({r} veh/hr)</span>");
+            }
+        }
+        String::new()
+    }
+
+    /// Get queue as HTML
+    fn queue_html(&self) -> String {
+        let value = self.status.as_ref().and_then(|s| {
+            s.queue.as_ref().and_then(|q| match q.as_str() {
+                "empty" => Some(8),
+                "exists" => Some(50),
+                "full" => Some(100),
+                _ => None,
+            })
+        });
+        match value {
+            Some(value) => format!(
+                "<span>🚗 queue \
+                  <meter min='0' optimum='0' low='25' high='75' max='100' \
+                         value='{value}'>\
+                  </meter>\
+                </span>"
+            ),
+            None => String::new(),
+        }
+    }
+
+    /// Get shrink/grow buttons as HTML
+    fn shrink_grow_html(&self) -> &'static str {
+        match self.lock_reason() {
+            LockReason::Incident | LockReason::Testing => {
+                "<span>\
+                   <button id='q_shrink' type='button'>Shrink ➘</button>\
+                   <button id='q_grow' type='button'>Grow ➚</button>\
+                 </span>"
+            }
+            _ => "",
+        }
+    }
+
+    /// Convert to Compact HTML
+    fn to_html_compact(&self, anc: &RampMeterAnc) -> String {
+        let name = HtmlStr::new(self.name());
+        let item_states = self.item_states(anc);
+        let location = HtmlStr::new(&self.location).with_len(32);
+        format!(
+            "<div class='title row'>{name} {item_states}</div>\
+            <div class='info fill'>{location}</div>"
+        )
+    }
+
+    /// Convert to Control HTML
+    fn to_html_control(&self, anc: &RampMeterAnc) -> String {
+        if let Some((lat, lon)) = anc.loc.latlon() {
+            fly_map_item(&self.name, lat, lon);
+        }
+        let title = self.title(View::Control);
+        let item_states = self.item_states(anc).to_html();
+        let location = HtmlStr::new(&self.location).with_len(64);
+        let (meter1, meter2) = self.meter_images_html();
+        let reason = self.lock_reason_html();
+        let rate = self.rate_html();
+        let queue = self.queue_html();
+        let shrink_grow = self.shrink_grow_html();
         format!(
             "{title}\
             <div class='row fill'>\
@@ -403,11 +567,7 @@ impl RampMeter {
             <div class='row center'>\
               {meter1}\
               <div class='column'>\
-                <span>{rate}</span>\
-                <span>\
-                  <button id='q_grow' type='button'>⏫ Grow</button>\
-                  <button id='q_shrink' type='button'>⏬ Shrink</button>\
-                </span>\
+                {reason}{rate}{queue}{shrink_grow}\
               </div>\
               {meter2}\
             </div>"
@@ -492,10 +652,13 @@ impl Card for RampMeter {
     /// All item states as html options
     const ITEM_STATES: &'static str = "<option value=''>all ↴\
          <option value='🔹'>🔹 available\
-         <option value='🔶'>🔶 deployed\
+         <option value='🔶' selected>🔶 deployed\
+         <option value='🗓️'>🗓️ planned\
+         <option value='🚨'>🚨 incident\
+         <option value='🔒'>🔒 locked\
          <option value='⚠️'>⚠️ fault\
          <option value='🔌'>🔌 offline\
-         <option value='▪️'>▪️ inactive";
+         <option value='🔻'>🔻 inactive";
 
     /// Get the resource
     fn res() -> Res {
@@ -518,10 +681,16 @@ impl Card for RampMeter {
         let item_states = self.item_states(anc);
         if item_states.is_match(ItemState::Inactive.code()) {
             ItemState::Inactive
-        } else if item_states.is_match(ItemState::Deployed.code()) {
-            ItemState::Deployed
         } else if item_states.is_match(ItemState::Offline.code()) {
             ItemState::Offline
+        } else if item_states.is_match(ItemState::Deployed.code()) {
+            ItemState::Deployed
+        } else if item_states.is_match(ItemState::Planned.code()) {
+            ItemState::Planned
+        } else if item_states.is_match(ItemState::Fault.code())
+            || item_states.is_match(ItemState::Locked.code())
+        {
+            ItemState::Fault
         } else {
             ItemState::Available
         }

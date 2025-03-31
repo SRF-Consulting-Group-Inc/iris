@@ -77,7 +77,7 @@ public class MeterLock {
 				jo = new JSONObject(lk);
 		}
 		catch (JSONException e) {
-			System.err.println("LockBuilder: " + e.getMessage());
+			System.err.println("MeterLock: " + e.getMessage());
 		}
 		lock = jo;
 	}

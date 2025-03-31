@@ -198,7 +198,7 @@ public class MeterDispatcher extends IPanel implements ProxyView<RampMeter> {
 
 	/** Set the camera preset action */
 	private void setPresetAction(RampMeter rm) {
-		CameraPreset cp = RampMeterHelper.getPreset(rm);
+		CameraPreset cp = (rm != null) ? rm.getPreset() : null;
 		preset_btn.setAction(new CameraPresetAction(session, cp));
 	}
 
@@ -217,12 +217,12 @@ public class MeterDispatcher extends IPanel implements ProxyView<RampMeter> {
 		ShrinkQueueAction sq_act = new ShrinkQueueAction(rm, user);
 		GrowQueueAction gq_act = new GrowQueueAction(rm, user);
 		if (!isWritePermitted(rm)) {
-			reason_act.setEnabled(false);
 			on_act.setEnabled(false);
 			off_act.setEnabled(false);
+			reason_act.setEnabled(false);
 		}
-		boolean metering = RampMeterHelper.isMetering(rm);
-		if ((!isWritePermitted(rm)) || r == null || !metering) {
+		boolean locked_on = (lk.optRate() != null);
+		if ((!isWritePermitted(rm)) || !locked_on) {
 			sq_act.setEnabled(false);
 			gq_act.setEnabled(false);
 		}

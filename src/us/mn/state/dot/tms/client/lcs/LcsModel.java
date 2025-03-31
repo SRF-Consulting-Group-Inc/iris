@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2009-2019  Minnesota Department of Transportation
+ * Copyright (C) 2009-2025  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,42 +12,42 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-package us.mn.state.dot.tms.client.marking;
+package us.mn.state.dot.tms.client.lcs;
 
 import java.util.ArrayList;
-import us.mn.state.dot.tms.LaneMarking;
 import us.mn.state.dot.tms.GeoLocHelper;
+import us.mn.state.dot.tms.Lcs;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyColumn;
 import us.mn.state.dot.tms.client.proxy.ProxyTableModel;
 
 /**
- * Table model for lane markings.
+ * Table model for LCS arrays.
  *
  * @author Douglas Lau
  */
-public class LaneMarkingModel extends ProxyTableModel<LaneMarking> {
+public class LcsModel extends ProxyTableModel<Lcs> {
 
 	/** Create the columns in the model */
 	@Override
-	protected ArrayList<ProxyColumn<LaneMarking>> createColumns() {
-		ArrayList<ProxyColumn<LaneMarking>> cols =
-			new ArrayList<ProxyColumn<LaneMarking>>(2);
-		cols.add(new ProxyColumn<LaneMarking>("lane_marking", 120) {
-			public Object getValueAt(LaneMarking lm) {
-				return lm.getName();
+	protected ArrayList<ProxyColumn<Lcs>> createColumns() {
+		ArrayList<ProxyColumn<Lcs>> cols =
+			new ArrayList<ProxyColumn<Lcs>>(2);
+		cols.add(new ProxyColumn<Lcs>("lcs", 120) {
+			public Object getValueAt(Lcs l) {
+				return l.getName();
 			}
 		});
-		cols.add(new ProxyColumn<LaneMarking>("location", 300) {
-			public Object getValueAt(LaneMarking lm) {
-				return GeoLocHelper.getLocation(lm.getGeoLoc());
+		cols.add(new ProxyColumn<Lcs>("location", 300) {
+			public Object getValueAt(Lcs l) {
+				return GeoLocHelper.getLocation(l.getGeoLoc());
 			}
 		});
 		return cols;
 	}
 
-	/** Create a new lane marking table model */
-	public LaneMarkingModel(Session s) {
-		super(s, LaneMarkingManager.descriptor(s), 12);
+	/** Create a new LCS array table model */
+	public LcsModel(Session s) {
+		super(s, LcsManager.descriptor(s), 16);
 	}
 }

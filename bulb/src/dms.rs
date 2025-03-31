@@ -1162,7 +1162,7 @@ impl Card for Dms {
          <option value='🎯'>🎯 dedicated\
          <option value='⚠️'>⚠️ fault\
          <option value='🔌'>🔌 offline\
-         <option value='▪️'>▪️ inactive";
+         <option value='🔻'>🔻 inactive";
 
     /// Get the resource
     fn res() -> Res {
@@ -1195,6 +1195,8 @@ impl Card for Dms {
             ItemState::Planned
         } else if item_states.is_match(ItemState::External.code()) {
             ItemState::External
+        } else if item_states.is_match(ItemState::Fault.code()) {
+            ItemState::Fault
         } else {
             ItemState::Available
         }

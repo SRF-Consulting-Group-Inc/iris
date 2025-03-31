@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2007-2024  Minnesota Department of Transportation
+ * Copyright (C) 2007-2025  Minnesota Department of Transportation
  * Copyright (C) 2015       Iteris Inc.
  * Copyright (C) 2016-2021  SRF Consulting Group
  *
@@ -47,7 +47,6 @@ import us.mn.state.dot.tms.GateArmArray;
 import us.mn.state.dot.tms.GeoLoc;
 import us.mn.state.dot.tms.Gps;
 import us.mn.state.dot.tms.Graphic;
-import us.mn.state.dot.tms.LaneMarking;
 import us.mn.state.dot.tms.MapExtent;
 import us.mn.state.dot.tms.ParkingArea;
 import us.mn.state.dot.tms.Permission;
@@ -264,6 +263,14 @@ public class SonarState extends Client {
 		return dms_cache;
 	}
 
+	/** Cache of LCS objects */
+	private final LcsCache lcs_cache;
+
+	/** Get the LCS object cache */
+	public LcsCache getLcsCache() {
+		return lcs_cache;
+	}
+
 	/** Cache of incident objects */
 	private final IncCache inc_cache;
 
@@ -294,23 +301,6 @@ public class SonarState extends Client {
 	/** Get the alert info cache */
 	public TypeCache<AlertInfo> getAlertInfos() {
 		return alert_infos;
-	}
-
-	/** Cache of LCS objects */
-	private final LcsCache lcs_cache;
-
-	/** Get the LCS object cache */
-	public LcsCache getLcsCache() {
-		return lcs_cache;
-	}
-
-	/** Cache of lane markings */
-	private final TypeCache<LaneMarking> lane_markings =
-		new TypeCache<LaneMarking>(LaneMarking.class, this);
-
-	/** Get the lane marking cache */
-	public TypeCache<LaneMarking> getLaneMarkings() {
-		return lane_markings;
 	}
 
 	/** Cache of weather sensors */
@@ -530,6 +520,7 @@ public class SonarState extends Client {
 		con_cache = new ConCache(this);
 		det_cache = new DetCache(this);
 		dms_cache = new DmsCache(this);
+		lcs_cache = new LcsCache(this);
 		inc_cache = new IncCache(this);
 		alert_configs = new TypeCache<AlertConfig>(AlertConfig.class,
 			this);
@@ -537,7 +528,6 @@ public class SonarState extends Client {
 			this);
 		alert_infos = new TypeCache<AlertInfo>(AlertInfo.class,
 			this);
-		lcs_cache = new LcsCache(this);
 		gate_arm_array_model = new ProxyListModel<GateArmArray>(
 			gate_arm_arrays);
 		gate_arm_array_model.initialize();
@@ -637,11 +627,8 @@ public class SonarState extends Client {
 		}
 		populateReadable(graphics);
 		dms_cache.populate(this);
-		inc_cache.populate(this);
 		lcs_cache.populate(this);
-		populateReadable(lane_markings);
-		if (canRead(LaneMarking.SONAR_TYPE))
-			lane_markings.ignoreAttribute("operation");
+		inc_cache.populate(this);
 		populateReadable(weather_sensors);
 		if (canRead(WeatherSensor.SONAR_TYPE)) {
 			weather_sensors.ignoreAttribute("operation");

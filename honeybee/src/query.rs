@@ -81,11 +81,15 @@ pub const CAMERA_ALL: &str = "\
 
 /// SQL query for one camera (secondary)
 pub const CAMERA_ONE: &str = "\
-  SELECT c.name, location, geo_loc, controller, pin, notes, cam_num, publish, \
-         cam_template, encoder_type, enc_address, enc_port, enc_mcast, \
-         enc_channel, video_loss \
+  SELECT c.name, location, c.geo_loc, controller, pin, c.notes, cam_num, publish, \
+         cam_template, encoder_type, enc_address, enc_port, enc_mcast, enc_channel, \
+         video_loss, cl.name as comm_link, cl.uri as controller_uri, \
+         concat_ws(' ', e.make, e.model, e.config) as encoder_type_string \
   FROM iris.camera c \
   LEFT JOIN geo_loc_view gl ON c.geo_loc = gl.name \
+  LEFT JOIN iris.encoder_type e ON e.name = c.encoder_type \
+  LEFT JOIN iris.controller con ON con.name = c.controller \
+  LEFT JOIN iris.comm_link cl ON cl.name = con.comm_link \
   WHERE c.name = $1";
 
 /// SQL query for all cameras (public)
@@ -521,54 +525,43 @@ pub const LANE_CODE_LUT: &str = "\
   FROM iris.lane_code \
   ORDER BY lcode";
 
-/// SQL query for all lane markings (primary)
-pub const LANE_MARKING_ALL: &str = "\
-  SELECT m.name, location, controller, notes, deployed \
-  FROM iris.lane_marking m \
-  LEFT JOIN geo_loc_view gl ON m.geo_loc = gl.name \
-  ORDER BY name";
-
-/// SQL query for one lane marking (secondary)
-pub const LANE_MARKING_ONE: &str = "\
-  SELECT m.name, location, geo_loc, controller, pin, notes, deployed \
-  FROM iris.lane_marking m \
-  LEFT JOIN geo_loc_view gl ON m.geo_loc = gl.name \
-  WHERE m.name = $1";
-
-/// SQL query for lane use indications (LUT)
-pub const LANE_USE_INDICATION_LUT: &str = "\
-  SELECT id, description \
-  FROM iris.lane_use_indication \
-  ORDER BY id";
-
 /// SQL query for all LCS arrays (primary)
-pub const LCS_ARRAY_ALL: &str = "\
-  SELECT name, notes, lcs_lock \
-  FROM iris.lcs_array \
-  ORDER BY name";
+pub const LCS_ALL: &str = "\
+  SELECT l.name, location, controller, notes, lock, status \
+  FROM iris.lcs l \
+  LEFT JOIN geo_loc_view gl ON l.geo_loc = gl.name \
+  ORDER BY l.name";
 
 /// SQL query for one LCS array (secondary)
-pub const LCS_ARRAY_ONE: &str = "\
-  SELECT name, notes, shift, lcs_lock \
-  FROM iris.lcs_array \
-  WHERE name = $1";
+pub const LCS_ONE: &str = "\
+  SELECT l.name, location, geo_loc, controller, pin, notes, lcs_type, \
+         shift, preset, lock, status \
+  FROM iris.lcs l \
+  LEFT JOIN geo_loc_view gl ON l.geo_loc = gl.name \
+  WHERE l.name = $1";
 
-/// SQL query for all LCS indications (primary)
-pub const LCS_INDICATION_ALL: &str = "\
-  SELECT name, controller, lcs, indication \
+/// SQL query for LCS indications (LUT)
+pub const LCS_INDICATION_LUT: &str = "\
+  SELECT id, description \
   FROM iris.lcs_indication \
+  ORDER BY id";
+
+/// SQL query for all LCS states (primary)
+pub const LCS_STATE_ALL: &str = "\
+  SELECT name, controller, lcs, lane, indication \
+  FROM iris.lcs_state \
   ORDER BY name";
 
-/// SQL query for one LCS indication (secondary)
-pub const LCS_INDICATION_ONE: &str = "\
-  SELECT name, controller, pin, lcs, indication \
-  FROM iris.lcs_indication \
+/// SQL query for one LCS state (secondary)
+pub const LCS_STATE_ONE: &str = "\
+  SELECT name, controller, pin, lcs, lane, indication, msg_pattern, msg_num \
+  FROM iris.lcs_state \
   WHERE name = $1";
 
-/// SQL query for LCS locks (LUT)
-pub const LCS_LOCK_LUT: &str = "\
+/// SQL query for LCS types (LUT)
+pub const LCS_TYPE_LUT: &str = "\
   SELECT id, description \
-  FROM iris.lcs_lock \
+  FROM iris.lcs_type \
   ORDER BY id";
 
 /// SQL query for ramp meter algorithms (LUT)
