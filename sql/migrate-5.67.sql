@@ -10,12 +10,12 @@ ALTER TABLE iris._ramp_meter ADD COLUMN lock JSONB;
 ALTER TABLE iris._ramp_meter ADD COLUMN status JSONB;
 
 UPDATE iris._ramp_meter m
-    SET lock = json_object('reason': LOWER(ml.description))
+    SET lock = json_build_object('reason', LOWER(ml.description))
     FROM iris.meter_lock ml
     WHERE m.m_lock = ml.id;
 
 UPDATE iris._ramp_meter m
-    SET status = json_object('fault': f.description)
+    SET status = json_build_object('fault', f.description)
     FROM iris.meter_fault f
     WHERE m.fault = f.id;
 
@@ -130,7 +130,7 @@ DROP VIEW meter_lock_event_view;
 ALTER TABLE event.meter_lock_event ADD COLUMN lock JSONB;
 
 UPDATE event.meter_lock_event ev
-    SET lock = json_object('reason': ml.description, 'user_id': user_id)
+    SET lock = json_build_object('reason', ml.description, 'user_id', user_id)
     FROM iris.meter_lock ml
     WHERE ev.m_lock = ml.id;
 
