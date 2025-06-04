@@ -95,7 +95,7 @@ public class OpSendDMSFonts extends OpDMS {
 	private final ASN1Integer max_characters = maxFontCharacters.makeInt();
 
 	/** Map of matching font numbers to fonts */
-	private final TreeMap<Integer, Font> fonts;
+	private TreeMap<Integer, Font> fonts;
 
 	/** Mapping of rows to font values in font table */
 	private final TreeMap<Integer, FontRow> rows =
@@ -174,10 +174,16 @@ public class OpSendDMSFonts extends OpDMS {
 			mess.add(number);
 			try {
 				mess.queryProps();
+				addRow(row, fontNum(row, number.getInteger()));
 			}
 			catch (NoSuchName e) {
 				// Note: some vendors respond with NoSuchName
-				//       if the font is not valid
+				//       if the font is not valid.
+				//       Keep looking for valid numbers.
+				if (isSkylineFontErr()) {
+						// FIXME: This really should be done via a missing-fontNum test loop in populateRows()
+						addRow(row, fontNum(row, row));
+				}
 				return firstFontPhase();
 			}
 			logQuery(number);
@@ -338,6 +344,8 @@ public class OpSendDMSFonts extends OpDMS {
 			} else {
 				if (version2)
 					return new QueryInitialStatus(frow);
+				else if (isSkylineFontErr())
+					return new InitializeFont(frow);
 				else
 					return new InvalidateFont(frow);
 			}
@@ -481,7 +489,10 @@ public class OpSendDMSFonts extends OpDMS {
 					status.getEnum());
 				return nextFontPhase();
 			}
-			return new InvalidateFont(frow);
+			if (isSkylineFontErr())
+				return new InitializeFont(frow);
+			else
+				return new InvalidateFont(frow);
 		}
 	}
 
@@ -505,6 +516,69 @@ public class OpSendDMSFonts extends OpDMS {
 				// Some vendors (Skyline) respond with GenError
 				// if the font is not currently valid
 			}
+			catch (NoSuchName e) {
+				// Note: some vendors respond with NoSuchName
+				//       if the font is not valid
+			}
+			return new CreateFont(frow);
+		}
+	}
+
+    /** Initialize the font (set font height) */
+	private class InitializeFont extends Phase {
+		private final FontRow frow;
+		private InitializeFont(FontRow fr) {
+			frow = fr;
+		}
+
+		/** Initialize a font entry in the font table */
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess) throws IOException {
+			for (int loop = 0; (loop < 300); ++loop) {
+				ASN1Integer height = fontHeight.makeInt(frow.row);
+				height.setInteger(frow.font.getHeight());
+				mess.add(height);
+				logStore(height);
+				try {
+					mess.storeProps();
+				}
+				catch (GenError e) {
+					// Some vendors (Skyline) respond with GenError
+					// if the font is not currently valid
+				}
+				catch (NoSuchName e) {
+					// Some vendors respond with NoSuchName
+					// if the font is not currently valid
+					continue;
+				}
+				break;
+			}
+			return new AssignFont(frow);
+		}
+	}
+
+	/** Assign the font (set the font number) */
+	protected class AssignFont extends Phase {
+		private final FontRow frow;
+		private AssignFont(FontRow fr) {
+			frow = fr;
+		}
+
+		/** Create a new font in the font table */
+		@SuppressWarnings("unchecked")
+		protected Phase poll(CommMessage mess) throws IOException {
+			int row = frow.row;
+			ASN1Integer number = fontNumber.makeInt(row);
+			number.setInteger(frow.f_num);
+			mess.add(number);
+			logStore(number);
+			try {
+				mess.storeProps();
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors respond with NoSuchName
+				//       if the font is not valid
+			}
 			return new CreateFont(frow);
 		}
 	}
@@ -523,12 +597,10 @@ public class OpSendDMSFonts extends OpDMS {
 			ASN1Integer number = fontNumber.makeInt(row);
 			DisplayString name = new DisplayString(fontName.node,
 				row);
-			ASN1Integer height = fontHeight.makeInt(row);
 			ASN1Integer char_spacing = fontCharSpacing.makeInt(row);
 			ASN1Integer line_spacing = fontLineSpacing.makeInt(row);
 			number.setInteger(frow.f_num);
 			name.setString(frow.font.getName());
-			height.setInteger(frow.font.getHeight());
 			char_spacing.setInteger(frow.font.getCharSpacing());
 			// char- or line-matrix signs "shall ignore" line spacing,
 			// except when they're buggy and we must work around it
@@ -538,15 +610,19 @@ public class OpSendDMSFonts extends OpDMS {
 			);
 			mess.add(number);
 			mess.add(name);
-			mess.add(height);
 			mess.add(char_spacing);
 			mess.add(line_spacing);
 			logStore(number);
 			logStore(name);
-			logStore(height);
 			logStore(char_spacing);
 			logStore(line_spacing);
-			mess.storeProps();
+			try {
+				mess.storeProps();
+			}
+			catch (NoSuchName e) {
+				// Note: some vendors respond with NoSuchName
+				//       if the font is not valid
+			}
 			Collection<Glyph> glyphs =
 				FontHelper.lookupGlyphs(frow.font).values();
 			if (glyphs.isEmpty()) {

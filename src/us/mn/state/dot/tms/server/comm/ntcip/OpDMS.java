@@ -17,6 +17,8 @@ package us.mn.state.dot.tms.server.comm.ntcip;
 import java.io.IOException;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import us.mn.state.dot.tms.ControllerHelper;
 import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.DMSType;
 import us.mn.state.dot.tms.SignDetail;
@@ -129,5 +131,15 @@ abstract public class OpDMS extends OpNtcip {
 		SignDetail sd = dms.getSignDetail();
 		return (sd != null) &&
 			(sd.getDmsType() == DMSType.VMS_CHAR.ordinal());
+	}
+
+	/** Check for Skyline signs with a known font uploading error */
+	protected boolean isSkylineFontErr() {
+		if (isMakeContaining("skyline")) {
+			String v = ControllerHelper.getSetup(
+							dms.getController(), "sw", "version");
+			return v.compareToIgnoreCase("MSC_04.04.0068") >= 0;
+	}
+	return false;
 	}
 }
