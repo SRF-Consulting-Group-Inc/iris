@@ -1106,9 +1106,20 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 	/** Test if DMS is available */
 	@Override
 	protected boolean isAvailable() {
-		return super.isAvailable()
-		    && (isMsgBlank() || isMsgStandby())
-		    && DMSHelper.isGeneralPurpose(this);
+		double percentPixelsStuck = (DMSHelper.getStuckPixelCount(this) * 100.0 / DMSHelper.getTotalSignPixels(this));
+		int stuckPercentagePixelThreshold = 10;
+		
+		boolean basicCheck = (isMsgBlank() || isMsgStandby())
+			    && DMSHelper.isGeneralPurpose(this);
+		
+		//returns true if pixel stuck % is less than the set threshold % 
+		boolean smallPixelFaultCheck = (DMSHelper.hasOnlyPixelFault(this) 
+				&& (percentPixelsStuck < stuckPercentagePixelThreshold)
+				&& (percentPixelsStuck > 0)
+				&& isOnline());
+		
+		return (basicCheck && (super.isAvailable() || smallPixelFaultCheck));
+	
 	}
 
 	/** Test if current message is blank */

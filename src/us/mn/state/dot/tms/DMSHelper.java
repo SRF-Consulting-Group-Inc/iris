@@ -96,6 +96,18 @@ public class DMSHelper extends BaseHelper {
 	static public boolean hasFaults(DMS proxy) {
 		return optFaults(proxy) != null;
 	}
+	
+	/** Test if a DMS has a pixel fault */
+	static public boolean hasOnlyPixelFault(DMS proxy) {
+        String faults = optFaults(proxy);
+        if (faults == null || faults.isEmpty()) {
+            return false;
+        }
+        if (faults.equalsIgnoreCase("pixel")) {
+            return true;
+        }
+        return false;
+    }
 
 	/** Test if a DMS is active */
 	static public boolean isActive(DMS proxy) {
@@ -111,7 +123,7 @@ public class DMSHelper extends BaseHelper {
 	static public boolean isPurpose(DMS proxy) {
 		return ItemStyle.PURPOSE.checkBit(proxy.getStyles());
 	}
-
+	
 	/** Get a string that contains all active DMS styles,
 	 * separated by commas. */
 	static public String getAllStyles(DMS proxy) {
@@ -374,6 +386,41 @@ public class DMSHelper extends BaseHelper {
 					bg.setPixel(x, y, DmsColor.WHITE);
 			}
 		}
+	}
+	
+	/** Return total stuck pixels */
+	static public int getStuckPixelCount(DMS dms) {
+	    try {
+	        BitmapGraphic stuck_off = createStuckBitmap(dms, STUCK_OFF);
+	        BitmapGraphic stuck_on  = createStuckBitmap(dms, STUCK_ON);
+
+	        if (stuck_off == null && stuck_on == null) 
+	        	return -1;
+	        
+	        int totalStuck = 0;
+	        if (stuck_off != null)
+	        	totalStuck += stuck_off.getLitCount();
+	        if (stuck_on  != null)
+	        	totalStuck += stuck_on.getLitCount();
+	        return totalStuck;
+	    } catch (InvalidMsgException e) {
+	        return -1;
+	    }
+	}
+	
+	/** Get total number of pixels on the sign */
+	static public int getTotalSignPixels(DMS dms) {
+	    SignConfig sc = dms.getSignConfig();
+	    if (sc != null) {
+	        int pw = sc.getPixelWidth();
+	        int ph = sc.getPixelHeight();
+	        int totalPixels = 0;
+	        if (pw > 0 && ph > 0) {
+	        	totalPixels = pw * ph;
+	            return totalPixels;
+	        }
+	    }
+	    return -1;
 	}
 
 	/** Check if a MULTI string is rasterizable for a sign */
