@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2015-2022  SRF Consulting Group
+ * Copyright (C) 2015-2026  SRF Consulting Group
  * Copyright (C) 2021       Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,6 +13,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+//===========================================================================
+// THIS IS NOT A PULL-REQUEST READY FILE !!
+// This is a bare-minimum patch just to enable control of North Dakota's
+// NDOTv6 gate controllers with the absolute-minimum code changes.
+// Additional code and database changes are required to make this PR ready.
+//===========================================================================
+
 package us.mn.state.dot.tms.server.comm.ndorv5;
 
 import java.io.IOException;
@@ -25,10 +33,13 @@ import us.mn.state.dot.tms.utils.LineReader;
 
 /**
  * A property which can be sent-to or received-from
- * an NDORv5 gate-controller.
+ * an NDORv5 or NDOTv6 gate-controller.
  *
  * Note:  Code updated in August 2016 to include
- * multi-arm gate protocol referred to as v5.
+ *  multi-arm gate protocol referred to as v5.
+ * Note2:  Updated in January 2026 to include the
+ *  v6 extension that included the North Dakota
+ *  MODBUS error reporting extension.
  *
  * @author John L. Stanley - SRF Consulting
  * @author Douglas Lau
@@ -41,6 +52,7 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 	StatusOfGateArmLights     gateArmLights;
 	StatusOfWarningSignLights warningSign;
 	int                       delay;
+	int                       errorFlags;
 
 	/** Create a new NDOR Gate property */
 	public GateNdorV5Property(String cmd) {
@@ -76,6 +88,8 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 				}
 			}
 		}
+		if (ch == 'e') // field 'e' is optional
+			return -1;
 		throw new ParsingException(
 				"INVALID RESPONSE "+ch+": \"" + resp + "\"");
 	}
@@ -88,10 +102,12 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 			int b = parseField('b', resp);
 			int c = parseField('c', resp);
 			int d = parseField('d', resp);
+			int e = parseField('e', resp);
 			statusOfGate  = StatusOfGate.fromOrdinal(a);
 			warningSign   = StatusOfWarningSignLights.fromOrdinal(b);
 			gateArmLights = StatusOfGateArmLights.fromOrdinal(c);
 			delay         = d;
+			errorFlags    = e;
 			return true;
 		}
 		return false;
@@ -120,6 +136,9 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 		// secondary faults (arm-lights and gate-sign)
 		if ((gateArmLights == null || gateArmLights.isError())
 				|| (warningSign == null || warningSign.isError()))
+			return GateArmState.FAULT;
+		// tertiary faults (errorFlags)
+		if (errorFlags > 0)
 			return GateArmState.FAULT;
 		// finished moving status
 		switch (statusOfGate) {
@@ -157,6 +176,12 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 			return StatusOfWarningSignLights.SIGN_ERROR.toString();
 		if (warningSign.isError())
 			return warningSign.toString();
+		// tertiary faults (NDOTv6 errorFlags)
+		if (errorFlags > 0) { // report errorFlags
+			if ((errorFlags & 0x01) != 0)
+				return "MODBUS_ERROR";
+			return "ERRORFLAGS="+errorFlags;
+		}
 		// no faults
 		return null;
 	}
@@ -173,6 +198,8 @@ public class GateNdorV5Property extends AsciiDeviceProperty {
 		sb.append(warningSign);
 		sb.append(" delay:");
 		sb.append(delay);
+		sb.append(" errorFlags:");
+		sb.append(errorFlags);
 		return sb.toString();
 	}
 }
