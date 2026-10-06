@@ -100,6 +100,7 @@ abstract public class BaseObjectImpl implements Storable, SonarObject {
 		RampMeterImpl.loadAll();
 		SignMessageImpl.loadAll();
 		DMSImpl.loadAll();
+		VslSignImpl.loadAll();
 		MsgPatternImpl.loadAll();
 		MsgLineImpl.loadAll();
 		GateArmImpl.loadAll();

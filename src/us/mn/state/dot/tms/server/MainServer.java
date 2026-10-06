@@ -237,6 +237,7 @@ public class MainServer {
 		ns.registerType(RampMeterImpl.class);
 		ns.registerType(SignMessageImpl.class);
 		ns.registerType(DMSImpl.class);
+		ns.registerType(VslSignImpl.class);
 		ns.registerType(MsgPatternImpl.class);
 		ns.registerType(MsgLineImpl.class);
 		ns.registerType(GateArmImpl.class);
