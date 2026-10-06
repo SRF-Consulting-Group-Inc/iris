@@ -18,6 +18,7 @@ import java.awt.BorderLayout;
 import javax.swing.JTabbedPane;
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.DMS;
+import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.SonarObjectForm;
 import us.mn.state.dot.tms.utils.I18N;
@@ -52,6 +53,9 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 	/** Manufacturer panel */
 	private final PropManufacturer manufacturer_pnl;
 
+	/** VSL panel */
+	private final PropVsl vsl_pnl;
+
 	/** Create a new DMS properties form */
 	public DMSProperties(Session s, DMS sign) {
 		super(I18N.get("dms") + ": ", s, sign);
@@ -63,6 +67,7 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 		pixel_pnl = new PropPixels(s, sign);
 		bright_pnl = new PropBrightness(s, sign);
 		manufacturer_pnl = new PropManufacturer(s, sign);
+		vsl_pnl = new PropVsl(s, sign);
 	}
 
 	/** Get the SONAR type cache */
@@ -81,6 +86,7 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 		pixel_pnl.initialize();
 		bright_pnl.initialize();
 		manufacturer_pnl.initialize();
+		vsl_pnl.initialize();
 		JTabbedPane tab = new JTabbedPane();
 		tab.add(I18N.get("location"), location_pnl);
 		tab.add(I18N.get("device.setup"), setup_pnl);
@@ -88,6 +94,8 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 		tab.add(I18N.get("dms.pixels"), pixel_pnl);
 		tab.add(I18N.get("dms.brightness"), bright_pnl);
 		tab.add(I18N.get("dms.manufacturer"), manufacturer_pnl);
+		if (VslSignHelper.isEnabled())
+			tab.add(I18N.get("dms.vsl"), vsl_pnl);
 		add(tab);
 		add(op_pnl, BorderLayout.SOUTH);
 		super.initialize();
@@ -98,6 +106,7 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 	protected void dispose() {
 		location_pnl.dispose();
 		setup_pnl.dispose();
+		vsl_pnl.dispose();
 		op_pnl.dispose();
 		super.dispose();
 	}
@@ -107,6 +116,7 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 	protected void updateEditMode() {
 		location_pnl.updateEditMode();
 		setup_pnl.updateEditMode();
+		vsl_pnl.updateEditMode();
 	}
 
 	/** Update one attribute on the form */
@@ -119,5 +129,6 @@ public class DMSProperties extends SonarObjectForm<DMS> {
 		pixel_pnl.updateAttribute(a);
 		bright_pnl.updateAttribute(a);
 		manufacturer_pnl.updateAttribute(a);
+		vsl_pnl.updateAttribute(a);
 	}
 }

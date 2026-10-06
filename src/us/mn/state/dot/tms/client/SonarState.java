@@ -61,6 +61,8 @@ import us.mn.state.dot.tms.TagReader;
 import us.mn.state.dot.tms.TollZone;
 import us.mn.state.dot.tms.User;
 import us.mn.state.dot.tms.VidSourceTemplate;
+import us.mn.state.dot.tms.VslSign;
+import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.WeatherSensor;
 import us.mn.state.dot.tms.Word;
 import us.mn.state.dot.tms.client.camera.CamCache;
@@ -441,6 +443,15 @@ public class SonarState extends Client {
 		return device_actions;
 	}
 
+	/** Cache of VSL signs */
+	private final TypeCache<VslSign> vsl_signs =
+		new TypeCache<VslSign>(VslSign.class, this);
+
+	/** Get the VSL sign cache */
+	public TypeCache<VslSign> getVslSigns() {
+		return vsl_signs;
+	}
+
 	/** Cache of words */
 	private final TypeCache<Word> words =
 		new TypeCache<Word>(Word.class, this);
@@ -631,6 +642,8 @@ public class SonarState extends Client {
 		populateReadable(parking_areas);
 		populateReadable(phase_actions);
 		populateReadable(device_actions);
+		if (VslSignHelper.isEnabled())
+			populateReadable(vsl_signs);
 		populateReadable(gpses);
 		if (canRead(Gps.SONAR_TYPE))
 			gpses.ignoreAttribute("operation");
