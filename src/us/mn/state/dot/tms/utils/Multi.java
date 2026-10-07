@@ -221,6 +221,9 @@ public interface Multi {
 	/** Add a speed advisory */
 	void addSpeedAdvisory();
 
+	/** Add a variable speed limit */
+	void addSpeedLimit();
+
 	/** Add an incident locator */
 	void addLocator(String code);
 }

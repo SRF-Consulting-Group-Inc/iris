@@ -39,9 +39,10 @@ public enum SignMsgSource {
 	parking,        // 13 parking availability with [pa...] tag
 	slow_warning,   // 14 slow warning with [slow...] tag
 	speed_advisory, // 15 speed advisory with [vsa] tag
-	standby,        // 16 standby message with [standby] tag
-	tolling,        // 17 tolling with [tz...] tag
-	travel_time;    // 18 travel time with [tt...] tag
+	speed_limit,    // 16 variable speed limit with [vsl] tag
+	standby,        // 17 standby message with [standby] tag
+	tolling,        // 18 tolling with [tz...] tag
+	travel_time;    // 19 travel time with [tt...] tag
 
 	/** Values array */
 	static private final SignMsgSource[] VALUES = values();

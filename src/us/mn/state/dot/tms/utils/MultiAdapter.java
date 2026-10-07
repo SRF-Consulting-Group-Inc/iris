@@ -194,6 +194,10 @@ public class MultiAdapter implements Multi {
 	@Override
 	public void addSpeedAdvisory() {}
 
+	/** Add a variable speed limit */
+	@Override
+	public void addSpeedLimit() {}
+
 	/** Add an incident locator */
 	@Override
 	public void addLocator(String code) {}

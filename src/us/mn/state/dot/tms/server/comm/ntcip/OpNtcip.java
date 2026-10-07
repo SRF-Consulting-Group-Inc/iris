@@ -52,11 +52,17 @@ abstract public class OpNtcip extends OpDevice {
 		return Pattern.matches(re, addGraphicIds(ms));
 	}
 
-	/** Create a regex which matches any speed advisory values */
+	/** Create a regex which matches any speed advisory or speed limit
+	 * values */
 	static private String createRegex(String ms) {
 		MultiBuilder re = new MultiBuilder() {
 			@Override
 			public void addSpeedAdvisory() {
+				// Add unquoted regex to match 2 digits
+				addSpan("\\E[0-9].\\Q");
+			}
+			@Override
+			public void addSpeedLimit() {
 				// Add unquoted regex to match 2 digits
 				addSpan("\\E[0-9].\\Q");
 			}

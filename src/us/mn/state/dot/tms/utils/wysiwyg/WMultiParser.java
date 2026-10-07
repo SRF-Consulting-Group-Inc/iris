@@ -229,6 +229,15 @@ public class WMultiParser implements Multi {
 	}
 
 	/* (non-Javadoc)
+	 * @see us.mn.state.dot.tms.utils.Multi#addSpeedLimit()
+	 */
+	@Override
+	public void addSpeedLimit() {
+		// No fields to edit, so keep the tag as-is
+		page.addToken(new WtUnsupportedTag("vsl"));
+	}
+
+	/* (non-Javadoc)
 	 * @see us.mn.state.dot.tms.utils.Multi#addClearGuideAdvisory()
 	 */
 	@Override

@@ -104,6 +104,8 @@ public class MultiString {
 		public void addTolling(String mode, String[] zones) {}
 		@Override
 		public void addSpeedAdvisory() {}
+		@Override
+		public void addSpeedLimit() {}
 	}
 
 	/** Filter brackets in a span of text */
@@ -179,6 +181,8 @@ public class MultiString {
 			parseTolling(tag.substring(2), cb);
 		else if (ltag.startsWith("vsa"))
 			cb.addSpeedAdvisory();
+		else if (ltag.startsWith("vsl"))
+			cb.addSpeedLimit();
 		else
 			cb.unsupportedTag(tag);
 	}
@@ -570,6 +574,9 @@ public class MultiString {
 				valid[0] = false;
 			}
 			@Override public void addSpeedAdvisory() {
+				valid[0] = false;
+			}
+			@Override public void addSpeedLimit() {
 				valid[0] = false;
 			}
 			@Override public void addLocator(String code) {

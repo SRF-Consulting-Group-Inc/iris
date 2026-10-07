@@ -392,6 +392,22 @@ public class MultiStringTest extends TestCase {
 			getFonts(255)[1] == 3);
 	}
 
+	public void testSpeedLimit() {
+		MultiString ms = new MultiString("SPEED[nl][vsl]");
+		assertTrue(ms.isValid());
+		assertFalse(ms.isValidMulti());
+		final boolean[] found = new boolean[1];
+		ms.parse(new MultiAdapter() {
+			@Override public void addSpeedLimit() {
+				found[0] = true;
+			}
+		});
+		assertTrue(found[0]);
+		MultiBuilder mb = new MultiBuilder();
+		ms.parse(mb);
+		assertEquals("SPEED[nl][vsl]", mb.toString());
+	}
+
 	public void testEtc() {
 		try {
 			new MultiString(null);

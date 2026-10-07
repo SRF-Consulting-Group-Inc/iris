@@ -46,6 +46,8 @@ import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.TollZone;
 import us.mn.state.dot.tms.TollZoneHelper;
+import us.mn.state.dot.tms.VslSign;
+import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.WeatherSensor;
 import us.mn.state.dot.tms.WeatherSensorHelper;
 import static us.mn.state.dot.tms.server.MainServer.FLUSH;
@@ -252,6 +254,9 @@ public class TagProcessor {
 		@Override public void addSpeedAdvisory() {
 			addSpan(speedAdvisorySpan());
 		}
+		@Override public void addSpeedLimit() {
+			addSpan(speedLimitSpan());
+		}
 		@Override public void addStandby() {
 			addSource(SignMsgSource.standby);
 		}
@@ -351,6 +356,16 @@ public class TagProcessor {
 			    == null;
 		} else
 			return false;
+	}
+
+	/** Get the posted variable speed limit span */
+	private String speedLimitSpan() {
+		addSource(SignMsgSource.speed_limit);
+		VslSign vs = VslSignHelper.lookup(device.getName());
+		Integer s = (vs != null) ? vs.getPostedSpeed() : null;
+		return (s != null)
+		      ? s.toString()
+		      : fail("No VSL speed posted");
 	}
 
 	/** Calculate speed advisory span */

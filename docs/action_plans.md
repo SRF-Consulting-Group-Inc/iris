@@ -238,6 +238,7 @@ Tag              | Description                     | Tag Mode            | Sourc
 `[tt` *…* `]`    | [Travel time] estimation        | Replace             | `travel_time`
 `[tz` *…* `]`    | [Toll zone] pricing             | Replace             | `tolling`
 `[vsa]`          | [Variable speed advisory]       | Condition + Replace | `speed_advisory`
+`[vsl]`          | NDDOT variable speed limit      | Condition + Replace | `speed_limit`
 
 ## Time Action Tag
 

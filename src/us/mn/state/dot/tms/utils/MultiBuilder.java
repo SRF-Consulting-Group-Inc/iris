@@ -334,6 +334,12 @@ public class MultiBuilder implements Multi {
 		multi.append("[vsa]");
 	}
 
+	/** Add a variable speed limit */
+	@Override
+	public void addSpeedLimit() {
+		multi.append("[vsl]");
+	}
+
 	/** Add a ClearGuide advisory
 	 * @param dms DMS name
 	 * @param wid Workzone ID
