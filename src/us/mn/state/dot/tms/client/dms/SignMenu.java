@@ -50,6 +50,7 @@ public class SignMenu extends IMenu {
 		addItem(createMsgLineItem());
 		addItem(createWysiwygSelectorItem());
 		addItem(createWordItem());
+		addItem(createVslApprovalItem());
 		addItem(session.createTableAction(Beacon.SONAR_TYPE));
 	}
 
@@ -119,6 +120,16 @@ public class SignMenu extends IMenu {
 		    new IAction("word.plural") {
 			protected void doActionPerformed(ActionEvent e) {
 				desktop.show(new WordForm(session));
+			}
+		    } : null;
+	}
+
+	/** Create a VSL approvals menu item action */
+	private IAction createVslApprovalItem() {
+		return VslApprovalForm.isPermitted(session) ?
+		    new IAction("dms.vsl.approvals") {
+			protected void doActionPerformed(ActionEvent e) {
+				desktop.show(new VslApprovalForm(session));
 			}
 		    } : null;
 	}
