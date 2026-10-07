@@ -9,9 +9,10 @@
 SET SESSION AUTHORIZATION 'tms';
 BEGIN;
 
--- Add VSL enable system attribute
-INSERT INTO iris.system_attribute (name, value)
-    VALUES ('nddot_vsl_enable', 'false');
+-- Add VSL system attributes
+INSERT INTO iris.system_attribute (name, value) VALUES
+    ('nddot_vsl_enable', 'false'),
+    ('nddot_vsl_speed_rounding', '5');
 
 -- Add VSL approval mode look-up table
 CREATE TABLE iris.vsl_approval_mode (
