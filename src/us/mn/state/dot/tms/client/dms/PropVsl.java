@@ -26,9 +26,11 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import us.mn.state.dot.sonar.SonarObject;
 import us.mn.state.dot.sonar.client.ProxyListener;
 import us.mn.state.dot.sonar.client.TypeCache;
 import us.mn.state.dot.tms.DMS;
+import us.mn.state.dot.tms.DetectorHelper;
 import us.mn.state.dot.tms.DeviceAction;
 import us.mn.state.dot.tms.DeviceActionHelper;
 import us.mn.state.dot.tms.Hashtags;
@@ -38,7 +40,6 @@ import us.mn.state.dot.tms.VslApprovalMode;
 import us.mn.state.dot.tms.VslSign;
 import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.VslState;
-import us.mn.state.dot.tms.WeatherSensor;
 import us.mn.state.dot.tms.WeatherSensorHelper;
 import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.proxy.ProxyView;
@@ -146,6 +147,9 @@ public class PropVsl extends IPanel {
 	/** Weather sensors label */
 	private final JLabel ess_lbl = new JLabel();
 
+	/** Detectors label */
+	private final JLabel det_lbl = new JLabel();
+
 	/** Recommended speed label */
 	private final JLabel rec_lbl = new JLabel();
 
@@ -225,6 +229,8 @@ public class PropVsl extends IPanel {
 		add(approval_cbx, Stretch.LAST);
 		add("dms.vsl.weather.sensors");
 		add(ess_lbl, Stretch.LAST);
+		add("dms.vsl.detectors");
+		add(det_lbl, Stretch.LAST);
 		add("dms.vsl.recommended");
 		add(rec_lbl, Stretch.LAST);
 		add("dms.vsl.posted");
@@ -387,25 +393,31 @@ public class PropVsl extends IPanel {
 		updateStatus();
 	}
 
-	/** Update the weather sensors and status labels */
+	/** Update the weather sensors, detectors and status labels */
 	private void updateStatus() {
 		VslSign vs = watcher.getProxy();
 		String ht = (vs != null) ? vs.getHashtag() : null;
-		String ess = (ht != null) ? findWeatherSensors(ht) : "";
+		String ess = (ht != null)
+		      ? findTagged(WeatherSensorHelper.iterator(), ht)
+		      : "";
 		ess_lbl.setText(ess);
+		det_lbl.setText((ht != null)
+			? findTagged(DetectorHelper.iterator(), ht)
+			: "");
 		status_lbl.setText(formatStatus(vs, ht, ess));
 	}
 
-	/** Get the names of weather sensors with a hashtag */
-	private String findWeatherSensors(String ht) {
+	/** Get the names of objects with a hashtag in their notes */
+	static private String findTagged(Iterator<? extends SonarObject> it,
+		String ht)
+	{
 		StringBuilder sb = new StringBuilder();
-		Iterator<WeatherSensor> it = WeatherSensorHelper.iterator();
 		while (it.hasNext()) {
-			WeatherSensor ws = it.next();
-			if (new Hashtags(ws.getNotes()).contains(ht)) {
+			SonarObject so = it.next();
+			if (new Hashtags(so.getNotes()).contains(ht)) {
 				if (sb.length() > 0)
 					sb.append(", ");
-				sb.append(ws.getName());
+				sb.append(so.getName());
 			}
 		}
 		return sb.toString();
