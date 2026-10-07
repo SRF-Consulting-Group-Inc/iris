@@ -22,6 +22,7 @@ import java.util.Map;
 import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sched.TimeSteward;
 import us.mn.state.dot.tms.ChangeVetoException;
+import us.mn.state.dot.tms.DmsLock;
 import us.mn.state.dot.tms.EventType;
 import us.mn.state.dot.tms.Hashtags;
 import us.mn.state.dot.tms.SystemAttrEnum;
@@ -31,6 +32,7 @@ import us.mn.state.dot.tms.VslSign;
 import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.VslState;
 import us.mn.state.dot.tms.server.event.VslEvent;
+import us.mn.state.dot.tms.utils.MultiString;
 
 /**
  * NDDOT variable speed limit (VSL) sign.  Operators configure the hashtag,
@@ -245,7 +247,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		VSL_LOG.log(getName() + ": " + msg);
 	}
 
-	/** Calculate the recommended speed */
+	/** Calculate the recommended speed, then apply approval rules */
 	public void calculate() {
 		VslCalculator calc = new VslCalculator(hashtag, min_speed,
 			max_speed);
@@ -255,7 +257,90 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 				logMsg(d);
 		}
 		setAvailableNotify(s != null);
-		setRecSpeedNotify(s);
+		if (s == null) {
+			// Hold the posted speed (VSL-FLT-02)
+			setRecommendationNotify(null, VslState.NONE);
+		} else if (isOverridden()) {
+			// Calculate, but don't approve (VSL-VOV-03)
+			logMsg("overridden");
+			setRecommendationNotify(s, VslState.NONE);
+		} else
+			approve(s);
+	}
+
+	/** Check if an operator message is on the sign (VSL-VOV-01) */
+	private boolean isOverridden() {
+		DMSImpl dms = lookupDMS(name);
+		if (dms != null) {
+			String ms = new DmsLock(dms.getLock()).optMulti();
+			return ms != null && !new MultiString(ms).isBlank();
+		} else
+			return false;
+	}
+
+	/** Apply the approval rules to a recommended speed */
+	private void approve(int s) {
+		long now = TimeSteward.currentTimeMillis();
+		VslApprovalMode mode = VslApprovalMode.fromOrdinal(
+			approval_mode);
+		if (isPending() && mode == VslApprovalMode.SEMI_AUTOMATED &&
+		    VslApproval.isReviewTimedOut(rec_time, now))
+		{
+			logMsg("review timeout");
+			postSpeed(rec_speed, null);
+			return;
+		}
+		VslApproval ap = VslApproval.evaluate(s, posted_speed,
+			posted_time, quiet_expires, mode, now);
+		logMsg(ap.toString());
+		if (ap.urgent)
+			setQuietExpiresNotify(null);
+		switch (ap.action) {
+		case POST:
+			postSpeed(ap.speed, null);
+			break;
+		case REQUEST:
+			requestApproval(ap.speed);
+			break;
+		default:
+			setRecommendationNotify(ap.speed, ap.state);
+			break;
+		}
+	}
+
+	/** Check if a recommendation is waiting for an operator */
+	private boolean isPending() {
+		return rec_speed != null &&
+		       VslState.fromOrdinal(rec_state) == VslState.PENDING;
+	}
+
+	/** Request operator approval of a speed (VSL-APV-01) */
+	private void requestApproval(int s) {
+		// A request for the same speed keeps its review time
+		if (isPending() && rec_speed == s)
+			return;
+		setRecommendationNotify(s, VslState.PENDING);
+		logEvent(new VslEvent(EventType.VSL_PENDING, name, s, null));
+	}
+
+	/** Post a speed to the sign.
+	 * @param s Speed (mph).
+	 * @param user User who approved it, or null if automatic. */
+	private void postSpeed(int s, String user) {
+		Long t = TimeSteward.currentTimeMillis();
+		try {
+			store.update(this, "posted_speed", s);
+			store.update(this, "posted_time", asTimestamp(t));
+		}
+		catch (TMSException e) {
+			logMsg("posted_speed: " + e.getMessage());
+		}
+		posted_speed = s;
+		posted_time = t;
+		notifyAttribute("postedSpeed");
+		notifyAttribute("postedTime");
+		setRecommendationNotify(s, VslState.NONE);
+		logEvent(new VslEvent(EventType.VSL_POSTED, name, s, user));
 	}
 
 	/** Flag set when a weather sensor can be used (null until the first
@@ -288,20 +373,27 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 	/** Recommended speed (mph) */
 	private Integer rec_speed;
 
-	/** Set the recommended speed (mph), or null for none */
-	private void setRecSpeedNotify(Integer s) {
-		if (!objectEquals(s, rec_speed)) {
+	/** Set the recommendation.  The recommendation time changes along
+	 * with the speed or state, so a new request gets a new review time.
+	 * @param s Recommended speed (mph), or null for none.
+	 * @param st Recommendation state. */
+	private void setRecommendationNotify(Integer s, VslState st) {
+		int ord = st.ordinal();
+		if (!objectEquals(s, rec_speed) || ord != rec_state) {
 			Long t = TimeSteward.currentTimeMillis();
 			try {
 				store.update(this, "rec_speed", s);
+				store.update(this, "rec_state", ord);
 				store.update(this, "rec_time", asTimestamp(t));
 			}
 			catch (TMSException e) {
-				logMsg("rec_speed: " + e.getMessage());
+				logMsg("recommendation: " + e.getMessage());
 			}
 			rec_speed = s;
+			rec_state = ord;
 			rec_time = t;
 			notifyAttribute("recSpeed");
+			notifyAttribute("recState");
 			notifyAttribute("recTime");
 		}
 	}
@@ -350,6 +442,21 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 
 	/** Quiet period expiration time (milliseconds since epoch) */
 	private Long quiet_expires;
+
+	/** Set the quiet period expiration time, or null for none */
+	private void setQuietExpiresNotify(Long t) {
+		if (!objectEquals(t, quiet_expires)) {
+			try {
+				store.update(this, "quiet_expires",
+					asTimestamp(t));
+			}
+			catch (TMSException e) {
+				logMsg("quiet_expires: " + e.getMessage());
+			}
+			quiet_expires = t;
+			notifyAttribute("quietExpires");
+		}
+	}
 
 	/** Get the quiet period expiration time, or null if none */
 	@Override
