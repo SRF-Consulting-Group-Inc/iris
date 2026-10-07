@@ -132,6 +132,9 @@ public interface WeatherSensor extends Device {
 	/** Get the pavement surface status (null for missing) */
 	String getPvmtSurfStatus();
 
+	/** Get the pavement sensor error (null for no error) */
+	String getPvmtSensorError();
+
 	/** Get the pavement surface freeze temperature (null for missing) */
 	Integer getSurfFreezeTemp();
 

@@ -606,6 +606,23 @@ public class WeatherSensorImpl extends DeviceImpl implements WeatherSensor,
 		}
 	}
 
+	/** Pavement sensor error (null for no error) */
+	private transient String pvmt_sensor_error;
+
+	/** Get pavement sensor error (null for no error) */
+	@Override
+	public String getPvmtSensorError() {
+		return pvmt_sensor_error;
+	}
+
+	/** Set pavement sensor error (null for no error) */
+	public void setPvmtSensorErrorNotify(String v) {
+		if (!objectEquals(v, pvmt_sensor_error)) {
+			pvmt_sensor_error = v;
+			notifyAttribute("pvmtSensorError");
+		}
+	}
+
 	/** Pavement surface freeze point (null for missing) */
 	private transient Integer surf_freeze_temp;
 

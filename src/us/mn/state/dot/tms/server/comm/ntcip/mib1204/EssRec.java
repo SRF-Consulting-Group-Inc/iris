@@ -107,6 +107,10 @@ public class EssRec {
 			ws.setPvmtSurfStatusNotify((ss != null)
 				? ss.toString()
 				: SurfaceStatus.undefined.toString());
+			PavementSensorError pse = row.getPavementSensorError();
+			ws.setPvmtSensorErrorNotify((pse != null)
+				? pse.toString()
+				: null);
 			ws.setSurfFreezeTempNotify(row.getFreezePointC());
 			ws.setPvmtFrictionNotify(row.friction.getValue());
 			ws.setSurfCondV2Notify(row.getSurfCondV2());
@@ -114,6 +118,7 @@ public class EssRec {
 			ws.setPvmtSurfTempNotify(null);
 			ws.setSurfTempNotify(null);
 			ws.setPvmtSurfStatusNotify(null);
+			ws.setPvmtSensorErrorNotify(null);
 			ws.setSurfFreezeTempNotify(null);
 			ws.setPvmtFrictionNotify(null);
 			ws.setSurfCondV2Notify(null);
