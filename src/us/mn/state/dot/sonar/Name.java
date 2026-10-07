@@ -153,6 +153,7 @@ public class Name {
 		{ "video_monitor", "camera" },
 		{ "video_monitor", "deviceRequest" },
 		{ "video_monitor", "playList" },
+		{ "vsl_sign", "decision" },
 		{ "weather_sensor", "deviceRequest" },
 	};
 

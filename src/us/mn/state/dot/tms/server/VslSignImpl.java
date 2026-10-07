@@ -132,6 +132,14 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		super.doStore();
 	}
 
+	/** Get notes (including hashtags).  These are the sign's notes, so
+	 * hashtag permissions on the sign also apply to its VSL settings. */
+	@Override
+	public String getNotes() {
+		DMSImpl dms = lookupDMS(name);
+		return (dms != null) ? dms.getNotes() : null;
+	}
+
 	/** Hashtag of the sign's weather sensors and detectors */
 	private String hashtag;
 
@@ -248,7 +256,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 	}
 
 	/** Calculate the recommended speed, then apply approval rules */
-	public void calculate() {
+	public synchronized void calculate() {
 		VslCalculator calc = new VslCalculator(hashtag, min_speed,
 			max_speed);
 		Integer s = calc.calculate();
@@ -321,6 +329,40 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 			return;
 		setRecommendationNotify(s, VslState.PENDING);
 		logEvent(new VslEvent(EventType.VSL_PENDING, name, s, null));
+	}
+
+	/** Set an operator decision (handled by doSetDecision) */
+	@Override
+	public void setDecision(int st) {
+		// Handled by doSetDecision
+	}
+
+	/** Set an operator decision on the pending recommendation.  An
+	 * approval posts the speed at once (VSL-APV-04); a rejection keeps
+	 * the posted speed and starts a quiet period (VSL-APV-05).  Both
+	 * are logged with the operator's name (VSL-APV-10).
+	 * @param st Ordinal of VslState.APPROVED or VslState.REJECTED. */
+	public synchronized void doSetDecision(int st) throws TMSException {
+		if (!isPending())
+			throw new ChangeVetoException("Nothing pending");
+		String user = getProcUser();
+		int s = rec_speed;
+		switch (VslState.fromOrdinal(st)) {
+		case APPROVED:
+			logEvent(new VslEvent(EventType.VSL_APPROVED, name, s,
+				user));
+			postSpeed(s, user);
+			break;
+		case REJECTED:
+			logEvent(new VslEvent(EventType.VSL_REJECTED, name, s,
+				user));
+			setQuietExpiresNotify(VslApproval.quietExpires(
+				TimeSteward.currentTimeMillis()));
+			setRecommendationNotify(s, VslState.REJECTED);
+			break;
+		default:
+			throw new ChangeVetoException("Invalid decision");
+		}
 	}
 
 	/** Post a speed to the sign.

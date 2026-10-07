@@ -100,6 +100,24 @@ public class PropVsl extends IPanel {
 		}
 	};
 
+	/** Action to approve the pending recommendation */
+	private final IAction approve_act = new IAction("dms.vsl.approve") {
+		protected void doActionPerformed(ActionEvent e) {
+			VslSign vs = watcher.getProxy();
+			if (vs != null)
+				vs.setDecision(VslState.APPROVED.ordinal());
+		}
+	};
+
+	/** Action to reject the pending recommendation */
+	private final IAction reject_act = new IAction("dms.vsl.reject") {
+		protected void doActionPerformed(ActionEvent e) {
+			VslSign vs = watcher.getProxy();
+			if (vs != null)
+				vs.setDecision(VslState.REJECTED.ordinal());
+		}
+	};
+
 	/** Hashtag text field */
 	private final JTextField hashtag_txt = new JTextField(16);
 
@@ -232,7 +250,9 @@ public class PropVsl extends IPanel {
 		add("dms.vsl.detectors");
 		add(det_lbl, Stretch.LAST);
 		add("dms.vsl.recommended");
-		add(rec_lbl, Stretch.LAST);
+		add(rec_lbl);
+		add(new JButton(approve_act));
+		add(new JButton(reject_act), Stretch.LAST);
 		add("dms.vsl.posted");
 		add(posted_lbl, Stretch.LAST);
 		add(status_lbl, Stretch.LEFT);
@@ -344,6 +364,18 @@ public class PropVsl extends IPanel {
 		min_spn.setEnabled(canWrite(vs, "minSpeed"));
 		max_spn.setEnabled(canWrite(vs, "maxSpeed"));
 		approval_act.setEnabled(canWrite(vs, "approvalMode"));
+		updateDecision(vs);
+	}
+
+	/** Update the approve and reject actions.  These are operations,
+	 * so edit mode is not needed. */
+	private void updateDecision(VslSign vs) {
+		boolean d = vs != null &&
+			VslState.fromOrdinal(vs.getRecState()) ==
+			VslState.PENDING &&
+			session.isWritePermitted(vs, "decision");
+		approve_act.setEnabled(d);
+		reject_act.setEnabled(d);
 	}
 
 	/** Check if the user can write a VSL sign attribute */
@@ -375,6 +407,7 @@ public class PropVsl extends IPanel {
 			rec_lbl.setText((rs != null)
 				? formatSpeed(rs) + " (" + st + ")"
 				: "");
+			updateDecision(vs);
 		}
 		if (a == null || a.equals("postedSpeed"))
 			posted_lbl.setText(formatSpeed(vs.getPostedSpeed()));

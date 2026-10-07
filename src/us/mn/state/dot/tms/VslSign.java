@@ -85,4 +85,8 @@ public interface VslSign extends SonarObject {
 	/** Get the quiet period expiration time, or null if none.  This time
 	 * is in milliseconds since the epoch. */
 	Long getQuietExpires();
+
+	/** Set an operator decision on the pending recommendation.
+	 * @param st Ordinal of VslState.APPROVED or VslState.REJECTED. */
+	void setDecision(int st);
 }
