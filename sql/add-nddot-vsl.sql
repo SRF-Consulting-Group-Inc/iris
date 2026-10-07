@@ -11,6 +11,7 @@ BEGIN;
 
 -- Add VSL system attributes
 INSERT INTO iris.system_attribute (name, value) VALUES
+    ('nddot_vsl_cycle_rate', '1'),
     ('nddot_vsl_enable', 'false'),
     ('nddot_vsl_speed_rounding', '5');
 
