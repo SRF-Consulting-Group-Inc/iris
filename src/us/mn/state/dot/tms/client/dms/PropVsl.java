@@ -435,6 +435,10 @@ public class PropVsl extends IPanel {
 			appendWarning(sb, I18N.get("dms.vsl.warn.no.hashtag"));
 		else if (ess.isEmpty())
 			appendWarning(sb, I18N.get("dms.vsl.warn.no.sensors"));
+		else if (Boolean.FALSE.equals(vs.getAvailable())) {
+			appendWarning(sb, I18N.get(
+				"dms.vsl.warn.unavailable"));
+		}
 		String plan = findVsaPlan(tags);
 		if (plan != null) {
 			appendWarning(sb, I18N.get("dms.vsl.warn.vsa") + " " +

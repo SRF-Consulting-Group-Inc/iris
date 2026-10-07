@@ -61,6 +61,10 @@ public interface VslSign extends SonarObject {
 	/** Get the approval mode (ordinal of VslApprovalMode) */
 	int getApprovalMode();
 
+	/** Get flag set when a weather sensor can be used, or null before
+	 * the first calculation */
+	Boolean getAvailable();
+
 	/** Get the recommended speed (mph), or null if none */
 	Integer getRecSpeed();
 

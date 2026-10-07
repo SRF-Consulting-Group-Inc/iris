@@ -269,6 +269,7 @@ public class MainServer {
 		TIMER.addJob(new ParkingAreaJob());
 		TIMER.addJob(new PhaseActionJob());
 		TIMER.addJob(new DeviceActionJob());
+		TIMER.addJob(new VslJob());
 	}
 
 	/** Schedule jobs on FLUSH thread */

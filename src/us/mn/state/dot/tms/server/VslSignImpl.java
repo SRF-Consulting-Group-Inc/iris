@@ -19,7 +19,10 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import us.mn.state.dot.sched.DebugLog;
+import us.mn.state.dot.sched.TimeSteward;
 import us.mn.state.dot.tms.ChangeVetoException;
+import us.mn.state.dot.tms.EventType;
 import us.mn.state.dot.tms.Hashtags;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
@@ -27,6 +30,7 @@ import us.mn.state.dot.tms.VslApprovalMode;
 import us.mn.state.dot.tms.VslSign;
 import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.VslState;
+import us.mn.state.dot.tms.server.event.VslEvent;
 
 /**
  * NDDOT variable speed limit (VSL) sign.  Operators configure the hashtag,
@@ -37,6 +41,9 @@ import us.mn.state.dot.tms.VslState;
  * @author Coby Christiansen - SRF Consulting
  */
 public class VslSignImpl extends BaseObjectImpl implements VslSign {
+
+	/** VSL debug log */
+	static private final DebugLog VSL_LOG = new DebugLog("vsl");
 
 	/** Load all the VSL signs */
 	static protected void loadAll() throws TMSException {
@@ -233,8 +240,71 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		return approval_mode;
 	}
 
+	/** Log a VSL message */
+	private void logMsg(String msg) {
+		VSL_LOG.log(getName() + ": " + msg);
+	}
+
+	/** Calculate the recommended speed */
+	public void calculate() {
+		VslCalculator calc = new VslCalculator(hashtag, min_speed,
+			max_speed);
+		Integer s = calc.calculate();
+		if (VSL_LOG.isOpen()) {
+			for (String d: calc.detail)
+				logMsg(d);
+		}
+		setAvailableNotify(s != null);
+		setRecSpeedNotify(s);
+	}
+
+	/** Flag set when a weather sensor can be used (null until the first
+	 * calculation) */
+	private transient Boolean available;
+
+	/** Set flag when a weather sensor can be used.  A change is logged
+	 * as an event (VSL-FLT-03, VSL-FLT-04). */
+	private void setAvailableNotify(boolean a) {
+		if (!objectEquals(a, available)) {
+			if (!a) {
+				logEvent(new VslEvent(EventType.VSL_UNAVAILABLE,
+					name, null, null));
+			} else if (available != null) {
+				logEvent(new VslEvent(EventType.VSL_AVAILABLE,
+					name, null, null));
+			}
+			available = a;
+			notifyAttribute("available");
+		}
+	}
+
+	/** Get flag set when a weather sensor can be used, or null before
+	 * the first calculation */
+	@Override
+	public Boolean getAvailable() {
+		return available;
+	}
+
 	/** Recommended speed (mph) */
 	private Integer rec_speed;
+
+	/** Set the recommended speed (mph), or null for none */
+	private void setRecSpeedNotify(Integer s) {
+		if (!objectEquals(s, rec_speed)) {
+			Long t = TimeSteward.currentTimeMillis();
+			try {
+				store.update(this, "rec_speed", s);
+				store.update(this, "rec_time", asTimestamp(t));
+			}
+			catch (TMSException e) {
+				logMsg("rec_speed: " + e.getMessage());
+			}
+			rec_speed = s;
+			rec_time = t;
+			notifyAttribute("recSpeed");
+			notifyAttribute("recTime");
+		}
+	}
 
 	/** Get the recommended speed (mph), or null if none */
 	@Override
