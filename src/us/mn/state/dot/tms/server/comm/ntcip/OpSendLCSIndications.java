@@ -93,7 +93,8 @@ public class OpSendLCSIndications extends OpLCS {
 
 	/** Find MULTI string for an LCS indication */
 	private String findIndicationMulti(int ln, int ind) {
-		LcsState ls = LcsHelper.lookupState(lcs, ln, ind);
+		// LCS state lanes are numbered from 1
+		LcsState ls = LcsHelper.lookupState(lcs, ln + 1, ind);
 		if (ls != null) {
 			MsgPattern pat = ls.getMsgPattern();
 			if (pat != null) {
