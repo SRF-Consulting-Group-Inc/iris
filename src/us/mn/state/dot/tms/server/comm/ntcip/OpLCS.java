@@ -105,15 +105,18 @@ abstract public class OpLCS extends OpNtcip {
 		return d_lanes;
 	}
 
-	/** Lookup DMS for LCS states */
+	/** Lookup DMS for LCS states.
+	 * States are matched to a DMS by controller only -- the state pin
+	 * cannot equal the DMS pin, since controller_io pins are unique. */
 	private boolean lookupLane(final DMSImpl d, LcsState[] states,
 		DMSImpl[] d_lanes)
 	{
 		final Controller c = d.getController();
-		final int pin = d.getPin();
+		if (null == c)
+			return true;
 		for (int i = 0; i < states.length; i++) {
 			LcsState ls = states[i];
-			if (ls.getController() == c && ls.getPin() == pin) {
+			if (ls.getController() == c) {
 				int ln = ls.getLane() - 1;
 				if (ln < 0 || ln >= d_lanes.length) {
 					logError("lookupLane: bad lane " + ln);
