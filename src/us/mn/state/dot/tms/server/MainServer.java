@@ -283,6 +283,7 @@ public class MainServer {
 		FLUSH.addJob(new XmlConfigJob(1000));
 		FLUSH.addJob(new SignMessageXmlJob());
 		FLUSH.addJob(new IncidentXmlJob());
+		FLUSH.addJob(new VslFeedXmlJob());
 		FLUSH.addJob(new WeatherSensorXmlJob());
 		FLUSH.addJob(new EventPurgeJob());
 		FLUSH.addJob(new ReaperJob());

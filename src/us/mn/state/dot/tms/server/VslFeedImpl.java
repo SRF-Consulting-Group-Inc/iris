@@ -14,6 +14,7 @@
  */
 package us.mn.state.dot.tms.server;
 
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -131,6 +132,14 @@ public class VslFeedImpl extends BaseObjectImpl implements VslFeed {
 		if (!name.matches("[A-Za-z0-9_]+"))
 			throw new ChangeVetoException("Bad name: " + name);
 		super.doStore();
+	}
+
+	/** Destroy a VSL feed, and remove its file */
+	@Override
+	public void doDestroy() throws TMSException {
+		super.doDestroy();
+		new File(XmlWriter.XML_OUTPUT_DIRECTORY,
+			VslFeedXmlWriter.fileName(this)).delete();
 	}
 
 	/** Feed title */
