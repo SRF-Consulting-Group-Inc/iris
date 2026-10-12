@@ -175,6 +175,10 @@ public class DMSManager extends DeviceManager<DMS> {
 			p.addSeparator();
 			p.add(getWysiwygAction(dms));
 		}
+		if (VslOverrideForm.isPermitted(session, dms)) {
+			p.addSeparator();
+			p.add(getVslOverrideAction(dms));
+		}
 	}
 
 	/** Add actions to a popup menu */
@@ -212,6 +216,16 @@ public class DMSManager extends DeviceManager<DMS> {
 			protected void doActionPerformed(ActionEvent e) {
 				session.getDesktop().show(
 					new WMsgSelectorForm(session, dms));
+			}
+		};
+	}
+
+	/** Get the VSL override action */
+	private IAction getVslOverrideAction(DMS dms) {
+		return new IAction("dms.vsl.override") {
+			protected void doActionPerformed(ActionEvent e) {
+				session.getDesktop().show(
+					new VslOverrideForm(session, dms));
 			}
 		};
 	}

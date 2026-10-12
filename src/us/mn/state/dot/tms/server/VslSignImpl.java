@@ -265,13 +265,13 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 				logMsg(d);
 		}
 		setAvailableNotify(s != null);
-		if (s == null) {
-			// Hold the posted speed (VSL-FLT-02)
-			setRecommendationNotify(null, VslState.NONE);
-		} else if (isOverridden()) {
+		if (isOverridden()) {
 			// Calculate, but don't approve (VSL-VOV-03)
 			logMsg("overridden");
 			setRecommendationNotify(s, VslState.NONE);
+		} else if (s == null) {
+			// Hold the posted speed (VSL-FLT-02)
+			setRecommendationNotify(null, VslState.NONE);
 		} else
 			approve(s);
 	}
