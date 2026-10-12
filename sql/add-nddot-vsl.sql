@@ -114,6 +114,37 @@ GRANT SELECT ON vsl_sign_view TO PUBLIC;
 -- Add vsl_sign resource type, based on dms for permissions
 INSERT INTO iris.resource_type (name, base) VALUES ('vsl_sign', 'dms');
 
+-- Add vsl_feed table
+--
+-- An RSS feed of VSL notifications, read by GovDelivery (VSL-NTF-01).  A
+-- feed covers the VSL signs whose notes contain its hashtag.  The name is
+-- part of the feed's file name.
+CREATE TABLE iris.vsl_feed (
+    name VARCHAR(20) PRIMARY KEY,
+    title VARCHAR(64) NOT NULL,
+    hashtag VARCHAR(16),
+    notify_pending BOOLEAN NOT NULL,
+    notify_override BOOLEAN NOT NULL,
+    notify_posted BOOLEAN NOT NULL,
+    notify_fault BOOLEAN NOT NULL,
+
+    CONSTRAINT vsl_feed_name_ck CHECK (name ~ '^[A-Za-z0-9_]+$'),
+    CONSTRAINT vsl_feed_hashtag_ck CHECK (hashtag ~ '^#[A-Za-z0-9]+$')
+);
+
+CREATE TRIGGER vsl_feed_notify_trig
+    AFTER INSERT OR UPDATE OR DELETE ON iris.vsl_feed
+    FOR EACH STATEMENT EXECUTE FUNCTION iris.table_notify();
+
+CREATE VIEW vsl_feed_view AS
+    SELECT name, title, hashtag, notify_pending, notify_override,
+           notify_posted, notify_fault
+    FROM iris.vsl_feed;
+GRANT SELECT ON vsl_feed_view TO PUBLIC;
+
+-- Add vsl_feed resource type, based on dms for permissions
+INSERT INTO iris.resource_type (name, base) VALUES ('vsl_feed', 'dms');
+
 -- Add VSL event types
 INSERT INTO event.event_description (event_desc_id, description) VALUES
     (10001, 'VSL Pending'),
