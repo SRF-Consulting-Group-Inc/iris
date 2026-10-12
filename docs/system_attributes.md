@@ -81,6 +81,7 @@ System Attribute                 | Description
 `nddot_vsl_increase_rate`        | Minutes between VSL changes when increasing speed
 `nddot_vsl_increase_threshold`   | Smallest VSL speed increase which cancels waiting periods (mph)
 `nddot_vsl_min_speed_change`     | Smallest difference between posted and recommended VSL speeds which triggers a change (mph)
+`nddot_vsl_notify_repeat`        | Minutes to suppress repeat VSL notifications for an unchanged condition (0 to never suppress)
 `nddot_vsl_quiet_period`         | Minutes to hold the posted VSL speed after an operator rejects a recommended speed
 `nddot_vsl_review_timeout`       | Minutes to wait for operator approval in semi-automated VSL mode before posting
 `nddot_vsl_speed_rounding`       | VSL recommended speeds are rounded down to a multiple of this value (mph)

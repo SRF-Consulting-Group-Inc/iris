@@ -20,6 +20,7 @@ INSERT INTO iris.system_attribute (name, value) VALUES
     ('nddot_vsl_increase_rate', '2'),
     ('nddot_vsl_increase_threshold', '15'),
     ('nddot_vsl_min_speed_change', '5'),
+    ('nddot_vsl_notify_repeat', '30'),
     ('nddot_vsl_quiet_period', '10'),
     ('nddot_vsl_review_timeout', '2'),
     ('nddot_vsl_speed_rounding', '5');
