@@ -27,11 +27,13 @@ import us.mn.state.dot.sonar.Namespace;
 import us.mn.state.dot.sonar.SonarObject;
 import us.mn.state.dot.tms.AccessLevel;
 import us.mn.state.dot.tms.User;
+import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.client.alert.AlertManager;
 import us.mn.state.dot.tms.client.beacon.BeaconManager;
 import us.mn.state.dot.tms.client.camera.CameraManager;
 import us.mn.state.dot.tms.client.comm.ControllerManager;
 import us.mn.state.dot.tms.client.dms.DMSManager;
+import us.mn.state.dot.tms.client.dms.VslManager;
 import us.mn.state.dot.tms.client.gate.GateArmManager;
 import us.mn.state.dot.tms.client.gate.GatePlanManager;
 import us.mn.state.dot.tms.client.incident.IncidentManager;
@@ -234,6 +236,8 @@ public class Session {
 		managers.add(inc_manager);
 		managers.add(new PlanManager(this, loc_manager));
 		managers.add(alert_manager);
+		if (VslSignHelper.isEnabled())
+			managers.add(new VslManager(this, loc_manager));
 		tile_layer = createTileLayer(props.getProperty("map.tile.url"));
 		setCurrent(this, null);
 	}

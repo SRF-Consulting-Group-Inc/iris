@@ -16,7 +16,7 @@ Nothing here is used unless the `nddot_vsl_enable` [system attribute] is
    log in again.
 3. Add `#VSL` to the notes of each VSL sign.  This is the reserved VSL
    [hashtag] for [DMS], used by the action plan to find VSL signs.
-4. On the sign's **VSL** tab, press **Create**, then set:
+4. On the **VSL** tab of the sign's properties, press **Create**, then set:
    - **Hashtag**: the sign's own hashtag, such as `#Vsl255`
    - **Minimum Speed** and **Maximum Speed** (mph)
    - **Approval Mode** (see [approval](#approval))
@@ -30,8 +30,9 @@ Nothing here is used unless the `nddot_vsl_enable` [system attribute] is
    - a [device action] with the `#VSL` hashtag, the deployed phase, and the
      message pattern **name**
 
-The **VSL** tab shows warnings for missing setup, such as no `#VSL` hashtag in
-the sign's notes or no weather sensors with the sign's hashtag.
+The sign's **VSL** properties tab shows warnings for missing setup, such as no
+`#VSL` hashtag in the sign's notes or no weather sensors with the sign's
+hashtag.
 
 ## Calculation
 
@@ -137,10 +138,11 @@ multiples of the rounding increment, so every change below a threshold
 (15 mph) is at most 10 mph, which is within both limits.  Changes at or above a
 threshold are not limited.
 
-Pending requests are listed in **View ➔ Message Signs ➔ VSL Approvals**, and
-on the sign's **VSL** tab.  **Approve** posts the recommended speed right
-away.  **Reject** keeps the posted speed and starts the quiet period.  Both
-are logged with the operator's name.
+Pending requests are listed on the **VSL** side panel tab, in **View ➔
+Message Signs ➔ VSL Approvals**, and on the sign's **VSL** properties tab.
+**Approve** posts the recommended speed right away.  **Reject** keeps the
+posted speed and starts the quiet period.  Both are logged with the operator's
+name.
 
 ## Override
 
@@ -170,7 +172,8 @@ speed, and keeps its posted speed.  Operators can still override it.
 ## Notifications
 
 VSL notifications are written to RSS 2.0 feeds, which can be read by
-GovDelivery.  Feeds are configured in **View ➔ Message Signs ➔ VSL Feeds**:
+GovDelivery.  Feeds are configured on the **VSL** side panel tab, or in
+**View ➔ Message Signs ➔ VSL Feeds**:
 
 - **Name**: letters, digits and underscores.  The feed is written to
   `vsl_`*name*`.xml` in the XML output directory (`/var/www/html/iris_xml/`)
