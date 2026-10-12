@@ -16,12 +16,17 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import us.mn.state.dot.tms.ChangeVetoException;
+import us.mn.state.dot.tms.DMS;
 import us.mn.state.dot.tms.Hashtags;
 import us.mn.state.dot.tms.TMSException;
 import us.mn.state.dot.tms.VslFeed;
+import us.mn.state.dot.tms.VslFeedHelper;
 import us.mn.state.dot.tms.VslSignHelper;
 
 /**
@@ -31,6 +36,27 @@ import us.mn.state.dot.tms.VslSignHelper;
  * @author Coby Christiansen - SRF Consulting
  */
 public class VslFeedImpl extends BaseObjectImpl implements VslFeed {
+
+	/** Maximum number of notifications kept by a feed.
+	 *
+	 * TODO: confirm how many items GovDelivery needs in a feed. */
+	static private final int MAX_NOTICES = 20;
+
+	/** Add a notification to the feeds covering a sign.
+	 * @param dms Sign of the notification.
+	 * @param n Notification to add.
+	 * @return Names of the feeds which want the notification. */
+	static public ArrayList<String> addNotice(DMS dms, VslNotice n) {
+		ArrayList<String> names = new ArrayList<String>();
+		if (dms == null)
+			return names;
+		for (VslFeed f: VslFeedHelper.find(dms)) {
+			if (f instanceof VslFeedImpl &&
+			    ((VslFeedImpl) f).add(n))
+				names.add(f.getName());
+		}
+		return names;
+	}
 
 	/** Load all the VSL feeds */
 	static protected void loadAll() throws TMSException {
@@ -248,5 +274,47 @@ public class VslFeedImpl extends BaseObjectImpl implements VslFeed {
 	@Override
 	public boolean getNotifyFault() {
 		return notify_fault;
+	}
+
+	/** Recent notifications, newest first.  These are kept in memory
+	 * only.
+	 *
+	 * TODO: decide whether notifications should be kept across server
+	 *       restarts. */
+	private transient final LinkedList<VslNotice> notices =
+		new LinkedList<VslNotice>();
+
+	/** Check if the feed wants a type of notification */
+	private boolean isWanted(VslNotice.Type t) {
+		switch (t) {
+		case PENDING:
+			return notify_pending;
+		case OVERRIDE:
+		case OVERRIDE_CLEARED:
+			return notify_override;
+		case POSTED:
+			return notify_posted;
+		case FAULT:
+		case FAULT_CLEARED:
+			return notify_fault;
+		default:
+			return false;
+		}
+	}
+
+	/** Add a notification, if the feed wants it.
+	 * @return true if the notification was added. */
+	private synchronized boolean add(VslNotice n) {
+		if (!isWanted(n.type))
+			return false;
+		notices.addFirst(n);
+		while (notices.size() > MAX_NOTICES)
+			notices.removeLast();
+		return true;
+	}
+
+	/** Get the recent notifications, newest first */
+	public synchronized List<VslNotice> getNotices() {
+		return new ArrayList<VslNotice>(notices);
 	}
 }

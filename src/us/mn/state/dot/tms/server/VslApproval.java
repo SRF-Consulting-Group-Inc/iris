@@ -83,13 +83,20 @@ public class VslApproval {
 		return now + minutesMs(m);
 	}
 
+	/** Get the time a semi-automated request is posted without
+	 * operator approval (VSL-APV-02, VSL-NTF-03).
+	 * @param rec_time Time of the approval request. */
+	static public long reviewExpires(long rec_time) {
+		int m = SystemAttrEnum.NDDOT_VSL_REVIEW_TIMEOUT.getInt();
+		return rec_time + minutesMs(m);
+	}
+
 	/** Check if the semi-automated review timeout has passed.
 	 * @param rec_time Time of the approval request.
 	 * @param now Current time.
 	 * @return true if the review timeout has passed (VSL-APV-02). */
 	static public boolean isReviewTimedOut(Long rec_time, long now) {
-		int m = SystemAttrEnum.NDDOT_VSL_REVIEW_TIMEOUT.getInt();
-		return rec_time != null && now >= rec_time + minutesMs(m);
+		return rec_time != null && now >= reviewExpires(rec_time);
 	}
 
 	/** Evaluate the approval rules.

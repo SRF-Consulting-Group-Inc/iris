@@ -16,14 +16,19 @@ package us.mn.state.dot.tms.server;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import us.mn.state.dot.sched.DebugLog;
 import us.mn.state.dot.sched.TimeSteward;
 import us.mn.state.dot.tms.ChangeVetoException;
+import us.mn.state.dot.tms.DMSHelper;
 import us.mn.state.dot.tms.DmsLock;
 import us.mn.state.dot.tms.EventType;
+import us.mn.state.dot.tms.GeoLoc;
+import us.mn.state.dot.tms.GeoLocHelper;
 import us.mn.state.dot.tms.Hashtags;
 import us.mn.state.dot.tms.SystemAttrEnum;
 import us.mn.state.dot.tms.TMSException;
@@ -255,8 +260,12 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		VSL_LOG.log(getName() + ": " + msg);
 	}
 
+	/** Flag set after the first calculation */
+	private transient boolean calculated;
+
 	/** Calculate the recommended speed, then apply approval rules */
 	public synchronized void calculate() {
+		DMSImpl dms = lookupDMS(name);
 		VslCalculator calc = new VslCalculator(hashtag, min_speed,
 			max_speed);
 		Integer s = calc.calculate();
@@ -264,8 +273,8 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 			for (String d: calc.detail)
 				logMsg(d);
 		}
-		setAvailableNotify(s != null);
-		if (isOverridden()) {
+		setAvailableNotify(calc.fault);
+		if (checkOverride(dms)) {
 			// Calculate, but don't approve (VSL-VOV-03)
 			logMsg("overridden");
 			setRecommendationNotify(s, VslState.NONE);
@@ -273,21 +282,63 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 			// Hold the posted speed (VSL-FLT-02)
 			setRecommendationNotify(null, VslState.NONE);
 		} else
-			approve(s);
+			approve(s, calc);
+		checkComm(dms);
+		calculated = true;
 	}
 
-	/** Check if an operator message is on the sign (VSL-VOV-01) */
-	private boolean isOverridden() {
-		DMSImpl dms = lookupDMS(name);
-		if (dms != null) {
-			String ms = new DmsLock(dms.getLock()).optMulti();
-			return ms != null && !new MultiString(ms).isBlank();
-		} else
-			return false;
+	/** Operator message on the sign, or null if none */
+	private transient String override;
+
+	/** User of the operator message on the sign */
+	private transient String override_user;
+
+	/** Check for an operator message on the sign (VSL-VOV-01).  A new or
+	 * cleared message is notified (VSL-NTF-04, VSL-NTF-05), except on
+	 * the first calculation after the server starts.
+	 * @return true if the sign is overridden. */
+	private boolean checkOverride(DMSImpl dms) {
+		DmsLock lk = new DmsLock((dms != null) ? dms.getLock() : null);
+		String ms = lk.optMulti();
+		if (ms != null && new MultiString(ms).isBlank())
+			ms = null;
+		String user = (ms != null) ? lk.getUser() : null;
+		if (calculated && !objectEquals(ms, override)) {
+			if (ms != null)
+				sendNotice(overrideNotice(ms, user));
+			else
+				sendNotice(overrideClearedNotice());
+		}
+		override = ms;
+		override_user = user;
+		return ms != null;
+	}
+
+	/** Create an override notification (VSL-NTF-04) */
+	private VslNotice overrideNotice(String ms, String user) {
+		String t = new MultiString(ms).asText();
+		return createNotice(VslNotice.Type.OVERRIDE, user + " " + t)
+			.add("Operator", user)
+			.add("Override speed", t.matches("\\d+")
+				? t + " mph"
+				: t);
+	}
+
+	/** Create an override cleared notification (VSL-NTF-05).
+	 *
+	 * TODO: the operator who blanked the sign is not known here, so the
+	 *       operator who set the override is given.  Naming the operator
+	 *       who blanked it would need a hook in DMSImpl.doSetLock. */
+	private VslNotice overrideClearedNotice() {
+		return createNotice(VslNotice.Type.OVERRIDE_CLEARED, "")
+			.add("Override by", override_user)
+			.add("Posted speed", VslNotice.formatSpeed(
+				posted_speed))
+			.add("Status", "calculated speeds resume");
 	}
 
 	/** Apply the approval rules to a recommended speed */
-	private void approve(int s) {
+	private void approve(int s, VslCalculator calc) {
 		long now = TimeSteward.currentTimeMillis();
 		VslApprovalMode mode = VslApprovalMode.fromOrdinal(
 			approval_mode);
@@ -308,7 +359,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 			postSpeed(ap.speed, null);
 			break;
 		case REQUEST:
-			requestApproval(ap.speed);
+			requestApproval(ap.speed, calc);
 			break;
 		default:
 			setRecommendationNotify(ap.speed, ap.state);
@@ -323,12 +374,30 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 	}
 
 	/** Request operator approval of a speed (VSL-APV-01) */
-	private void requestApproval(int s) {
+	private void requestApproval(int s, VslCalculator calc) {
 		// A request for the same speed keeps its review time
 		if (isPending() && rec_speed == s)
 			return;
 		setRecommendationNotify(s, VslState.PENDING);
 		logEvent(new VslEvent(EventType.VSL_PENDING, name, s, null));
+		sendNotice(pendingNotice(s, calc));
+	}
+
+	/** Create an approval request notification (VSL-NTF-03) */
+	private VslNotice pendingNotice(int s, VslCalculator calc) {
+		VslNotice n = createNotice(VslNotice.Type.PENDING,
+			s + " " + posted_speed)
+			.add("Posted speed", VslNotice.formatSpeed(
+				posted_speed))
+			.add("Recommended speed", VslNotice.formatSpeed(s))
+			.addReading(calc.sensor, calc.reading);
+		if (VslApprovalMode.fromOrdinal(approval_mode) ==
+		    VslApprovalMode.SEMI_AUTOMATED && rec_time != null)
+		{
+			n.add("Deploys automatically at", VslNotice.formatTime(
+				VslApproval.reviewExpires(rec_time)));
+		}
+		return n;
 	}
 
 	/** Set an operator decision (handled by doSetDecision) */
@@ -369,6 +438,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 	 * @param s Speed (mph).
 	 * @param user User who approved it, or null if automatic. */
 	private void postSpeed(int s, String user) {
+		Integer prev = posted_speed;
 		Long t = TimeSteward.currentTimeMillis();
 		try {
 			store.update(this, "posted_speed", s);
@@ -383,26 +453,164 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		notifyAttribute("postedTime");
 		setRecommendationNotify(s, VslState.NONE);
 		logEvent(new VslEvent(EventType.VSL_POSTED, name, s, user));
+		sendNotice(createNotice(VslNotice.Type.POSTED, prev + " " + s)
+			.add("Previous speed", VslNotice.formatSpeed(prev))
+			.add("Posted speed", VslNotice.formatSpeed(s))
+			.add("Approval", (user != null)
+				? "approved by " + user
+				: "automatic"));
 	}
 
 	/** Flag set when a weather sensor can be used (null until the first
 	 * calculation) */
 	private transient Boolean available;
 
+	/** Reason no weather sensor can be used, or null */
+	private transient String sensor_fault;
+
 	/** Set flag when a weather sensor can be used.  A change is logged
-	 * as an event (VSL-FLT-03, VSL-FLT-04). */
-	private void setAvailableNotify(boolean a) {
+	 * as an event (VSL-FLT-03, VSL-FLT-04) and notified (VSL-NTF-07).
+	 * @param fault Reason no speed was calculated, or null. */
+	private void setAvailableNotify(String fault) {
+		boolean a = (fault == null);
 		if (!objectEquals(a, available)) {
 			if (!a) {
 				logEvent(new VslEvent(EventType.VSL_UNAVAILABLE,
 					name, null, null));
+				sendNotice(faultNotice(SENSOR_ERROR, fault,
+					posted_speed, getTargetSpeed()));
 			} else if (available != null) {
 				logEvent(new VslEvent(EventType.VSL_AVAILABLE,
 					name, null, null));
+				sendNotice(resolvedNotice(SENSOR_ERROR,
+					sensor_fault));
 			}
 			available = a;
+			sensor_fault = fault;
 			notifyAttribute("available");
 		}
+	}
+
+	/** Get the speed being deployed when a fault happens: a recommended
+	 * speed different from the posted speed, or null.
+	 *
+	 * TODO: confirm with NDDOT what "the speed the system was trying to
+	 *       deploy" means for a sensor fault (VSL-NTF-07). */
+	private Integer getTargetSpeed() {
+		return (rec_speed != null && !rec_speed.equals(posted_speed))
+		      ? rec_speed
+		      : null;
+	}
+
+	/** Label of sensor faults */
+	static private final String SENSOR_ERROR = "Sensor error";
+
+	/** Label of communication faults */
+	static private final String COMM_ERROR = "Communication error";
+
+	/** Communication problem with the sign, or null */
+	private transient String comm_fault;
+
+	/** Posted speed when the last communication fault was notified */
+	private transient Integer comm_fault_speed;
+
+	/** Posted speed while the sign was last communicating */
+	private transient Integer deployed_speed;
+
+	/** Check communication with the sign (VSL-NTF-07).  A new posted
+	 * speed during a fault is notified again, since it can't be
+	 * deployed. */
+	private void checkComm(DMSImpl dms) {
+		String f = getCommFault(dms);
+		if (f != null) {
+			if (!f.equals(comm_fault) ||
+			    !objectEquals(posted_speed, comm_fault_speed))
+			{
+				sendNotice(faultNotice(COMM_ERROR, f,
+					deployed_speed, posted_speed));
+				comm_fault_speed = posted_speed;
+			}
+		} else {
+			if (comm_fault != null) {
+				sendNotice(resolvedNotice(COMM_ERROR,
+					comm_fault));
+			}
+			deployed_speed = posted_speed;
+		}
+		comm_fault = f;
+	}
+
+	/** Get a communication problem with a sign, or null.
+	 *
+	 * TODO: confirm with NDDOT whether an inactive sign (such as one with
+	 *       its comm link disabled) should be a fault. */
+	static private String getCommFault(DMSImpl dms) {
+		if (dms == null)
+			return "no sign";
+		else if (!DMSHelper.isActive(dms))
+			return "sign not active";
+		else if (DMSHelper.isOffline(dms))
+			return "sign offline";
+		else
+			return null;
+	}
+
+	/** Create a fault notification (VSL-NTF-07).
+	 * @param label Fault label.
+	 * @param fault Fault description.
+	 * @param last Last deployed speed, or null if unknown.
+	 * @param target Speed being deployed, or null if none. */
+	private VslNotice faultNotice(String label, String fault,
+		Integer last, Integer target)
+	{
+		return createNotice(VslNotice.Type.FAULT, label + " " + target)
+			.add(label, fault)
+			.add("Last deployed speed", (last != null)
+				? VslNotice.formatSpeed(last)
+				: "unknown")
+			.add("Speed being deployed", VslNotice.formatSpeed(
+				target));
+	}
+
+	/** Create a fault resolved notification (VSL-NTF-07) */
+	private VslNotice resolvedNotice(String label, String fault) {
+		return createNotice(VslNotice.Type.FAULT_CLEARED, label)
+			.add(label + " resolved", fault)
+			.add("Posted speed", VslNotice.formatSpeed(
+				posted_speed));
+	}
+
+	/** Create a notification for the sign (VSL-NTF-02) */
+	private VslNotice createNotice(VslNotice.Type t, String k) {
+		DMSImpl dms = lookupDMS(name);
+		GeoLoc gl = (dms != null) ? dms.getGeoLoc() : null;
+		String loc = (gl != null) ? GeoLocHelper.getLocation(gl) : "";
+		return new VslNotice(t, TimeSteward.currentTimeMillis(), name,
+			loc, k);
+	}
+
+	/** Times of recent notifications, by condition */
+	private transient final HashMap<String, Long> notified =
+		new HashMap<String, Long>();
+
+	/** Send a notification to the sign's feeds, unless it repeats a
+	 * recent condition (VSL-NTF-08) */
+	private void sendNotice(VslNotice n) {
+		long repeat_ms = SystemAttrEnum.NDDOT_VSL_NOTIFY_REPEAT
+			.getInt() * 60L * 1000L;
+		Iterator<Long> it = notified.values().iterator();
+		while (it.hasNext()) {
+			if (it.next() + repeat_ms <= n.time)
+				it.remove();
+		}
+		if (n.isRepeat(notified.get(n.key), repeat_ms)) {
+			logMsg("repeat notice: " + n.getTitle());
+			return;
+		}
+		notified.put(n.key, n.time);
+		ArrayList<String> feeds = VslFeedImpl.addNotice(lookupDMS(name),
+			n);
+		logMsg("notice: " + n + " feeds: " + feeds);
 	}
 
 	/** Get flag set when a weather sensor can be used, or null before

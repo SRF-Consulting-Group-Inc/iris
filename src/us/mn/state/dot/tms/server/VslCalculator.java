@@ -76,6 +76,16 @@ public class VslCalculator {
 	/** Lines describing the calculation, for the VSL log */
 	public final ArrayList<String> detail = new ArrayList<String>();
 
+	/** Reason no speed was calculated, or null (VSL-NTF-07) */
+	public String fault;
+
+	/** Name of the weather sensor with the lowest candidate speed */
+	public String sensor;
+
+	/** Reading of the weather sensor with the lowest candidate speed,
+	 * for road surface information (VSL-NTF-03) */
+	public VslReading reading;
+
 	/** Create a calculator for a VSL sign */
 	public VslCalculator(String ht, int mn, int mx) {
 		hashtag = ht;
@@ -88,7 +98,8 @@ public class VslCalculator {
 	 *         be used (VSL-FLT-02). */
 	public Integer calculate() {
 		if (hashtag == null) {
-			detail.add("no hashtag");
+			fault = "no hashtag";
+			detail.add(fault);
 			return null;
 		}
 		Double traffic = findTrafficSpeed();
@@ -99,11 +110,16 @@ public class VslCalculator {
 			if (new Hashtags(ws.getNotes()).contains(hashtag)) {
 				Double s = calculateCandidate(ws, traffic);
 				if (s != null && (lowest == null || s < lowest))
+				{
 					lowest = s;
+					sensor = ws.getName();
+					reading = VslReading.fromSensor(ws);
+				}
 			}
 		}
 		if (lowest == null) {
-			detail.add("no usable weather sensor");
+			fault = "no usable weather sensor";
+			detail.add(fault);
 			return null;
 		}
 		int rs = recommendedSpeed(lowest, min_speed, max_speed,
