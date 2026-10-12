@@ -238,7 +238,7 @@ Tag              | Description                     | Tag Mode            | Sourc
 `[tt` *…* `]`    | [Travel time] estimation        | Replace             | `travel_time`
 `[tz` *…* `]`    | [Toll zone] pricing             | Replace             | `tolling`
 `[vsa]`          | [Variable speed advisory]       | Condition + Replace | `speed_advisory`
-`[vsl]`          | NDDOT variable speed limit      | Condition + Replace | `speed_limit`
+`[vsl]`          | [NDDOT variable speed limit]    | Condition + Replace | `speed_limit`
 
 ## Time Action Tag
 
@@ -370,6 +370,7 @@ the `email_event` table.
 [message pattern]: message_patterns.html
 [priority]: sign_message.html#message-priority
 [MULTI]: multi.html
+[NDDOT variable speed limit]: nddot_vsl.html
 [Parking area]: parking_areas.html
 [permission]: permissions.html
 [preset]: cameras.html#presets
