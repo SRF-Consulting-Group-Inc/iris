@@ -51,6 +51,7 @@ public class SignMenu extends IMenu {
 		addItem(createWysiwygSelectorItem());
 		addItem(createWordItem());
 		addItem(createVslApprovalItem());
+		addItem(createVslFeedItem());
 		addItem(session.createTableAction(Beacon.SONAR_TYPE));
 	}
 
@@ -130,6 +131,16 @@ public class SignMenu extends IMenu {
 		    new IAction("dms.vsl.approvals") {
 			protected void doActionPerformed(ActionEvent e) {
 				desktop.show(new VslApprovalForm(session));
+			}
+		    } : null;
+	}
+
+	/** Create a VSL feeds menu item action */
+	private IAction createVslFeedItem() {
+		return VslFeedForm.isPermitted(session) ?
+		    new IAction("dms.vsl.feeds") {
+			protected void doActionPerformed(ActionEvent e) {
+				desktop.show(new VslFeedForm(session));
 			}
 		    } : null;
 	}
