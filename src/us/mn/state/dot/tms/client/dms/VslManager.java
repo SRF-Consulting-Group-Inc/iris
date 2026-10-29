@@ -30,6 +30,7 @@ import us.mn.state.dot.tms.client.proxy.ProxyTheme;
  * layer; it only provides the VSL tab.
  *
  * @author Coby Christiansen - SRF Consulting
+ * @author John L. Stanley - SRF Consulting
  */
 public class VslManager extends ProxyManager<VslSign> {
 
@@ -45,11 +46,17 @@ public class VslManager extends ProxyManager<VslSign> {
 		super(s, lm, descriptor(s), 0, ItemStyle.ALL);
 	}
 
-	/** Check if user can read VSL signs.  Nothing is shown unless VSL is
-	 * enabled. */
+	/** Check if a user can read VSL signs.  Nothing is shown unless VSL
+	 * is enabled. */
+	static public boolean isPermitted(Session s) {
+		return VslSignHelper.isEnabled() &&
+		       s.canRead(VslSign.SONAR_TYPE);
+	}
+
+	/** Check if user can read VSL signs */
 	@Override
 	public boolean canRead() {
-		return VslSignHelper.isEnabled() && super.canRead();
+		return isPermitted(session);
 	}
 
 	/** Create a VSL map tab */

@@ -3,6 +3,7 @@
  * Copyright (C) 2008-2024  Minnesota Department of Transportation
  * Copyright (C) 2010  AHMCT, University of California
  * Copyright (C) 2017-2018  Iteris Inc.
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +45,7 @@ import us.mn.state.dot.tms.utils.I18N;
  *
  * @author Douglas Lau
  * @author Michael Darter
+ * @author John L. Stanley - SRF Consulting
  */
 public class DMSManager extends DeviceManager<DMS> {
 
@@ -92,7 +94,30 @@ public class DMSManager extends DeviceManager<DMS> {
 	/** Create a theme for DMSs */
 	@Override
 	protected ProxyTheme<DMS> createTheme() {
-		return new DmsTheme(this);
+		return new DmsTheme(this, session);
+	}
+
+	/** Check the style of the specified DMS.  When VSL signs have their
+	 * own style, they are left out of Purpose. */
+	@Override
+	public boolean checkStyle(ItemStyle is, DMS dms) {
+		if (is == ItemStyle.PURPOSE && hasVslStyle() &&
+		    super.checkStyle(ItemStyle.VSL, dms))
+			return false;
+		return super.checkStyle(is, dms);
+	}
+
+	/** Check if VSL signs have their own style */
+	private boolean hasVslStyle() {
+		ProxyTheme<DMS> theme = getTheme();
+		return (theme instanceof DmsTheme) &&
+		       ((DmsTheme) theme).hasVslStyle();
+	}
+
+	/** Check if a style button is hidden while no DMS have the style */
+	@Override
+	public boolean isStyleHiddenWhenEmpty(ItemStyle is) {
+		return is == ItemStyle.VSL;
 	}
 
 	/** Create a list cell renderer */

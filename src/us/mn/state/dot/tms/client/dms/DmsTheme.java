@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2019-2025  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +24,8 @@ import us.mn.state.dot.tms.Hashtags;
 import us.mn.state.dot.tms.ItemStyle;
 import us.mn.state.dot.tms.SignMessage;
 import us.mn.state.dot.tms.SystemAttrEnum;
+import us.mn.state.dot.tms.VslSignHelper;
+import us.mn.state.dot.tms.client.Session;
 import us.mn.state.dot.tms.client.ToolTipBuilder;
 import us.mn.state.dot.tms.client.map.MapObject;
 import us.mn.state.dot.tms.client.map.Style;
@@ -35,6 +38,7 @@ import static us.mn.state.dot.tms.client.widget.Widgets.UI;
  * Theme for DMS objects on the map.
  *
  * @author Douglas Lau
+ * @author John L. Stanley - SRF Consulting
  */
 public class DmsTheme extends ProxyTheme<DMS> {
 
@@ -54,8 +58,11 @@ public class DmsTheme extends ProxyTheme<DMS> {
 	static private final Symbol PARKING_SYMBOL = new VectorSymbol(
 		new ParkingMarker());
 
+	/** VSL sign style, or null if VSL signs are shown as Purpose signs */
+	private final Style vsl_style;
+
 	/** Create a new DMS theme */
-	public DmsTheme(DMSManager man) {
+	public DmsTheme(DMSManager man, Session s) {
 		super(man, new DmsMarker());
 		// NOTE: the ordering of styles controls which color is used
 		//       to render the sign icon on the map
@@ -67,6 +74,45 @@ public class DmsTheme extends ProxyTheme<DMS> {
 		addStyle(ItemStyle.OFFLINE, COLOR_OFFLINE);
 		addStyle(ItemStyle.PURPOSE, COLOR_PURPOSE);
 		addStyle(ItemStyle.ALL);
+		vsl_style = createVslStyle(s);
+	}
+
+	/** Create the VSL sign style.  It is added after All, so the other
+	 * style buttons keep their places; getStyle picks its color.
+	 * @return VSL style, or null if VSL signs are shown as Purpose
+	 *         signs. */
+	private Style createVslStyle(Session s) {
+		if (!VslManager.isPermitted(s))
+			return null;
+		Integer rgb = VslSignHelper.getColor();
+		if (rgb == null) {
+			String c = SystemAttrEnum.NDDOT_VSL_COLOR.getString();
+			if (c != null && !c.trim().isEmpty()) {
+				System.err.println("Warning: invalid " +
+					"nddot_vsl_color: " + c);
+			}
+			return null;
+		}
+		addStyle(ItemStyle.VSL, new Color(rgb));
+		return getStyle(ItemStyle.VSL);
+	}
+
+	/** Check if VSL signs have their own style */
+	public boolean hasVslStyle() {
+		return vsl_style != null;
+	}
+
+	/** Get the style of a DMS.  An active VSL sign which is not faulted
+	 * or offline is drawn in the VSL color. */
+	@Override
+	public Style getStyle(DMS dms) {
+		if (vsl_style != null &&
+		    manager.checkStyle(ItemStyle.VSL, dms) &&
+		    manager.checkStyle(ItemStyle.ACTIVE, dms) &&
+		   !manager.checkStyle(ItemStyle.FAULT, dms) &&
+		   !manager.checkStyle(ItemStyle.OFFLINE, dms))
+			return vsl_style;
+		return super.getStyle(dms);
 	}
 
 	/** Set the map scale */
