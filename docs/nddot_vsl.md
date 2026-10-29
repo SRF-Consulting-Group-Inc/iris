@@ -239,6 +239,7 @@ Change VSL sign or feed settings | Configure
 
 System Attribute               | Default | Description
 -------------------------------|---------|------------------------------------
+`nddot_vsl_color`              |         | Color of VSL signs on the DMS tab, as `R,G,B`, `(R,G,B)` or `#RRGGBB`; blank or invalid shows them as Purpose signs (requires client restart)
 `nddot_vsl_cycle_rate`         | 1       | Minutes between calculations
 `nddot_vsl_decrease_limit`     | 15      | Largest decrease in one change, except threshold changes (mph)
 `nddot_vsl_decrease_rate`      | 1       | Minutes between changes when decreasing speed

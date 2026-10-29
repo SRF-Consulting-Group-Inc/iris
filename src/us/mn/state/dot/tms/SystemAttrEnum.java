@@ -3,7 +3,7 @@
  * Copyright (C) 2009-2026  Minnesota Department of Transportation
  * Copyright (C) 2009-2015  AHMCT, University of California
  * Copyright (C) 2012-2021  Iteris Inc.
- * Copyright (C) 2015-2024  SRF Consulting Group
+ * Copyright (C) 2015-2026  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Douglas Lau
  * @author Michael Darter
  * @author Travis Swanston
- * @author John L. Stanley
+ * @author John L. Stanley - SRF Consulting
  */
 public enum SystemAttrEnum {
 	ACTION_PLAN_ALERT_LIST(""),
@@ -83,6 +83,7 @@ public enum SystemAttrEnum {
 	METER_MIN_RED_SECS(0.1f, 0.1f, 10f),
 	METER_YELLOW_SECS(0.7f, 0.1f, 10f),
 	MSG_FEED_VERIFY(true),
+	NDDOT_VSL_COLOR("", Change.RESTART_CLIENT),
 	NDDOT_VSL_CYCLE_RATE(1, 1, 60),
 	NDDOT_VSL_DECREASE_LIMIT(15, 1, 100),
 	NDDOT_VSL_DECREASE_RATE(1, 0, 60),

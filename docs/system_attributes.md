@@ -72,6 +72,7 @@ System Attribute                 | Description
 `meter_min_red_secs`             | [Ramp meter] minimum red interval time
 `meter_yellow_secs`              | [Ramp meter] yellow interval time
 `msg_feed_verify`                | Require [DMS] messages from msg_feed to exist in message library
+`nddot_vsl_color`                | Color of VSL signs on the [DMS] tab, as `R,G,B` or `#RRGGBB`; blank shows them as Purpose signs (requires client restart)
 `nddot_vsl_cycle_rate`           | Minutes between calculating VSL recommended speeds
 `nddot_vsl_decrease_limit`       | Largest VSL speed decrease in one change, except for threshold changes (mph)
 `nddot_vsl_decrease_rate`        | Minutes between VSL changes when decreasing speed
