@@ -3,7 +3,7 @@
  * Copyright (C) 2010-2024  Minnesota Department of Transportation
  * Copyright (C) 2011  AHMCT, University of California
  * Copyright (C) 2017-2021  Iteris Inc.
- * Copyright (C) 2024       SRF Consulting Group
+ * Copyright (C) 2024-2026  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ package us.mn.state.dot.tms;
  * @author Douglas Lau
  * @author Michael Darter
  * @author John L. Stanley - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public interface WeatherSensor extends Device {
 

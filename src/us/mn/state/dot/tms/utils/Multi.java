@@ -2,7 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2009-2026  Minnesota Department of Transportation
  * Copyright (C) 2009  AHMCT, University of California
- * Copyright (C) 2019-2020  SRF Consulting Group
+ * Copyright (C) 2019-2026  SRF Consulting Group
  * Copyright (C) 2021  Iteris Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ package us.mn.state.dot.tms.utils;
  * @author Michael Darter
  * @author John Stanley - SRF Consulting
  * @author Gordon Parikh - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public interface Multi {
 

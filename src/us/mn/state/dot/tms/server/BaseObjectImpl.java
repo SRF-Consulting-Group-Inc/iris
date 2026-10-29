@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2007-2026  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@ import us.mn.state.dot.tms.server.event.BaseEvent;
  * Base object class for storable SONAR objects.
  *
  * @author Douglas Lau
+ * @author Coby Christiansen - SRF Consulting
  */
 abstract public class BaseObjectImpl implements Storable, SonarObject {
 

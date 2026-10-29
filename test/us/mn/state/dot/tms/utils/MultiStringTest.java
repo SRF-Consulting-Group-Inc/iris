@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2009-2023  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@ import static us.mn.state.dot.tms.units.Interval.Units.DECISECONDS;
  * MultiString test cases
  * @author Michael Darter
  * @author Douglas Lau
+ * @author Coby Christiansen - SRF Consulting
  */
 public class MultiStringTest extends TestCase {
 

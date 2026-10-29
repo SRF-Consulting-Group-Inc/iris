@@ -1,6 +1,6 @@
 /*
  * IRIS -- Intelligent Roadway Information System
- * Copyright (C) 2019-2025  SRF Consulting Group
+ * Copyright (C) 2019-2026  SRF Consulting Group
  * Copyright (C) 2021-2026  Minnesota Department of Transportation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import us.mn.state.dot.tms.utils.wysiwyg.token.*;
  * WToken objects.
  * 
  * @author John L. Stanley - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public class WMultiParser implements Multi {
 

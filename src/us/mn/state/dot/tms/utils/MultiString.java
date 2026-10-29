@@ -2,7 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2006-2026  Minnesota Department of Transportation
  * Copyright (C) 2014-2015  AHMCT, University of California
- * Copyright (C) 2019-2020  SRF Consulting Group
+ * Copyright (C) 2019-2026  SRF Consulting Group
  * Copyright (C) 2021  Iteris Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import us.mn.state.dot.tms.utils.Multi.OverLimitMode;
  * @author Travis Swanston
  * @author John L. Stanley - SRF Consulting
  * @author Gordon Parikh - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public class MultiString {
 

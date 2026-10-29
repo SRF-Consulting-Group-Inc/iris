@@ -2,6 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2017  Iteris Inc.
  * Copyright (C) 2019-2025  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@ import us.mn.state.dot.tms.server.WeatherSensorImpl;
  *
  * @author Michael Darter
  * @author Douglas Lau
+ * @author Coby Christiansen - SRF Consulting
  */
 public class EssRec {
 

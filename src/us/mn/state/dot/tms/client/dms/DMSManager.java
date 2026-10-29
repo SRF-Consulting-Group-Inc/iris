@@ -46,6 +46,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Douglas Lau
  * @author Michael Darter
  * @author John L. Stanley - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public class DMSManager extends DeviceManager<DMS> {
 

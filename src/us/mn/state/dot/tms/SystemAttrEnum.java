@@ -27,6 +27,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * @author Michael Darter
  * @author Travis Swanston
  * @author John L. Stanley - SRF Consulting
+ * @author Coby Christiansen - SRF Consulting
  */
 public enum SystemAttrEnum {
 	ACTION_PLAN_ALERT_LIST(""),

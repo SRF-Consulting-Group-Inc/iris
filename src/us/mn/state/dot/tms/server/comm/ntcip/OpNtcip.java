@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2013-2026  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +38,7 @@ import us.mn.state.dot.tms.utils.MultiString;
  * Operation for NTCIP device.
  *
  * @author Douglas Lau
+ * @author Coby Christiansen - SRF Consulting
  */
 abstract public class OpNtcip extends OpDevice {
 
