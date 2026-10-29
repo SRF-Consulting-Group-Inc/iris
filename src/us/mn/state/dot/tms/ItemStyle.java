@@ -1,6 +1,7 @@
 /*
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2012-2026  Minnesota Department of Transportation
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +23,7 @@ import us.mn.state.dot.tms.utils.I18N;
  * Item style enumeration.
  *
  * @author Douglas Lau
+ * @author John L. Stanley - SRF Consulting
  */
 public enum ItemStyle {
 	/* Generic item styles */
@@ -69,7 +71,9 @@ public enum ItemStyle {
 	METER,
 	PHASE,
 	/* Alert styles */
-	PENDING;
+	PENDING,
+	/* NDDOT VSL sign styles */
+	VSL;
 
 	/** Get a string representation of the item style */
 	@Override

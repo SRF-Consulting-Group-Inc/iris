@@ -3,7 +3,7 @@
  * Copyright (C) 2000-2026  Minnesota Department of Transportation
  * Copyright (C) 2008-2009  AHMCT, University of California
  * Copyright (C) 2012-2021  Iteris Inc.
- * Copyright (C) 2016-2020  SRF Consulting Group
+ * Copyright (C) 2016-2026  SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1093,7 +1093,18 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 		return isOnline() && DMSHelper.isDeployable(this);
 	}
 
-	/** Calculate the item styles */
+	/** Flag set when the sign is an NDDOT VSL sign (has a vsl_sign
+	 * record).  This is set by VslSignImpl. */
+	private transient boolean vsl_sign;
+
+	/** Set flag for an NDDOT VSL sign.  The caller must update styles. */
+	void setVslSign(boolean v) {
+		vsl_sign = v;
+	}
+
+	/** Calculate the item styles.  A VSL sign is never available,
+	 * deployed, scheduled or external, and an active one is always
+	 * dedicated-purpose. */
 	@Override
 	protected long calculateStyles() {
 		long s = ItemStyle.ALL.bit();
@@ -1105,22 +1116,25 @@ public class DMSImpl extends DeviceImpl implements DMS, Comparable<DMSImpl> {
 			s |= ItemStyle.INACTIVE.bit();
 		if (DMSHelper.isHidden(this))
 			s |= ItemStyle.HIDDEN.bit();
-		else {
+		else if (!vsl_sign) {
 			if (isAvailable())
 				s |= ItemStyle.AVAILABLE.bit();
 			if (isUserDeployed())
 				s |= ItemStyle.DEPLOYED.bit();
 		}
-		if (isScheduleDeployed())
+		if (!vsl_sign && isScheduleDeployed())
 			s |= ItemStyle.SCHEDULED.bit();
-		if (isExternalDeployed() || isAlertDeployed())
+		if (!vsl_sign && (isExternalDeployed() || isAlertDeployed()))
 			s |= ItemStyle.EXTERNAL.bit();
 		if (isOnline() && hasFaults())
 			s |= ItemStyle.FAULT.bit();
 		if (isActive() && isOffline())
 			s |= ItemStyle.OFFLINE.bit();
-		if (isActive() && !DMSHelper.isGeneralPurpose(this))
+		if (isActive() &&
+		    (vsl_sign || !DMSHelper.isGeneralPurpose(this)))
 			s |= ItemStyle.PURPOSE.bit();
+		if (vsl_sign)
+			s |= ItemStyle.VSL.bit();
 		return s;
 	}
 

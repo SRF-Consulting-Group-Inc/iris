@@ -46,6 +46,7 @@ import us.mn.state.dot.tms.utils.MultiString;
  * starts.
  *
  * @author Coby Christiansen - SRF Consulting
+ * @author John L. Stanley - SRF Consulting
  */
 public class VslSignImpl extends BaseObjectImpl implements VslSign {
 
@@ -62,7 +63,9 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 			SONAR_TYPE + ";", new ResultFactory()
 		{
 			public void create(ResultSet row) throws Exception {
-				namespace.addObject(new VslSignImpl(row));
+				VslSignImpl vs = new VslSignImpl(row);
+				namespace.addObject(vs);
+				vs.setSignVsl(true);
 			}
 		});
 	}
@@ -135,6 +138,23 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		if (lookupDMS(name) == null)
 			throw new ChangeVetoException("No DMS named " + name);
 		super.doStore();
+		setSignVsl(true);
+	}
+
+	/** Destroy a VSL sign */
+	@Override
+	public void doDestroy() throws TMSException {
+		super.doDestroy();
+		setSignVsl(false);
+	}
+
+	/** Mark the sign as a VSL sign (or not), and update its styles */
+	private void setSignVsl(boolean v) {
+		DMSImpl dms = lookupDMS(name);
+		if (dms != null) {
+			dms.setVslSign(v);
+			dms.updateStyles();
+		}
 	}
 
 	/** Get notes (including hashtags).  These are the sign's notes, so
