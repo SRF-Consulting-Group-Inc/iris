@@ -2,6 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2008-2025  Minnesota Department of Transportation
  * Copyright (C) 2010  AHMCT, University of California
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,6 +49,7 @@ import us.mn.state.dot.tms.geo.MapVector;
  * proxy into an appropriate style list model.
  *
  * @author Douglas Lau
+ * @author John L. Stanley - SRF Consulting
  */
 abstract public class ProxyManager<T extends SonarObject> {
 
@@ -372,6 +374,12 @@ abstract public class ProxyManager<T extends SonarObject> {
 
 	/** Check the style of the specified proxy */
 	public boolean checkStyle(ItemStyle is, T proxy) {
+		return false;
+	}
+
+	/** Check if a style button is hidden while no proxies have the
+	 * style */
+	public boolean isStyleHiddenWhenEmpty(ItemStyle is) {
 		return false;
 	}
 

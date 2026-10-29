@@ -2,6 +2,7 @@
  * IRIS -- Intelligent Roadway Information System
  * Copyright (C) 2004-2025  Minnesota Department of Transportation
  * Copyright (C) 2010 AHMCT, University of California, Davis
+ * Copyright (C) 2026       SRF Consulting Group
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +20,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.GroupLayout;
@@ -43,6 +45,7 @@ import us.mn.state.dot.tms.utils.I18N;
  *
  * @author Douglas Lau
  * @author Michael Darter
+ * @author John L. Stanley - SRF Consulting
  */
 public class StyleSummary<T extends SonarObject> extends JPanel {
 
@@ -86,6 +89,9 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 
 	/** Style buttons */
 	private final StyleButton[] buttons;
+
+	/** Style buttons currently shown */
+	private StyleButton[] shown = new StyleButton[0];
 
 	/** Dummy list selection model */
 	private final DefaultListSelectionModel dummy_model =
@@ -228,19 +234,41 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 		setStyle(def_style);
 	}
 
+	/** Check if a style button should be shown */
+	private boolean isShown(StyleButton btn) {
+		return btn.n_count > 0 ||
+		      !manager.isStyleHiddenWhenEmpty(btn.i_style);
+	}
+
+	/** Get the style buttons which should be shown */
+	private StyleButton[] getShownButtons() {
+		ArrayList<StyleButton> btns = new ArrayList<StyleButton>();
+		for (StyleButton btn : buttons) {
+			if (isShown(btn))
+				btns.add(btn);
+		}
+		return btns.toArray(new StyleButton[0]);
+	}
+
 	/** Layout the panel */
 	private void layoutPanel() {
+		shown = getShownButtons();
+		removeAll();
 		GroupLayout gl = new GroupLayout(this);
 		gl.setHonorsVisibility(false);
 		gl.setAutoCreateGaps(false);
 		gl.setAutoCreateContainerGaps(false);
-		gl.setHorizontalGroup(createHorizontalGroup(gl));
-		gl.setVerticalGroup(createVerticalGroup(gl));
+		gl.setHorizontalGroup(createHorizontalGroup(gl, shown));
+		gl.setVerticalGroup(createVerticalGroup(gl, shown));
 		setLayout(gl);
+		revalidate();
+		repaint();
 	}
 
 	/** Create the horizontal group */
-	private GroupLayout.Group createHorizontalGroup(GroupLayout gl) {
+	private GroupLayout.Group createHorizontalGroup(GroupLayout gl,
+		StyleButton[] buttons)
+	{
 		GroupLayout.ParallelGroup hg = gl.createParallelGroup();
 		GroupLayout.SequentialGroup sg = gl.createSequentialGroup();
 		if (sz_btns != null) {
@@ -253,7 +281,7 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 		sg.addPreferredGap(RELATED, UI.hgap, Short.MAX_VALUE);
 		int n_rows = rowCount(buttons.length);
 		for (int c = 0; c < colCount(buttons.length); c++) {
-			StyleButton[] col = createColumn(n_rows, c);
+			StyleButton[] col = createColumn(buttons, n_rows, c);
 			if (col.length > 0) {
 				if (c > 0)
 					sg.addGap(UI.hgap);
@@ -272,7 +300,9 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 	}
 
 	/** Create a column of style buttons */
-	private StyleButton[] createColumn(int n_rows, int c) {
+	private StyleButton[] createColumn(StyleButton[] buttons, int n_rows,
+		int c)
+	{
 		ArrayList<StyleButton> col = new ArrayList<StyleButton>();
 		for (int r = 0; r < n_rows; r++) {
 			int i = c * n_rows + r;
@@ -283,7 +313,9 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 	}
 
 	/** Create the vertical group */
-	private GroupLayout.Group createVerticalGroup(GroupLayout gl) {
+	private GroupLayout.Group createVerticalGroup(GroupLayout gl,
+		StyleButton[] buttons)
+	{
 		GroupLayout.SequentialGroup vg = gl.createSequentialGroup();
 		GroupLayout.ParallelGroup pg = gl.createParallelGroup();
 		if (sz_btns != null) {
@@ -388,12 +420,26 @@ public class StyleSummary<T extends SonarObject> extends JPanel {
 		}
 	}
 
-	/** Update the count labels */
+	/** Update the count labels, and show or hide style buttons */
 	private void updateCountLabels() {
 		for (StyleButton btn : buttons) {
 			btn.setText(Integer.toString(btn.n_count) + ' ' +
 				btn.i_style);
 		}
+		if (!Arrays.equals(shown, getShownButtons())) {
+			layoutPanel();
+			if (!isSelectedShown())
+				setStyle(def_style);
+		}
+	}
+
+	/** Check if the selected style button is shown */
+	private boolean isSelectedShown() {
+		for (StyleButton btn : shown) {
+			if (btn.isSelected())
+				return true;
+		}
+		return false;
 	}
 
 	/** Set the selected style */
