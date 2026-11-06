@@ -154,7 +154,8 @@ INSERT INTO event.event_description (event_desc_id, description) VALUES
     (10003, 'VSL Rejected'),
     (10004, 'VSL Posted'),
     (10005, 'VSL Unavailable'),
-    (10006, 'VSL Available');
+    (10006, 'VSL Available'),
+    (10007, 'VSL Calculation');
 
 -- Add VSL event table
 --
@@ -177,5 +178,86 @@ GRANT SELECT ON vsl_event_view TO PUBLIC;
 -- Add config for VSL events, kept as an audit log
 INSERT INTO iris.event_config (name, enable_store, enable_purge, purge_days)
 VALUES ('vsl_event', true, false, 0);
+
+-- Add VSL calculation tables
+--
+-- One row for each calculation of each VSL sign, with one row for each of
+-- its weather sensors and detectors.  Speeds are mph, and weather readings
+-- are the values used by the VSL equations.  Purging a calculation also
+-- deletes its weather sensor and detector rows.
+CREATE TABLE event.vsl_calc (
+    vsl_sign VARCHAR(20) NOT NULL,
+    event_date TIMESTAMP WITH time zone NOT NULL,
+    event_desc INTEGER NOT NULL REFERENCES event.event_description,
+    min_speed INTEGER NOT NULL,
+    max_speed INTEGER NOT NULL,
+    detector_time TIMESTAMP WITH time zone,
+    traffic_speed REAL,
+    weather_sensor VARCHAR(20),
+    rec_speed INTEGER,
+    fault VARCHAR(32),
+    posted_speed INTEGER,
+    action VARCHAR(8),
+    action_speed INTEGER,
+    reason VARCHAR(48),
+
+    PRIMARY KEY (vsl_sign, event_date)
+);
+
+CREATE INDEX vsl_calc_event_date_idx ON event.vsl_calc (event_date);
+
+CREATE TABLE event.vsl_calc_station (
+    vsl_sign VARCHAR(20) NOT NULL,
+    event_date TIMESTAMP WITH time zone NOT NULL,
+    weather_sensor VARCHAR(20) NOT NULL,
+    problem VARCHAR(64),
+    surface VARCHAR(16),
+    surf_temp_f REAL,
+    visibility_ft REAL,
+    wind_speed_mph REAL,
+    humidity_pct REAL,
+    equation VARCHAR(4),
+    equation_max INTEGER,
+    candidate REAL,
+
+    PRIMARY KEY (vsl_sign, event_date, weather_sensor),
+    FOREIGN KEY (vsl_sign, event_date) REFERENCES event.vsl_calc
+        ON DELETE CASCADE
+);
+
+CREATE TABLE event.vsl_calc_detector (
+    vsl_sign VARCHAR(20) NOT NULL,
+    event_date TIMESTAMP WITH time zone NOT NULL,
+    detector VARCHAR(20) NOT NULL,
+    speed REAL,
+    problem VARCHAR(16),
+
+    PRIMARY KEY (vsl_sign, event_date, detector),
+    FOREIGN KEY (vsl_sign, event_date) REFERENCES event.vsl_calc
+        ON DELETE CASCADE
+);
+
+CREATE VIEW vsl_calc_view AS
+    SELECT vsl_sign, event_date, min_speed, max_speed, detector_time,
+           traffic_speed, weather_sensor, rec_speed, fault, posted_speed,
+           action, action_speed, reason
+    FROM event.vsl_calc;
+GRANT SELECT ON vsl_calc_view TO PUBLIC;
+
+CREATE VIEW vsl_calc_station_view AS
+    SELECT vsl_sign, event_date, weather_sensor, problem, surface,
+           surf_temp_f, visibility_ft, wind_speed_mph, humidity_pct,
+           equation, equation_max, candidate
+    FROM event.vsl_calc_station;
+GRANT SELECT ON vsl_calc_station_view TO PUBLIC;
+
+CREATE VIEW vsl_calc_detector_view AS
+    SELECT vsl_sign, event_date, detector, speed, problem
+    FROM event.vsl_calc_detector;
+GRANT SELECT ON vsl_calc_detector_view TO PUBLIC;
+
+-- Add config for VSL calculations, kept for two years
+INSERT INTO iris.event_config (name, enable_store, enable_purge, purge_days)
+VALUES ('vsl_calc', true, true, 730);
 
 COMMIT;
