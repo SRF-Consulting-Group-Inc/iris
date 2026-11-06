@@ -36,6 +36,7 @@ import us.mn.state.dot.tms.VslApprovalMode;
 import us.mn.state.dot.tms.VslSign;
 import us.mn.state.dot.tms.VslSignHelper;
 import us.mn.state.dot.tms.VslState;
+import us.mn.state.dot.tms.server.event.VslCalcEvent;
 import us.mn.state.dot.tms.server.event.VslEvent;
 import us.mn.state.dot.tms.utils.MultiString;
 
@@ -289,6 +290,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		VslCalculator calc = new VslCalculator(hashtag, min_speed,
 			max_speed);
 		Integer s = calc.calculate();
+		VslCalcEvent ev = createCalcEvent(calc, s);
 		if (VSL_LOG.isOpen()) {
 			for (String d: calc.detail)
 				logMsg(d);
@@ -297,14 +299,38 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		if (checkOverride(dms)) {
 			// Calculate, but don't approve (VSL-VOV-03)
 			logMsg("overridden");
+			ev.setDecision(null, null, "overridden");
 			setRecommendationNotify(s, VslState.NONE);
 		} else if (s == null) {
 			// Hold the posted speed (VSL-FLT-02)
 			setRecommendationNotify(null, VslState.NONE);
 		} else
-			approve(s, calc);
+			approve(s, calc, ev);
 		checkComm(dms);
 		calculated = true;
+		logEvent(ev);
+	}
+
+	/** Create an event with the details of a calculation */
+	private VslCalcEvent createCalcEvent(VslCalculator calc, Integer s) {
+		VslCalcEvent ev = new VslCalcEvent(name, min_speed, max_speed,
+			posted_speed);
+		ev.setResult(calc.det_stamp, calc.traffic_speed, calc.sensor,
+			s, calc.fault);
+		for (VslCalculator.Station st: calc.stations) {
+			VslReading r = st.reading;
+			if (r != null) {
+				ev.addStation(st.name, r.surface.toString(),
+					r.surf_temp_f, r.visibility_ft,
+					r.wind_speed_mph, r.humidity_pct,
+					st.choice.equation.toString(),
+					st.choice.max_speed, st.candidate);
+			} else
+				ev.addStation(st.name, st.problem);
+		}
+		for (VslCalculator.DetectorSpeed ds: calc.detectors)
+			ev.addDetector(ds.name, ds.speed, ds.problem);
+		return ev;
 	}
 
 	/** Operator message on the sign, or null if none */
@@ -358,7 +384,7 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 	}
 
 	/** Apply the approval rules to a recommended speed */
-	private void approve(int s, VslCalculator calc) {
+	private void approve(int s, VslCalculator calc, VslCalcEvent ev) {
 		long now = TimeSteward.currentTimeMillis();
 		VslApprovalMode mode = VslApprovalMode.fromOrdinal(
 			approval_mode);
@@ -366,12 +392,15 @@ public class VslSignImpl extends BaseObjectImpl implements VslSign {
 		    VslApproval.isReviewTimedOut(rec_time, now))
 		{
 			logMsg("review timeout");
+			ev.setDecision(VslApproval.Action.POST.toString(),
+				rec_speed, "review timeout");
 			postSpeed(rec_speed, null);
 			return;
 		}
 		VslApproval ap = VslApproval.evaluate(s, posted_speed,
 			posted_time, quiet_expires, mode, now);
 		logMsg(ap.toString());
+		ev.setDecision(ap.action.toString(), ap.speed, ap.reason);
 		if (ap.urgent)
 			setQuietExpiresNotify(null);
 		switch (ap.action) {

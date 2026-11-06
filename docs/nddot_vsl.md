@@ -219,7 +219,61 @@ VSL Posted      | A speed was posted
 VSL Unavailable | No weather sensor can be used
 VSL Available   | A weather sensor can be used again
 
-Calculation details for each sign are written to the `vsl` debug log, if the
+A seventh event type, VSL Calculation, is used only by the calculation
+history.
+
+## Calculation History
+
+Every calculation of every VSL sign is stored in three tables, which hold the
+same details as the `vsl` debug log.  Speeds are mph, and weather readings are
+the values used by the VSL equations (after IRIS rounds the station's
+readings).
+
+Table (view)                                         | One row for each
+-----------------------------------------------------|------------------------------
+`event.vsl_calc` (`vsl_calc_view`)                   | Calculation of a sign
+`event.vsl_calc_station` (`vsl_calc_station_view`)   | Weather sensor in a calculation
+`event.vsl_calc_detector` (`vsl_calc_detector_view`) | Detector in a calculation
+
+Rows of the three tables are matched by `vsl_sign` and `event_date`.
+
+Column (`vsl_calc`) | Description
+--------------------|-------------------------------------------------------
+`min_speed`         | Sign's minimum speed
+`max_speed`         | Sign's maximum speed
+`detector_time`     | Time of the detector sample interval that was read
+`traffic_speed`     | Traffic speed: the lowest detector speed
+`weather_sensor`    | Weather sensor with the lowest candidate speed
+`rec_speed`         | Recommended speed
+`fault`             | Reason no speed was calculated
+`posted_speed`      | Posted speed before the calculation
+`action`            | Approval action: `NONE`, `HOLD`, `REQUEST` or `POST`
+`action_speed`      | Speed of the approval action
+`reason`            | Reason for the action, as in the debug log, or `overridden`
+
+Column (`vsl_calc_station`) | Description
+----------------------------|-------------------------------------------------
+`problem`                   | Reason the sensor was not used (other columns are empty)
+`surface`                   | Surface category
+`surf_temp_f`               | Surface temperature (°F)
+`visibility_ft`             | Visibility (feet)
+`wind_speed_mph`            | Average wind speed (mph)
+`humidity_pct`              | Relative humidity (%)
+`equation`                  | Equation from the decision tree
+`equation_max`              | Maximum speed of the decision tree branch
+`candidate`                 | Candidate speed, before rounding
+
+Column (`vsl_calc_detector`) | Description
+-----------------------------|------------------------------------------------
+`speed`                      | Speed of the sample interval
+`problem`                    | `no speed` or `not sampling` (the detector was not used)
+
+Calculations are purged after 730 days, along with their weather sensor and
+detector rows.  Storing and purging can be changed for `vsl_calc` in
+[event configuration].  Each sign adds about 1,440 calculations a day, plus
+one row for each of its weather sensors and detectors.
+
+Calculation details are also written to the `vsl` debug log, if the
 `/var/log/iris/vsl` file exists.
 
 ## Permissions

@@ -64,6 +64,56 @@ public class VslCalculator {
 		return Math.max(min_speed, Math.min(s, max_speed));
 	}
 
+	/** Weather sensor in a calculation */
+	static public class Station {
+
+		/** Weather sensor name */
+		public final String name;
+
+		/** Reason the sensor can't be used, or null if it was used */
+		public final String problem;
+
+		/** Reading, or null if not used */
+		public final VslReading reading;
+
+		/** Decision tree choice, or null if not used */
+		public final VslDecisionTree.Choice choice;
+
+		/** Candidate speed (mph), or null if not used */
+		public final Double candidate;
+
+		/** Create a weather sensor in a calculation */
+		private Station(String n, String p, VslReading r,
+			VslDecisionTree.Choice c, Double s)
+		{
+			name = n;
+			problem = p;
+			reading = r;
+			choice = c;
+			candidate = s;
+		}
+	}
+
+	/** Detector in a calculation */
+	static public class DetectorSpeed {
+
+		/** Detector name */
+		public final String name;
+
+		/** Speed (mph), or null if none */
+		public final Float speed;
+
+		/** Reason there is no speed, or null */
+		public final String problem;
+
+		/** Create a detector in a calculation */
+		private DetectorSpeed(String n, Float s, String p) {
+			name = n;
+			speed = s;
+			problem = p;
+		}
+	}
+
 	/** Hashtag of the sign's weather sensors and detectors */
 	private final String hashtag;
 
@@ -75,6 +125,19 @@ public class VslCalculator {
 
 	/** Lines describing the calculation, for the VSL log */
 	public final ArrayList<String> detail = new ArrayList<String>();
+
+	/** Weather sensors of the calculation */
+	public final ArrayList<Station> stations = new ArrayList<Station>();
+
+	/** Detectors of the calculation */
+	public final ArrayList<DetectorSpeed> detectors =
+		new ArrayList<DetectorSpeed>();
+
+	/** Time stamp of the detector sample interval (ms), or 0 */
+	public long det_stamp;
+
+	/** Traffic speed (mph), or null if none */
+	public Double traffic_speed;
 
 	/** Reason no speed was calculated, or null (VSL-NTF-07) */
 	public String fault;
@@ -103,6 +166,7 @@ public class VslCalculator {
 			return null;
 		}
 		Double traffic = findTrafficSpeed();
+		traffic_speed = traffic;
 		Double lowest = null;
 		Iterator<WeatherSensor> it = WeatherSensorHelper.iterator();
 		while (it.hasNext()) {
@@ -134,12 +198,16 @@ public class VslCalculator {
 		String problem = VslReading.checkSensor(ws);
 		if (problem != null) {
 			detail.add(ws.getName() + ": not used, " + problem);
+			stations.add(new Station(ws.getName(), problem, null,
+				null, null));
 			return null;
 		}
 		VslReading r = VslReading.fromSensor(ws);
+		VslDecisionTree.Choice c = VslDecisionTree.choose(r);
 		double s = candidateSpeed(r, max_speed, traffic);
-		detail.add(ws.getName() + ": " + r + "; " +
-			VslDecisionTree.choose(r) + " = " + Math.round(s));
+		detail.add(ws.getName() + ": " + r + "; " + c + " = " +
+			Math.round(s));
+		stations.add(new Station(ws.getName(), null, r, c, s));
 		return s;
 	}
 
@@ -148,7 +216,7 @@ public class VslCalculator {
 	 * are not used (VSL-FLT-05).
 	 * @return Traffic speed (mph), or null if none. */
 	private Double findTrafficSpeed() {
-		long stamp = StationDataJob.getStamp();
+		det_stamp = StationDataJob.getStamp();
 		int per_ms = DetectorImpl.BIN_PERIOD_MS;
 		Double lowest = null;
 		Iterator<Detector> it = DetectorHelper.iterator();
@@ -158,9 +226,19 @@ public class VslCalculator {
 			    new Hashtags(d.getNotes()).contains(hashtag))
 			{
 				DetectorImpl det = (DetectorImpl) d;
-				float s = det.getSpeedRaw(stamp, per_ms);
-				if (s > 0 && (lowest == null || s < lowest))
-					lowest = (double) s;
+				float s = det.getSpeedRaw(det_stamp, per_ms);
+				if (s > 0) {
+					detectors.add(new DetectorSpeed(
+						det.getName(), s, null));
+					if (lowest == null || s < lowest)
+						lowest = (double) s;
+				} else {
+					String p = det.isSampling()
+					         ? "no speed"
+					         : "not sampling";
+					detectors.add(new DetectorSpeed(
+						det.getName(), null, p));
+				}
 			}
 		}
 		detail.add("traffic speed " + ((lowest != null)
